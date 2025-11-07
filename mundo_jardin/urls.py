@@ -26,6 +26,8 @@ urlpatterns = [
     path('catalogoAdmin/', include('catalogo_admin.urls')),
     
     path('adminpanel/', include('adminpanel.urls')),
+    path('ventas_admin/', include('ventas_admin.urls')),
+    
 ]
 
 # BLOQUE CONDICIONAL AÑADIDO:
@@ -33,6 +35,8 @@ urlpatterns = [
 if settings.DEBUG:
     # Mapea /static/ a la carpeta definida en STATICFILES_DIRS.
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
 
 
 

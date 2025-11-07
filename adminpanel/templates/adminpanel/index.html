@@ -18,40 +18,30 @@
     <header class="border-b border-gray-200 sticky top-0 z-50 bg-white">
     
     <div class="bg-[#fff6e4] border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-            
-            <a href="#" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
-                <img src="{% static 'logo.png' %}" 
-                    alt="Logo Mundo Jardín" 
-                    class="h-20 w-20 mr-3 rounded-full">
-                ADMINISTRACIÓN
-            </a>
-
-            <div class="flex items-center space-x-6 flex-shrink-0">
-                <a href="#" class="flex flex-col items-center text-[#6a760c] mr-6">
-                    <img src="{% static 'i1.png' %}" 
-                        alt="Ubicación" 
-                        class="h-7 w-7 mb-1 rounded-full">
-                    <span class="text-xs">Sevilla</span>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+                
+                <a href="#" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
+                    <img src="{% static 'logo.png' %}" 
+                        alt="Logo Mundo Jardín" 
+                        class="h-20 w-20 mr-3 rounded-full">
+                    ADMINISTRACIÓN
                 </a>
 
-                <a href="#" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    <span class="text-xs">Mi Cuenta</span>
-                </a>
+                <div class="flex items-center space-x-6 flex-shrink-0">
+                    <a href="#" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span class="text-xs">Mi Cuenta</span>
+                    </a>
+                </div>
             </div>
         </div>
-    </div>
 
-    <nav class="bg-[#fffaf0] border-t border-b border-black shadow-inner">
-        <ul class="flex justify-center space-x-16 py-4 text-lg font-semibold text-black">
-            <li><a href="{% url 'lista_productos' %}" class="hover:underline">PRODUCTOS</a></li>
-            <li><a href="#" class="hover:underline">VENTAS</a></li>
-            <li><a href="#" class="hover:underline">PEDIDOS</a></li>
-            <li><a href="#" class="hover:underline">USUARIOS</a></li>  
+    <nav class="bg-white border-b border-gray-200 shadow-sm">
+        <ul class="flex justify-center space-x-12 py-1 text-lg text-gray-700">
+            <li><a href="{% url 'lista_productos' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PRODUCTOS</a></li>
+            <li><a href="{% url 'ventas_admin_index' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">VENTAS</a></li>
+            <li><a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PEDIDOS</a></li>
+            <li><a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">USUARIOS</a></li>  
         </ul>
     </nav>
     </header>
@@ -71,7 +61,7 @@
                     </div>
                     <p class="text-gray-600 mb-4">Edita la ficha de tus productos.</p>
                     <a href="{% url 'lista_productos' %}" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
+                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Productos →
                     </a>
                 </div>
@@ -82,8 +72,8 @@
                         <span class="text-2xl">💰</span>
                     </div>
                     <p class="text-gray-600 mb-4">Accede al historial y control de ventas y estadísticas.</p>
-                    <a href="#" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
+                    <a href="{% url 'ventas_admin_index' %}" 
+                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Ventas →
                     </a>
                 </div>
@@ -95,7 +85,7 @@
                     </div>
                     <p class="text-gray-600 mb-4">Accede al registro y estado de todos los pedidos.</p>
                     <a href="#" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
+                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Pedidos →
                     </a>
                 </div>
@@ -107,7 +97,7 @@
                     </div>
                     <p class="text-gray-600 mb-4">Administra las cuentas de clientes y empleados.</p>
                     <a href="#" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
+                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Usuarios →
                     </a>
                 </div>
