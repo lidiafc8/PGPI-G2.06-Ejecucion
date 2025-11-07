@@ -15,14 +15,19 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
-from home import views
+from django.urls import path, include
+from home import views 
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
+    path('catalogoAdmin/', include('catalogo_admin.urls')),
+    
+    path('adminpanel/', include('adminpanel.urls')),
+    path('ventas_admin/', include('ventas_admin.urls')),
+    
 ]
 
 # BLOQUE CONDICIONAL AÑADIDO:

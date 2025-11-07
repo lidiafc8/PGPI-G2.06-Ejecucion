@@ -1,0 +1,59 @@
+{% extends 'catalogo_admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Detalles: {{ producto.nombre }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-gray-100">
+    
+    <h1 class="text-3xl font-bold text-gray-900 mb-8 text-center lm-text-green">
+        Detalles del Producto: {{ producto.nombre }}
+    </h1>
+
+    <div class="grid md:grid-cols-3 gap-8">
+        <div class="md:col-span-1 flex justify-center">
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" 
+                     alt="{{ producto.nombre }}" 
+                     class="w-full h-auto max-h-80 object-cover rounded-xl shadow-md border-2 lm-border-green">
+            {% else %}
+                <div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-xl text-gray-500 border border-dashed">
+                    Sin Imagen Disponible
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="md:col-span-2 space-y-4">
+            
+            <h2 class="text-2xl font-semibold text-gray-800">{{ producto.nombre }}</h2>
+            
+            <div class="flex space-x-6 items-center border-b pb-4">
+                <span class="text-3xl font-bold text-red-600">{{ producto.precio }}€</span>
+                <span class="text-lg font-medium {% if producto.stock <= 5 %}text-red-500{% else %}lm-text-green{% endif %}">
+                    Stock: {{ producto.stock }} unidades
+                </span>
+            </div>
+            
+            <p class="text-gray-700 whitespace-pre-wrap">{{ producto.descripcion }}</p>
+
+            <div class="bg-gray-50 p-4 rounded-lg space-y-2 text-sm">
+                {% include 'catalogo_admin/snippets/producto_atributos.html' %}
+            </div>
+
+            <div class="pt-6 flex space-x-4">
+                <a href="{% url 'editar_producto' pk=producto.pk %}" 
+                   class="lm-green text-white px-6 py-3 rounded-lg hover:lm-hover-bg transition font-medium flex items-center space-x-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-1.414 7.07l-4.243 4.243a1 1 0 01-1.414 0l-1.414-1.414a1 1 0 010-1.414l4.243-4.243 2.828 2.828z" />
+                    </svg>
+                    <span>Editar Producto</span>
+                </a>
+                <a href="{% url 'lista_productos' %}" 
+                   class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium">
+                    Volver al Listado
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

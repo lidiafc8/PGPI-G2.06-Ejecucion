@@ -1,0 +1,271 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundo Jardín - Administración - Ventas</title>
+    <!-- Carga de Tailwind CSS y la fuente Inter -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Color principal de Leroy Merlin es un verde oscuro/casi oliva. Usaremos green-800/700 como aproximación. */
+        .lm-green { background-color: #6a760c; }
+        .lm-text-green { color: #6a760c; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- CABECERA -->
+    <header class="border-b border-gray-200 sticky top-0 z-50 bg-white">
+    
+    <!-- BARRA PRINCIPAL (Logo + Ubicación + Iconos) -->
+    <div class="bg-[#fff6e4] border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <a href="{% url 'adminpanel_index' %}" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
+                <img src="{% static 'logo.png' %}" 
+                    alt="Logo Mundo Jardín" 
+                    class="h-20 w-20 mr-3 rounded-full">
+                ADMINISTRACIÓN
+            </a>
+
+            <!-- DERECHA: Ubicación + Iconos -->
+            <div class="flex items-center space-x-6 flex-shrink-0">
+                <!-- Ubicación -->
+                <a href="#" class="flex flex-col items-center text-[#6a760c] mr-6">
+                    <img src="{% static 'i1.png' %}" 
+                        alt="Ubicación" 
+                        class="h-7 w-7 mb-1 rounded-full">
+                    <span class="text-xs">Sevilla</span>
+                </a>
+
+                <!-- Icono de Usuario -->
+                <a href="#" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span class="text-xs">Mi Cuenta</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- BARRA SECUNDARIA (Secciones del panel) -->
+    <nav class="bg-[#fffaf0] border-t border-b border-black shadow-inner">
+        <ul class="flex justify-center space-x-16 py-4 text-lg font-semibold text-black">
+            <li><a href="{% url 'lista_productos' %}" class="hover:underline">PRODUCTOS</a></li>
+            <li>
+                <a href="{% url 'ventas_admin_index' %}"
+                    class="px-4 py-2 rounded-lg {% if request.resolver_match.url_name == 'ventas_admin_index' %}
+                    bg-[#e5e5b8] font-bold shadow-inner
+                    {% else %}
+                    hover:bg-[#f3f3d1]
+                    {% endif %}">
+                    VENTAS
+                </a>
+            </li>
+            <li><a href="#" class="hover:underline">PEDIDOS</a></li>
+            <li><a href="#" class="hover:underline">USUARIOS</a></li>  
+        </ul>
+    </nav>
+</header>
+
+<!-- CONTENIDO PRINCIPAL -->
+<main class="max-w-7xl mx-auto px-8 py-10">
+
+    <!-- FILA SUPERIOR: Título + Filtro -->
+    <div class="flex flex-wrap items-center justify-between mb-8">
+        <!-- Título -->
+        <h1 class="text-3xl font-extrabold text-black mb-4 md:mb-0">Historial de Ventas</h1>
+
+        <!-- Sección de Filtro -->
+         
+            <div class="flex flex-wrap items-center gap-3 mb-6">
+            <!-- Cliente -->
+            <div>
+                <label for="cliente-filtro" class="text-gray-700 font-semibold block mb-1">Cliente</label>
+                <select id="cliente-filtro" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+                    <option value="">Todos</option> 
+                    <option value="juan">Juan</option>
+                    <option value="maria">María</option>
+                    <option value="pedro">Pedro</option>
+                    <option value="ana">Ana</option>
+
+                    <!-- <option value="">Todos los clientes</option>
+                    {% for cliente in clientes %}
+                    <option value="{{ cliente.username }}">{{ cliente.username }}</option>
+                    {% endfor %} -->
+                </select>
+            </div>
+
+            <!-- Fecha inicio -->
+            <div>
+                <label for="fecha-inicio" class="text-gray-700 font-semibold block mb-1">Desde</label>
+                <input type="date" id="fecha-inicio" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+            </div>
+
+            <!-- Fecha fin -->
+            <div>
+                <label for="fecha-fin" class="text-gray-700 font-semibold block mb-1">Hasta</label>
+                <input type="date" id="fecha-fin" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+            </div>
+
+            <!-- Botón -->
+            <div class="self-end">
+                <button onclick="aplicarFiltro()" class="bg-[#6a760c] text-white px-4 py-2 rounded-lg hover:bg-[#5a650a] transition">
+                    Aplicar filtro
+                </button>
+            </div>
+</div>
+
+</div>
+
+    <!-- Subtítulos con totales
+        <div class="flex flex-col sm:flex-row sm:space-x-8 text-gray-800">
+            <h2 class="text-xl font-semibold">
+                Total ventas: <span class="font-bold text-[#6a760c]">{{ total_ventas }}</span>
+            </h2>
+            <h2 class="text-xl font-semibold">
+                Total ganancias: <span class="font-bold text-[#6a760c]">{{ total_ganancias }} €</span>
+            </h2>
+        </div>  -->
+
+        <!-- Totales -->
+        <div class="flex flex-col sm:flex-row sm:space-x-8 text-gray-800 mb-4">
+            <h2 class="text-xl font-semibold">
+                Total ventas: <span id="total-ventas" class="font-bold text-[#6a760c]">0</span>
+            </h2>
+            <h2 class="text-xl font-semibold">
+                Total ganancias: <span id="total-ganancias" class="font-bold text-[#6a760c]">0 €</span>
+            </h2>
+        </div>
+
+    <!-- TABLA DE VENTAS -->
+    <div class="overflow-x-auto">
+        <table id="tabla-ventas" class="min-w-full border-separate border-spacing-y-2">
+            <thead>
+                <tr>
+                    <th class="bg-[#a8ae63] text-black font-bold px-6 py-3 text-left rounded-tl-lg">ID PEDIDO</th>
+                    <th class="bg-[#a8ae63] text-black font-bold px-6 py-3 text-left">CLIENTE</th>
+                    <th class="bg-[#a8ae63] text-black font-bold px-6 py-3 text-left">FECHA</th>
+                    <th class="bg-[#a8ae63] text-black font-bold px-6 py-3 text-left rounded-tr-lg">GANANCIA (€)</th>
+                </tr>
+            </thead>
+            <tbody>
+            <tr data-cliente="juan" data-fecha="2025-11-01" data-total="50">
+                <td class="px-6 py-3">1</td>
+                <td class="px-6 py-3">juan</td>
+                <td class="px-6 py-3">2025-11-01</td>
+                <td class="px-6 py-3">50</td>
+            </tr>
+            <tr data-cliente="maria" data-fecha="2025-11-03" data-total="120.5">
+                <td class="px-6 py-3">2</td>
+                <td class="px-6 py-3">maria</td>
+                <td class="px-6 py-3">2025-11-03</td>
+                <td class="px-6 py-3">120.5</td>
+            </tr>
+            <tr data-cliente="pedro" data-fecha="2025-11-05" data-total="75">
+                <td class="px-6 py-3">3</td>
+                <td class="px-6 py-3">pedro</td>
+                <td class="px-6 py-3">2025-11-05</td>
+                <td class="px-6 py-3">75</td>
+            </tr>
+            <tr data-cliente="juan" data-fecha="2025-11-07" data-total="200">
+                <td class="px-6 py-3">4</td>
+                <td class="px-6 py-3">juan</td>
+                <td class="px-6 py-3">2025-11-07</td>
+                <td class="px-6 py-3">200</td>
+            </tr>
+            <tr data-cliente="ana" data-fecha="2025-11-09" data-total="90">
+                <td class="px-6 py-3">5</td>
+                <td class="px-6 py-3">ana</td>
+                <td class="px-6 py-3">2025-11-09</td>
+                <td class="px-6 py-3">90</td>
+            </tr>
+            <tr data-cliente="maria" data-fecha="2025-11-11" data-total="60">
+                <td class="px-6 py-3">6</td>
+                <td class="px-6 py-3">maria</td>
+                <td class="px-6 py-3">2025-11-11</td>
+                <td class="px-6 py-3">60</td>
+            </tr>
+        </tbody>
+
+        <!-- 
+         <tbody>
+            {% for p in ventas %}
+            <tr class="bg-white hover:bg-gray-100 transition">
+                <td class="px-6 py-3">{{ p.id }}</td>
+                <td class="px-6 py-3">{{ p.usuario_cliente }}</td>
+                <td class="px-6 py-3">{{ p.fecha_creacion }}</td>
+                <td class="px-6 py-3">{{ p.total_importe }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center py-6 text-gray-500">No hay pedidos registrados</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        -->
+
+        </table>
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="bg-gray-800 text-white mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm">
+        © 2025 Mundo Jardín
+    </div>
+</footer>
+
+<!-- SCRIPT DE FILTRADO -->
+<script>
+// Limitar calendario al día de hoy
+const hoy = new Date();
+const yyyy = hoy.getFullYear();
+const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+const dd = String(hoy.getDate()).padStart(2, '0');
+const fechaMax = `${yyyy}-${mm}-${dd}`;
+document.getElementById('fecha-inicio').setAttribute('max', fechaMax);
+document.getElementById('fecha-fin').setAttribute('max', fechaMax);
+
+// Función de filtrado
+function aplicarFiltro() {
+    const cliente = document.getElementById('cliente-filtro').value.toLowerCase();
+    const fechaInicio = document.getElementById('fecha-inicio').value;
+    const fechaFin = document.getElementById('fecha-fin').value;
+
+    const filas = Array.from(document.querySelectorAll('#tabla-ventas tbody tr'));
+    let totalVentas = 0;
+    let totalGanancias = 0;
+
+    filas.forEach(fila => {
+        const clienteFila = fila.dataset.cliente.toLowerCase();
+        const fechaFila = fila.dataset.fecha;
+        const totalFila = parseFloat(fila.dataset.total);
+
+        let mostrar = true;
+        if (cliente && clienteFila !== cliente) mostrar = false;
+        if (fechaInicio && fechaFila < fechaInicio) mostrar = false;
+        if (fechaFin && fechaFila > fechaFin) mostrar = false;
+
+        fila.style.display = mostrar ? '' : 'none';
+
+        if (mostrar) {
+            totalVentas += 1;
+            totalGanancias += totalFila;
+        }
+    });
+
+    // Actualizar totales en la interfaz
+    document.getElementById('total-ventas').textContent = totalVentas;
+    document.getElementById('total-ganancias').textContent = totalGanancias.toFixed(2) + ' €';
+}
+
+// Inicializar totales al cargar la página
+aplicarFiltro();
+</script>
+</body>
+</html>

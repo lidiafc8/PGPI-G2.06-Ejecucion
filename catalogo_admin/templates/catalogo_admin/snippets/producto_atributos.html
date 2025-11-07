@@ -1,0 +1,32 @@
+<div class="flex justify-between border-b pb-2">
+    <span class="text-gray-500">ID de Producto:</span>
+    <span class="font-semibold text-gray-800">{{ producto.pk }}</span>
+</div>
+<div class="flex justify-between border-b pb-2">
+    <span class="text-gray-500">Departamento:</span>
+    <span class="font-semibold text-gray-800">{{ producto.departamento }}</span>
+</div>
+<div class="flex justify-between border-b pb-2">
+    <span class="text-gray-500">Sección:</span>
+    <span class="font-semibold text-gray-800">{{ producto.seccion }}</span>
+</div>
+<div class="flex justify-between border-b pb-2">
+    <span class="text-gray-500">Fabricante:</span>
+    <span class="font-semibold text-gray-800">{{ producto.fabricante }}</span>
+</div>
+<div class="flex justify-between border-b pb-2">
+    <span class="text-gray-500">Categoría:</span>
+    <span class="font-semibold text-gray-800">{{ producto.categoria }}</span>
+</div>
+<div class="flex justify-between pt-2">
+    <span class="text-gray-500">¿Destacado?:</span>
+    <span class="font-semibold {% if producto.esta_destacado %}text-green-600{% else %}text-gray-400{% endif %}">
+        {% if producto.esta_destacado %}Sí{% else %}No{% endif %}
+    </span>
+</div>
+<div class="flex justify-between pt-2">
+    <span class="text-gray-500">¿Agotado?:</span>
+    <span class="font-semibold {% if producto.esta_agotado %}text-red-600{% else %}text-gray-400{% endif %}">
+        {% if producto.esta_agotado %}Sí{% else %}No{% endif %}
+    </span>
+</div>

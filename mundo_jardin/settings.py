@@ -37,7 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'home'
+    'home',
+    'adminpanel',
+    'ventas_admin',
+    'catalogo_admin'
 ]
 
 MIDDLEWARE = [
@@ -134,5 +137,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_URL = 'Imgproductos/'
+MEDIA_URL = '/Imgproductos/'
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'
