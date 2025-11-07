@@ -1,12 +1,49 @@
 from django.db import models
 from django.contrib.auth.hashers import make_password, check_password
 
-class MetodoPago(models.TextChoices):
+class TipoPago(models.TextChoices):
 
-    TARJETA = 'TARJETA',
-    PAYPAL = 'PAYPAL',
-    TRANSFERENCIA = 'TRANSFERENCIA',
-    CONTRA_ENTREGA = 'CONTRA_ENTREGA',
+    PASARELA_PAGO = 'PASARELA_PAGO',
+    CONTRAREEMBOLSO = 'CONTRAREEMBOLSO',
+    
+
+class TipoEnvio(models.TextChoices):
+
+    DOMICILIO = 'DOMICILIO',
+    RECOGIDA_TIENDA = 'RECOGIDA_TIENDA',
+
+class EstadoPedido(models.TextChoices):
+        PAGADO = 'PAGADO',
+        ENVIADO = 'ENVIADO', 
+        ENTREGADO = 'ENTREGADO',
+
+class Seccion(models.TextChoices):
+    HERRAMIENTAS_MANUALES = 'HERRAMIENTAS_MANUALES',
+    MAQUINARIA_DE_JARDÍN = 'MAQUINARIA_DE_JARDÍN',
+    RIEGO='RIEGO',
+    CULTIVO_Y_HUERTO = 'CULTIVO_Y_HUERTO',
+    PROTECCION_Y_SEGURIDAD='PROTECCION_Y_SEGURIDAD',
+    ACCESORIOS_Y_REPUESTOS='ACCESORIOS_Y_REPUESTOS',
+    JARDÍN_Y_EXTERIOR='JARDÍN_Y_EXTERIOR',
+
+class Categoria(models.TextChoices):
+    CORTE_Y_PODA = 'CORTE_Y_PODA',
+    LABRANZA_Y_PLANTACION = 'LABRANZA_Y_PLANTACION',
+    RIEGO_MANUAL='RIEGO_MANUAL',
+    CORTACESPEDES_Y_DESBROZADORAS = 'CORTACESPEDES_Y_DESBROZADORAS',
+    CORTASETOS_Y_MOTOSIERRAS='CORTASETOS_Y_MOTOSIERRAS',
+    SOPLADORES_Y_TRITURADORES='SOPLADORES_Y_TRITURADORES',
+    RIEGO_AUTOMATICO='RIEGO_AUTOMATICO',
+    MANGUERAS='MANGUERAS',
+    MACETAS_E_INVERNADEROS='MACETAS_E_INVERNADEROS',
+    ABONOS_Y_SUSTRATOS='ABONOS_Y_SUSTRATOS',
+    GUANTES_Y_ROPA_PROTECCION='GUANTES_Y_ROPA_PROTECCION',
+    GAFAS_Y_CASCOS='GAFAS_Y_CASCOS',
+    CUCHILLAS_Y_CADENAS='CUCHILLAS_Y_CADENAS',
+    BATERIAS_Y_CARGADORES='BATERIAS_Y_CARGADORES',
+    MUEBLES_Y_DECORACION='MUEBLES_Y_DECORACION',
+    ILUMINACION_EXTERIOR='ILUMINACION_EXTERIOR',
+
 
 class Usuario(models.Model):
     nombre= models.CharField(max_length=200)
@@ -27,9 +64,10 @@ class Usuario(models.Model):
 class UsuarioCliente(models.Model):
 
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
-    metodo_pago= models.CharField(max_length=20, choices=MetodoPago.choices, default=MetodoPago.TARJETA)
+    tipo_pago= models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
     telefono = models.CharField(max_length=15, blank=True, null=True)
     direccion_envio = models.CharField(max_length=255)
+    tipo_envio= models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA)
     
     def __str__(self):
         return self.usuario.nombre
@@ -45,13 +83,14 @@ class Producto(models.Model):
     nombre= models.CharField(max_length=200)
     descripcion= models.TextField()
     departamento= models.CharField(max_length=200)
-    seccion=models.CharField(max_length=200)
+    seccion=models.CharField(max_length=20, choices=Seccion.choices)
     fabricante=models.CharField(max_length=200)
-    categoria=models.CharField(max_length=200)
+    categoria=models.CharField(max_length=20, choices=Categoria.choices)
     precio= models.DecimalField(max_digits=10, decimal_places=2)
     stock=models.IntegerField(default=0)
-    imagen= models.ImageField(upload_to='productos/', blank=True, null=True)
+    imagen= models.ImageField(upload_to='', blank=True, null=True)
     esta_agotado= models.BooleanField(default=False)
+    esta_destacado= models.BooleanField(default=False)
 
     def __str__(self):
         return self.nombre
@@ -81,21 +120,16 @@ class ItemCestaCompra(models.Model):
         return f'{self.cantidad} x {self.producto.nombre}'
 
 class Pedido(models.Model):
-    class EstadoPedido(models.TextChoices):
-        PENDIENTE = 'PENDIENTE',
-        PROCESANDO = 'PROCESANDO',
-        ENVIADO = 'ENVIADO', 
-        ENTREGADO = 'ENTREGADO',
-        CANCELADO = 'CANCELADO',
+    
 
     usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.CASCADE) 
     fecha_creacion = models.DateTimeField(auto_now_add=True) 
-    estado = models.CharField(max_length=20, choices=EstadoPedido.choices, default=EstadoPedido.PENDIENTE)
+    estado = models.CharField(max_length=20, choices=EstadoPedido.choices, default=EstadoPedido.PAGADO)
     subtotal_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
     coste_entrega = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    metodo_pago = models.CharField(max_length=20, choices=MetodoPago.choices, default=MetodoPago.TARJETA)
-    tipo_envio = models.CharField(max_length=50, blank=True) 
+    metodo_pago = models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
+    tipo_envio = models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA) 
     direccion_envio = models.CharField(max_length=255) 
     correo_electronico = models.EmailField() 
     telefono = models.CharField(max_length=15, blank=True)
@@ -119,10 +153,3 @@ class ItemPedido(models.Model):
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
     
-
-
-class Escaparate(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    
-    def __str__(self):
-        return str(self.producto.id)
