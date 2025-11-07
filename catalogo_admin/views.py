@@ -2,7 +2,11 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from home.models import Producto  
 from .forms import ProductoForm    
-
+from django.views.decorators.http import require_POST
+import json
+from django.db import transaction
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 
 
 def lista_productos(request):
@@ -63,3 +67,38 @@ def mostrar_producto(request, pk):
     
     context = {'producto': producto}
     return render(request, 'catalogo_admin/mostrar_producto.html', context)
+
+def admin_dashboard(request):
+    
+    return render(request, 'adminpanel/index.html')
+
+
+
+
+
+@require_POST
+def guardar_orden_productos(request):
+    try:
+        
+        data = json.loads(request.body)
+        orden_productos = data.get('orden_productos')
+        
+        if not orden_productos:
+            return JsonResponse({'success': False, 'message': 'No se recibió la lista de orden.'}, status=400)
+
+
+        for index, producto_id in enumerate(orden_productos):
+            try:
+
+                producto = get_object_or_404(Producto, pk=producto_id)
+                producto.orden = index + 1 
+                producto.save()
+            except Exception as e:
+                print(f"Error al actualizar el producto {producto_id}: {e}")
+                
+        return JsonResponse({'success': True, 'message': 'Orden de productos actualizada exitosamente.'})
+
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'message': 'Formato JSON inválido.'}, status=400)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': f'Error interno del servidor: {e}'}, status=500)
