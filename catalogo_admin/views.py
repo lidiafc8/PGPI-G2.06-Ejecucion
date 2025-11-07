@@ -63,3 +63,7 @@ def mostrar_producto(request, pk):
     
     context = {'producto': producto}
     return render(request, 'catalogo_admin/mostrar_producto.html', context)
+
+def admin_dashboard(request):
+    
+    return render(request, 'adminpanel/index.html')
