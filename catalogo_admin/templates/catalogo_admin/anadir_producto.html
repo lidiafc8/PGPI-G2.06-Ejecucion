@@ -13,7 +13,7 @@
 <div class="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-gray-100">
     <h1 class="text-3xl font-bold text-gray-900 mb-6 text-center lm-text-green">
         {% if es_edicion %}
-            Editar Producto: **{{ producto.nombre }}**
+            Editar Producto: {{ producto.nombre }}
         {% else %}
             Añadir Nuevo Producto
         {% endif %}
@@ -57,7 +57,7 @@
                 Cancelar
             </a>
             <button type="submit" 
-                    class="lm-green text-white px-5 py-2 rounded-lg hover:lm-hover-bg transition font-medium">
+                    class="lm-green text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                 {% if es_edicion %}
                     Guardar Cambios
                 {% else %}
