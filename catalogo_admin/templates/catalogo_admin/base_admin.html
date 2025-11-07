@@ -53,10 +53,17 @@
 
     <nav class="lm-bg-light border-t border-b border-black shadow-inner">
         <ul class="flex justify-center space-x-12 sm:space-x-16 py-4 text-lg font-semibold text-black">
-            <li><a href="{% url 'lista_productos' %}" class="hover:underline {% if request.resolver_match.url_name == 'lista_productos' or request.resolver_match.url_name == 'anadir_producto' %}lm-text-green font-bold{% endif %}">
-                PRODUCTOS
-            </a></li>
-            <li><a href="#" class="hover:underline">VENTAS</a></li>
+            <li>
+                <a href="{% url 'lista_productos' %}"
+                    class="px-4 py-2 rounded-lg {% if request.resolver_match.url_name == 'lista_productos' %}
+                    bg-[#e5e5b8] font-bold shadow-inner
+                    {% else %}
+                    hover:bg-[#f3f3d1]
+                    {% endif %}">
+                    PRODUCTOS
+                </a>
+            </li>
+            <li><a href="{% url 'ventas_admin_index' %}" class="hover:underline">VENTAS</a></li>
             <li><a href="#" class="hover:underline">PEDIDOS</a></li>
             <li><a href="#" class="hover:underline">USUARIOS</a></li> 
         </ul>

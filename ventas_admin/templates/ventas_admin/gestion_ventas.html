@@ -55,7 +55,7 @@
     <!-- BARRA SECUNDARIA (Secciones del panel) -->
     <nav class="bg-[#fffaf0] border-t border-b border-black shadow-inner">
         <ul class="flex justify-center space-x-16 py-4 text-lg font-semibold text-black">
-            <li><a href="#" class="hover:underline">CATÁLOGO</a></li>
+            <li><a href="{% url 'lista_productos' %}" class="hover:underline">PRODUCTOS</a></li>
             <li>
                 <a href="{% url 'ventas_admin_index' %}"
                     class="px-4 py-2 rounded-lg {% if request.resolver_match.url_name == 'ventas_admin_index' %}
