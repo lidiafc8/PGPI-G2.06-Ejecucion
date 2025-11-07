@@ -35,6 +35,7 @@
                 {{ field.label }}
             </label>
             
+            {# Aquí se renderiza el campo, incluyendo los IDs 'id_seccion' e 'id_categoria' #}
             {{ field }}
             
             {% if field.errors %}
@@ -53,7 +54,7 @@
 
         <div class="flex justify-between items-center pt-4">
             <a href="{% url 'lista_productos' %}" 
-               class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
+                class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition font-medium">
                 Cancelar
             </a>
             <button type="submit" 
@@ -67,4 +68,95 @@
         </div>
     </form>
 </div>
-{% endblock %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // 1. Identificar los campos SELECT por sus IDs generados por Django
+    // Los IDs serán 'id_seccion' e 'id_categoria'
+    const $seccionSelect = $("#id_seccion");
+    const $categoriaSelect = $("#id_categoria");
+    
+    // Almacenar la categoría original para el modo edición
+    // Se usa un valor por defecto (vacío) si el campo no tiene valor inicial
+    const categoriaOriginal = $categoriaSelect.val() || ''; 
+    
+    function updateCategorias(isInitialLoad = false) {
+        // Obtiene el valor (string) de la sección seleccionada
+        const seccionValor = $seccionSelect.val();
+        
+        // Bloquea el campo de categoría si no hay sección seleccionada
+        if (!seccionValor) {
+            $categoriaSelect.empty().append('<option value="">Seleccione Sección primero</option>').prop('disabled', true);
+            return;
+        }
+
+        // Si es carga inicial y la categoría ya está seleccionada y es válida, no hacer nada (para evitar borrarla en edición)
+        if (isInitialLoad && categoriaOriginal) {
+             // Opcional: Podrías deshabilitar el AJAX para la carga inicial si la categoría es válida,
+             // pero es más seguro cargar igual para habilitar el filtrado si el usuario cambia la sección.
+        }
+
+        // Bloquea temporalmente para carga
+        $categoriaSelect.empty().prop('disabled', true);
+        $categoriaSelect.append('<option value="">Cargando categorías...</option>');
+
+        // Petición AJAX a la vista de filtrado
+        // Asegúrate de que 'cargar_categorias' esté definida en tu urls.py
+        $.ajax({
+            url: "{% url 'cargar_categorias' %}", 
+            data: {
+                // Enviamos el valor (string) de la sección, no un ID de BD
+                'seccion_valor': seccionValor
+            },
+            dataType: 'json',
+            success: function (data) {
+                $categoriaSelect.empty().prop('disabled', false);
+                $categoriaSelect.append('<option value="">-------</option>'); // Opción por defecto
+                
+                let foundOriginal = false;
+                
+                $.each(data.categorias, function (index, categoria) {
+                    // Usamos el 'nombre' como valor y como texto, ya que no hay IDs
+                    const optionValue = categoria.nombre;
+                    const $option = $('<option></option>').val(optionValue).text(optionValue);
+                    
+                    // En modo edición, si el valor coincide con la categoría original, la seleccionamos
+                    if (isInitialLoad && categoriaOriginal && optionValue === categoriaOriginal) {
+                        $option.attr('selected', 'selected');
+                        foundOriginal = true;
+                    }
+                    
+                    $categoriaSelect.append($option);
+                });
+
+                // En modo edición, si la categoría original no se encuentra, es inválida.
+                // Podrías agregar un mensaje de error visual si esto sucede.
+                if (isInitialLoad && categoriaOriginal && !foundOriginal) {
+                    console.warn("Categoría original no válida para la sección actual.");
+                    // Opcional: Añadir un mensaje de error al campo aquí
+                }
+            },
+            error: function() {
+                $categoriaSelect.empty().append('<option value="">Error al cargar categorías</option>').prop('disabled', true);
+            }
+        });
+    }
+    
+    // 2. Ejecutar la función cuando cambia la selección de Sección
+    $seccionSelect.change(function() {
+        updateCategorias(false); // No es carga inicial, es un cambio de usuario
+    });
+
+    // 3. Ejecutar la función al cargar la página si ya hay una sección seleccionada
+    // Esto es crucial para el modo EDICIÓN.
+    if ($seccionSelect.val()) {
+        updateCategorias(true); // Es carga inicial
+    } else {
+        // Inicializar la categoría como deshabilitada si no hay sección
+        $categoriaSelect.empty().append('<option value="">Seleccione Sección primero</option>').prop('disabled', true);
+    }
+});
+</script>
+
+{% endblock content %}
