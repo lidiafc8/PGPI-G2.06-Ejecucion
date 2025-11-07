@@ -17,11 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from home import views 
-
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
-    path('catalogoAdmin/', include('catalogo_admin.urls'))
+    path('catalogoAdmin/', include('catalogo_admin.urls')),
     
+    path('adminpanel/', include('adminpanel.urls')),
 ]
+
+# BLOQUE CONDICIONAL AÑADIDO:
+# Esto solo se ejecuta cuando DEBUG=True, permitiendo que el servidor local sirva estáticos.
+if settings.DEBUG:
+    # Mapea /static/ a la carpeta definida en STATICFILES_DIRS.
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+
+
+
