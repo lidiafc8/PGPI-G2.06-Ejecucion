@@ -153,10 +153,3 @@ class ItemPedido(models.Model):
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
     
-
-
-class Escaparate(models.Model):
-    producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    
-    def __str__(self):
-        return str(self.producto.id)
