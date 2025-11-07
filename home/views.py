@@ -1,15 +1,20 @@
 from django.http import HttpResponse
 from django.template import loader
-from django.shortcuts import render
-from .models import Escaparate, Articulo
+from .models import Producto 
+from django.shortcuts import render 
 
 def index(request):
-    escaparates = Escaparate.objects.all()
-    escaparate = escaparates.first()
-    articulos = Articulo.objects.filter(pk = escaparate.articulo.id)
-    articulo = articulos.first()
-    contexto = {
-        'nombre_articulo': articulo.nombre,
-    }
+  
+    productos = Producto.objects.all()
+
+    if productos.exists():
+        producto = productos.first()
+        contexto = {
+            'nombre_articulo': producto.nombre,    
+        }    
+    else:
+        contexto = {
+            'nombre_articulo': 'No hay productos disponibles',
+        }
     plantilla = loader.get_template('index.html')
     return HttpResponse(plantilla.render(contexto, request))
