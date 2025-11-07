@@ -34,3 +34,32 @@ def eliminar_producto(request, pk):
         producto.delete()
         return redirect('lista_productos') 
     return render(request, 'catalogo_admin/confirmar_eliminar.html', {'producto': producto})
+
+
+def editar_producto(request, pk):
+
+    producto = get_object_or_404(Producto, pk=pk)
+
+    if request.method == 'POST':
+        form = ProductoForm(request.POST, request.FILES, instance=producto)
+        
+        if form.is_valid():
+            form.save() 
+            return redirect('lista_productos') 
+
+    else:
+        form = ProductoForm(instance=producto) 
+        
+    context = {
+        'form': form,
+        'producto': producto,
+        'es_edicion': True 
+    }
+    return render(request, 'catalogo_admin/anadir_producto.html', context)
+
+def mostrar_producto(request, pk):
+
+    producto = get_object_or_404(Producto, pk=pk)
+    
+    context = {'producto': producto}
+    return render(request, 'catalogo_admin/mostrar_producto.html', context)

@@ -12,11 +12,17 @@ class ProductoForm(forms.ModelForm):
         ] 
         widgets = {
             
-            'descripcion': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Descripción detallada del producto'}),
-            'precio': forms.NumberInput(attrs={'step': '0.01', 'min': '0.00'}),
-            'stock': forms.NumberInput(attrs={'min': '0'}),
-            'seccion': forms.Select(attrs={'class': 'form-select'}),
-            'categoria': forms.Select(attrs={'class': 'form-select'}),
+            'nombre': forms.TextInput(attrs={'class': 'input-style'}), 
+            'descripcion': forms.Textarea(attrs={'rows': 4, 'placeholder': 'Descripción detallada del producto', 'class': 'input-style'}),
+
+            'precio': forms.NumberInput(attrs={'step': '0.01', 'min': '0.00', 'class': 'input-style'}),
+            'stock': forms.NumberInput(attrs={'min': '0', 'class': 'input-style'}),
+            'departamento': forms.TextInput(attrs={'class': 'input-style'}), 
+            'fabricante': forms.TextInput(attrs={'class': 'input-style'}), 
+
+            'seccion': forms.Select(attrs={'class': 'input-style'}),
+       
+            'categoria': forms.Select(attrs={'class': 'input-style'}),
         }
          
         labels = {
