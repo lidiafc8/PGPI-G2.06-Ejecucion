@@ -7,6 +7,7 @@ import json
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from .forms import SECCION_CATEGORIA_MAP
 
 
 def lista_productos(request):
@@ -102,3 +103,12 @@ def guardar_orden_productos(request):
         return JsonResponse({'success': False, 'message': 'Formato JSON inválido.'}, status=400)
     except Exception as e:
         return JsonResponse({'success': False, 'message': f'Error interno del servidor: {e}'}, status=500)
+    
+
+def cargar_categorias(request):
+    seccion_valor = request.GET.get('seccion_valor') 
+
+    categorias_validas = SECCION_CATEGORIA_MAP.get(seccion_valor, [])
+    categorias_json = [{'nombre': c} for c in categorias_validas]
+    
+    return JsonResponse({'categorias': categorias_json})
