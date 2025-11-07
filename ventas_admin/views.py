@@ -1,49 +1,52 @@
 from django.shortcuts import render
-
 from home.models import EstadoPedido, Pedido, UsuarioCliente
+from decimal import Decimal # Importa Decimal para manejar dinero
 
-# esto se usa cuando haya base de datos 
 def gestion_ventas(request):
-    pedidos = Pedido.objects.filter(estado=EstadoPedido.ENTREGADO).order_by('-fecha_creacion')
-    total_ganancias = sum(p.total for p in pedidos)
-    total_ventas = pedidos.count
-
-    return render(request, 'ventas_admin/gestion_ventas.html', {
-        'ventas': pedidos,
-        'total_ganancias': total_ganancias,
-        'total_ventas': total_ventas,
-    })
-    
-def ventas_por_cliente(request):
-    clientes = UsuarioCliente.objects.select_related('usuario').order_by('usuario__nombre')
     
     cliente_id = request.GET.get('cliente')
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
 
-    pedidos = Pedido.objects.filter(estado=EstadoPedido.ENTREGADO)
+    # 1. Obtenemos la lista de clientes PARA EL DESPLEGABLE
+    clientes_para_filtro = UsuarioCliente.objects.select_related('usuario').order_by('usuario__nombre')
 
-    # Aplicamos filtros si existen
+    # 2. Empezamos la consulta base (solo pedidos ENTREGADOS)
+    pedidos_query = Pedido.objects.filter(estado=EstadoPedido.ENTREGADO)
+
+    # 3. Aplicamos los filtros si se han enviado
     if cliente_id:
-        pedidos = pedidos.filter(cliente_id=cliente_id)
+        pedidos_query = pedidos_query.filter(usuario_cliente__id=cliente_id)
     if fecha_inicio:
-        pedidos = pedidos.filter(fecha_creacion__gte=fecha_inicio)
+        pedidos_query = pedidos_query.filter(fecha_creacion__date__gte=fecha_inicio)
     if fecha_fin:
-        pedidos = pedidos.filter(fecha_creacion__lte=fecha_fin)
+        pedidos_query = pedidos_query.filter(fecha_creacion__date__lte=fecha_fin)
+        
+    # 4. Obtenemos los resultados finales
+    pedidos_filtrados_qs = pedidos_query.select_related('usuario_cliente__usuario').order_by('-fecha_creacion')
 
-    # Ordenamos por fecha descendente
-    pedidos = pedidos.order_by('-fecha_creacion')
+    
+    # Esto ejecuta la consulta a la BD *una sola vez* y guarda los resultados en memoria.
+    pedidos_lista = list(pedidos_filtrados_qs)
+    
+    total_ganancias = Decimal('0.00') # Usar Decimal para precisión
+    
+    for pedido in pedidos_lista:
+        total_ganancias += pedido.total_importe
+        
+    total_ventas = len(pedidos_lista)
+    
 
-    # Calculamos totales sobre los pedidos filtrados
-    total_ganancias = sum(p.total for p in pedidos)
-    total_ventas = pedidos.count()
-
-    return render(request, 'ventas_admin/ventas_por_cliente.html', {
-        'clientes': clientes,
-        'pedidos': pedidos,
+    # --- Contexto para el Template ---
+    context = {
+        'ventas': pedidos_lista, 
+        'clientes': clientes_para_filtro,
         'total_ganancias': total_ganancias,
         'total_ventas': total_ventas,
+        
         'cliente_seleccionado': int(cliente_id) if cliente_id else None,
         'fecha_inicio': fecha_inicio,
         'fecha_fin': fecha_fin,
-    })
+    }
+    
+    return render(request, 'ventas_admin/gestion_ventas.html', context)
