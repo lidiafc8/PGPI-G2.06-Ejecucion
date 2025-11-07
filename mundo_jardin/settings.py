@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'home'
+    'home',
+    'catalogo_admin',
+    'adminpanel'
 ]
 
 MIDDLEWARE = [
@@ -66,6 +68,18 @@ TEMPLATES = [
         },
     },
 ]
+
+STATIC_URL = 'static/'
+
+# Dónde buscar archivos estáticos adicionales (como tu carpeta "static" global)
+# Asegúrate de que tu carpeta de imágenes estáticas exista en el nivel superior de tu proyecto
+STATICFILES_DIRS = [
+    BASE_DIR / 'static', 
+    # O, si la carpeta se llama 'imagenes_estaticas': BASE_DIR / 'imagenes_estaticas',
+]
+# DIRECTORIO DE RECOLECCIÓN (CLAVE PARA PRODUCCIÓN)
+# Al ejecutar 'collectstatic', Django copiará todos los archivos estáticos aquí.
+STATIC_ROOT = BASE_DIR / 'staticfiles_collect'
 
 WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 
@@ -122,5 +136,5 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-MEDIA_URL = 'Imgproductos/'
+MEDIA_URL = '/Imgproductos/'
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'

@@ -1,0 +1,38 @@
+{% extends 'catalogo_admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Confirmar Eliminación{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-red-200">
+    <div class="text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-12 w-12 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.487 0l5.58 9.92c.75 1.334-.213 2.986-1.748 2.986H4.403c-1.535 0-2.498-1.652-1.746-2.986l5.58-9.92zM10 11a1 1 0 100-2 1 1 0 000 2zm1-4a1 1 0 10-2 0 1 1 0 002 0z" clip-rule="evenodd" />
+        </svg>
+        <h1 class="text-3xl font-bold text-gray-900 mt-4">Confirmar Eliminación</h1>
+    </div>
+
+    <div class="mt-6 text-center">
+        <p class="text-lg text-gray-700 mb-4">
+            ¿Estás seguro de que deseas eliminar permanentemente el producto **"{{ producto.nombre }}"**?
+        </p>
+        <div class="bg-gray-50 border p-4 rounded-lg">
+            <p class="text-sm text-red-600 font-semibold">
+                ¡Esta acción no se puede deshacer!
+            </p>
+        </div>
+    </div>
+
+    <form method="post" class="mt-6 flex justify-center space-x-4">
+        {% csrf_token %}
+        <a href="{% url 'lista_productos' %}" 
+           class="bg-gray-300 text-gray-800 px-6 py-3 rounded-lg hover:bg-gray-400 transition font-medium">
+            Cancelar
+        </a>
+        <button type="submit" 
+                class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition font-medium">
+            Eliminar
+        </button>
+    </form>
+</div>
+{% endblock %}
