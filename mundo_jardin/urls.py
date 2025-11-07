@@ -24,6 +24,8 @@ urlpatterns = [
     path('', views.index),
     path('admin/', admin.site.urls),
     path('adminpanel/', include('adminpanel.urls')),
+    path('ventas_admin/', include('ventas_admin.urls')),
+    
 ]
 
 # BLOQUE CONDICIONAL AÑADIDO:

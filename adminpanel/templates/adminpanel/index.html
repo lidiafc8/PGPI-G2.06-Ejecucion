@@ -23,7 +23,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             
             <!-- Logo -->
-            <a href="#" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
+            <a href="{% url 'adminpanel_index' %}" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
                 <img src="{% static 'logo.png' %}" 
                     alt="Logo Mundo Jardín" 
                     class="h-20 w-20 mr-3 rounded-full">
@@ -56,8 +56,7 @@
     <nav class="bg-[#fffaf0] border-t border-b border-black shadow-inner">
         <ul class="flex justify-center space-x-16 py-4 text-lg font-semibold text-black">
             <li><a href="#" class="hover:underline">CATÁLOGO</a></li>
-            <li><a href="#" class="hover:underline">PRODUCTOS</a></li>
-            <li><a href="#"  class="hover:underline">VENTAS</a></li>
+            <li><a href="{% url 'ventas_admin_index' %}" class="hover:underline">VENTAS</a></li>
             <li><a href="#" class="hover:underline">PEDIDOS</a></li>
             <li><a href="#" class="hover:underline">USUARIOS</a></li>  
         </ul>
@@ -78,22 +77,10 @@
                         <h3 class="text-xl font-semibold text-gray-800">Gestión de Catálogo</h3>
                         <span class="text-2xl">🗂️</span>
                     </div>
-                    <p class="text-gray-600 mb-4">Añade, elimina y destaca los productos de tu catálogo.</p>
+                    <p class="text-gray-600 mb-4">Añade, elimina, edita y destaca los productos de tu catálogo.</p>
                     <a href="#" 
                        class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
                        Ir a Catálogo →
-                    </a>
-                </div>
-
-                <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-semibold text-gray-800">Gestión de Productos</h3>
-                        <span class="text-2xl">🪴</span>
-                    </div>
-                    <p class="text-gray-600 mb-4">Edita la ficha de tus productos.</p>
-                    <a href="#" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
-                       Ir a Productos →
                     </a>
                 </div>
 
@@ -104,7 +91,7 @@
                         <span class="text-2xl">💰</span>
                     </div>
                     <p class="text-gray-600 mb-4">Accede al historial y control de ventas y estadísticas.</p>
-                    <a href="#" 
+                    <a href="{% url 'ventas_admin_index' %}" 
                        class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
                        Ir a Ventas →
                     </a>
