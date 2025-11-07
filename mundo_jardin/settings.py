@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'home',
     'adminpanel',
     'ventas_admin',
-    'catalogo_admin'
+    'catalogo_admin',
+    'clientes_admin',
 ]
 
 MIDDLEWARE = [
