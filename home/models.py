@@ -91,6 +91,9 @@ class Producto(models.Model):
     imagen= models.ImageField(upload_to='', blank=True, null=True)
     esta_agotado= models.BooleanField(default=False)
     esta_destacado= models.BooleanField(default=False)
+    orden = models.PositiveIntegerField(default=0, blank=False, null=False)
+    class Meta:
+        ordering = ['orden']
 
     def __str__(self):
         return self.nombre
