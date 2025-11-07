@@ -59,7 +59,7 @@ class Usuario(models.Model):
         return check_password(raw_password, self.clave)
 
     def __str__(self):
-        return self.correo_electronico
+        return self.corre_electronico
 
 class UsuarioCliente(models.Model):
 
@@ -101,7 +101,7 @@ class CestaCompra(models.Model):
 
     usuario_cliente= models.OneToOneField('UsuarioCliente', on_delete=models.CASCADE)
     def __str__(self):
-        return f'Cesta de {self.usuario_cliente.usuario.correo_electronico}'
+        return f'Cesta de {self.usuario_cliente.usuario.corre_electronico}'
     
     def get_total_cesta(self):
         return sum(item.total for item in self.items.all())
@@ -138,7 +138,7 @@ class Pedido(models.Model):
     telefono = models.CharField(max_length=15, blank=True)
 
     def __str__(self):
-        return f'Pedido #{self.id} de {self.usuario_cliente.usuario.correo_electronico}' 
+        return f'Pedido #{self.id} de {self.usuario_cliente.usuario.corre_electronico}' 
 
 class ItemPedido(models.Model):
 

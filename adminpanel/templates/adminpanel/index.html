@@ -52,7 +52,7 @@
             <li><a href="{% url 'lista_productos' %}" class="hover:underline">PRODUCTOS</a></li>
             <li><a href="{% url 'ventas_admin_index' %}" class="hover:underline">VENTAS</a></li>
             <li><a href="#" class="hover:underline">PEDIDOS</a></li>
-            <li><a href="#" class="hover:underline">USUARIOS</a></li>  
+            <li><a href="{% url 'clientes_admin_index' %}" class="hover:underline">USUARIOS</a></li>  
         </ul>
     </nav>
     </header>
@@ -107,7 +107,7 @@
                         <span class="text-2xl">👤</span>
                     </div>
                     <p class="text-gray-600 mb-4">Administra las cuentas de clientes y empleados.</p>
-                    <a href="#" 
+                    <a href="{% url 'clientes_admin_index' %}"  
                        class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
                         Ir a Usuarios →
                     </a>
