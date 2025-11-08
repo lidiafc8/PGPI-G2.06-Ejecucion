@@ -46,10 +46,12 @@ class Categoria(models.TextChoices):
 
 
 class Usuario(models.Model):
-    nombre= models.CharField(max_length=200)
-    apellidos= models.CharField(max_length=200)
-    corre_electronico= models.EmailField(max_length=200, unique=True)
-    clave= models.CharField(max_length=128)
+    nombre = models.CharField(max_length=200)
+    apellidos = models.CharField(max_length=200)
+    corre_electronico = models.EmailField(max_length=200, unique=True)
+    clave = models.CharField(max_length=128)
+
+    last_login = models.DateTimeField(null=True, blank=True)
 
     def set_password(self, raw_password):
         self.clave = make_password(raw_password)
