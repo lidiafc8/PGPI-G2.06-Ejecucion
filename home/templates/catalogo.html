@@ -10,27 +10,32 @@
         
         <hr class="mb-8">
 
-
         {% if productos_destacados %}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 xl:gap-8">
                 
                 {% for producto in productos_destacados %}
                 
-                    <div class="bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo">
-                                                        {% if producto.imagen %}
-
-                        <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-                            <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" 
-                                 class="max-h-full max-w-full object-contain mix-blend-multiply">
-                        </div>
-                        {% else %}
+                    <a href="{% url 'detalle_producto' pk=producto.pk %}" 
+                       class="block bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02]">
+                        
+                        <div>
+                            {% if producto.imagen %}
+                                <div class="relative w-full h-32 mb-4 flex justify-center items-center">
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" 
+                                         class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                </div>
+                            {% else %}
+                                <div class="relative w-full h-32 mb-4 flex justify-center items-center">
                                     <span class="text-7xl text-gray-400" role="img" aria-label="Sin imagen">🖼️</span>
-                                {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
 
                         <div class="w-full text-center flex-grow flex flex-col justify-end">
                             
-                                                                <h4 class="text-lg font-extrabold text-gray-900 mb-2 ">{{ producto.nombre|upper }}</h4>
-
+                            <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2">
+                                {{ producto.nombre|upper }}
+                            </h4>
                             
                             <p class="text-xs text-gray-500 mb-2">
                                 Fabricante: {{ producto.fabricante }}
@@ -49,15 +54,15 @@
                             </div>
                             
                             <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                                {{ producto.precio|floatformat:0}},<span class="text-2xl">{{ producto.precio|floatformat:2|slice:"-2:" }}€
-                                                </span>
-                                            </span>
+                                {{ producto.precio|floatformat:0}},<span class="text-2xl">{{ producto.precio|floatformat:2|slice:"-2:" }}€</span>
+                            </span>
                         </div>
                         
-                        <button class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-md hover:bg-yellow-600 transition duration-150 shadow-md">
+                        <button onclick="event.stopPropagation(); window.location.href='/añadir-al-carrito/{{ producto.pk }}';" 
+                                class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-md hover:bg-yellow-600 transition duration-150 shadow-md relative z-10 mt-2">
                             Añadir
                         </button>
-                    </div>
+                    </a>
                     {% endfor %}
                 
             </div>
@@ -74,13 +79,13 @@
 
 {% block extra_css %}
 <style>
+    /* ... (Estilos existentes) ... */
     .hover\:shadow-hard-halo:hover {
-        box-shadow: 0 0 15px rgba(39, 43, 4, 0.4); /* Usa el color de tu marca (#6a760c) para el halo */
+        box-shadow: 0 0 15px rgba(39, 43, 4, 0.4); 
     }
     .lm-text-green { 
         color: #6a760c; 
     }
-    /* Limita el texto a dos líneas para evitar que las tarjetas tengan alturas diferentes */
     .line-clamp-2 {
         display: -webkit-box;
         -webkit-line-clamp: 2;

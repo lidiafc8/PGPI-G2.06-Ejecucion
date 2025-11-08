@@ -24,7 +24,7 @@ urlpatterns = [
     path('', views.index, name='home'),
     path('subcategorias/<slug:categoria>/', views.index, name='productos_por_categoria'),    
     path('catalogoAdmin/', include('catalogo_admin.urls')),
-    
+    path('producto/<int:pk>/', views.detalle_producto, name='detalle_producto'),
     path('adminpanel/', include('adminpanel.urls')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
