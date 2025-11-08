@@ -21,14 +21,16 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('', views.index),
-    path('admin/', admin.site.urls),
-    path('catalogoAdmin/', include('catalogo_admin.urls')),
+    path('', views.index, name='home'),
+    path('subcategorias/<slug:categoria>/', views.index, name='productos_por_categoria'),    path('catalogoAdmin/', include('catalogo_admin.urls')),
     
     path('adminpanel/', include('adminpanel.urls')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
+<<<<<<< HEAD
+=======
     path('registro/', include('registro_usuario.urls')),
+>>>>>>> 3bad154631e24b286563ffb9c4f3619e56e53030
     
 ]
 
