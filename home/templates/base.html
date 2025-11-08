@@ -69,13 +69,19 @@
                 </a>
 
                 <div class="hidden lg:block flex-grow mx-5 max-w-2xl">
-                    <div class="relative">
-                        <input type="search" placeholder="Buscar productos, guías o ideas..." class="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm">
-                        <button class="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-white rounded-r-lg lm-green hover:bg-[#bf7149] transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </button>
-                    </div>
-                </div>
+    <form action="{% url 'buscar' %}" method="GET" class="relative">
+        <input type="search" 
+               name="q" 
+               id="q"
+               placeholder="Buscar productos, guías o ideas..." 
+               class="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm">
+        
+        <button type="submit" 
+                class="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-white rounded-r-lg lm-green hover:bg-[#bf7149] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </button>
+    </form>
+</div>
 
                 <div class="flex items-center space-x-6 flex-shrink-0">
                     <a href="{% url 'inicio_sesion:login' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">

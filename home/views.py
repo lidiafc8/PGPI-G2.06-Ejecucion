@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from .models import Producto
+from django.db.models import Q
 
 # El parámetro 'categoria' contendrá el valor de la URL (ej: 'CORTASETOS_Y_MOTOSIERRAS')
 def index(request, categoria=None):
@@ -69,3 +70,29 @@ def detalle_producto(request, pk):
     }
     
     return render(request, 'detalle_producto.html', contexto)
+
+def buscar_productos(request):
+    # 1. Obtener el término de búsqueda
+    query = request.GET.get('q')
+    productos_encontrados = []
+    
+    # 2. Lógica de filtrado
+    if query:
+        # Filtra productos donde el 'nombre' contiene la consulta (icontains)
+        # Puedes añadir más campos a la búsqueda, por ejemplo:
+        productos_encontrados = Producto.objects.filter(
+            Q(nombre__icontains=query) |
+            Q(descripcion__icontains=query) |
+            Q(fabricante__icontains=query)|
+            Q(departamento__icontains=query)
+        ).distinct() # Usa distinct() para evitar duplicados si hay múltiples coincidencias
+
+    # 3. Prepara el contexto y renderiza
+    contexto = {
+        'query': query,
+        'productos_destacados': productos_encontrados, # Usamos el mismo nombre que en index.html si quieres reutilizar la plantilla
+        'categoria_actual': f'Resultados para "{query}"' if query else 'Búsqueda',
+    }
+    
+    # Podrías reutilizar la plantilla 'catalogo.html' o 'index.html' si muestra listas de productos
+    return render(request, 'catalogo.html', contexto)
