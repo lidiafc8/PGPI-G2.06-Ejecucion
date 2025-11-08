@@ -64,8 +64,9 @@
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
                                 <div class="flex-auto overflow-y-auto overflow-x-auto mt-12 pr-20" style="max-height: calc(300px - 5rem);">
                                     <h4 class="text-4xl font-extrabold text-gray-900 mb-2 ">{{ producto.nombre|upper }}</h4>
-                                    <p class="text-[#6a760c] text-sm truncate">{{ producto.fabricante }}</p>
-                                    <p class="text-[#bf7149] text-xs">
+<p class="text-xs text-gray-500 mb-2">
+                                Fabricante: {{ producto.fabricante }}
+                            </p>                                    <p class="text-[#bf7149] text-xs">
                                         <span class="font-medium"></span> {{ producto.get_categoria_display }} / 
                                         <span class="font-medium"></span> {{ producto.get_seccion_display }}
                                     </p>

@@ -25,7 +25,7 @@ def index(request, categoria=None):
         productos_a_mostrar = productos_a_mostrar.filter(categoria=categoria_valor)
         
         template_name = 'catalogo.html' 
-        categoria_valor = categoria_formateada = categoria_valor.replace('_', ' ') 
+        categoria_valor  = categoria_valor.replace('_', ' ') 
         
     else:
         productos_a_mostrar = Producto.objects.filter(esta_destacado=True)
