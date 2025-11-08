@@ -1,6 +1,12 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from .forms import ClienteAuthenticationForm 
+from django.contrib.auth import logout 
+from django.shortcuts import redirect 
+
+def custom_logout_view(request):
+    logout(request)
+    return redirect('/') 
 
 urlpatterns = [
     path('login/', auth_views.LoginView.as_view(
@@ -9,7 +15,5 @@ urlpatterns = [
         next_page='/'
     ), name='login'),
     
-    path('logout/', auth_views.LogoutView.as_view(
-        next_page='/' 
-    ), name='logout'),
+    path('logout/', custom_logout_view, name='logout'), 
 ]
