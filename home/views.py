@@ -1,5 +1,5 @@
 from django.shortcuts import render, get_object_or_404
-from .models import Producto, Categoria # Importamos Categoria (la enumeración)
+from .models import Producto
 
 # El parámetro 'categoria' contendrá el valor de la URL (ej: 'CORTASETOS_Y_MOTOSIERRAS')
 def index(request, categoria=None):
@@ -39,3 +39,33 @@ def index(request, categoria=None):
     }
     
     return render(request, template_name, contexto)
+
+def detalle_producto(request, pk):
+    """
+    Muestra la información detallada de un producto y extrae productos de la misma categoría.
+    """
+    # 1. Obtener el producto principal (si no existe, devuelve 404)
+    producto = get_object_or_404(Producto, pk=pk)
+
+    # 2. Obtener la categoría del producto actual
+    categoria_actual = producto.categoria
+
+    # 3. Consultar productos relacionados
+    productos_relacionados = Producto.objects.filter(
+        categoria=categoria_actual
+    ).exclude(
+        pk=pk  # <-- ¡ESTO EXCLUYE EL PRODUCTO ACTUAL!
+    )
+    
+    # Opcional: Para que el carrusel sea más dinámico, puedes añadir:
+    # .order_by('?') 
+    # Y limitar si tienes miles de productos:
+    # .order_by('?')[:20] 
+
+    # 4. Preparar el contexto
+    contexto = {
+        'producto': producto,
+        'productos_relacionados': productos_relacionados,
+    }
+    
+    return render(request, 'detalle_producto.html', contexto)
