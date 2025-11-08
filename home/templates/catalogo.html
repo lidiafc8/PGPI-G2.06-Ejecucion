@@ -1,0 +1,28 @@
+{% extends "base.html" %} 
+{% block content %}
+<main class="py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
+            {{ categoria_actual}}      
+         </h1>
+        
+        <hr class="mb-8">
+
+        <p class="text-lg text-gray-600 mb-10">
+            Aquí encontrarás todos los productos de la subcategoría de **{{ nombre_subcategoria }}**.
+        </p>
+
+        {% if productos %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                </div>
+        {% else %}
+            <div class="p-6 bg-yellow-50 border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
+                <p class="font-semibold">¡Lo sentimos!</p>
+                <p>Actualmente no hay productos disponibles en esta subcategoría.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</main>
+{% endblock content %}
