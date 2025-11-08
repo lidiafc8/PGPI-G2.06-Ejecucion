@@ -42,6 +42,10 @@ INSTALLED_APPS = [
     'ventas_admin',
     'catalogo_admin',
     'clientes_admin',
+<<<<<<< HEAD
+=======
+    'registro_usuario',
+>>>>>>> 3bad154631e24b286563ffb9c4f3619e56e53030
 ]
 
 MIDDLEWARE = [
