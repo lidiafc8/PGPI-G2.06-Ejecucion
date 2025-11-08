@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'catalogo_admin',
     'clientes_admin',
     'registro_usuario',
+    'inicio_sesion',
 ]
 
 MIDDLEWARE = [
