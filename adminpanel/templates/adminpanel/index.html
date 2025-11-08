@@ -11,7 +11,7 @@
         /* Color principal de Leroy Merlin es un verde oscuro/casi oliva. Usaremos green-800/700 como aproximación. */
         .lm-green { background-color: #6a760c; }
         .lm-text-green { color: #6a760c; }
-        .lm-hover-bg { background-color: #8b9935; } /* Añadido para consistencia */
+        .lm-hover-bg { background-color: #bf7149; } /* Añadido para consistencia */
     </style>
 </head>
 <body class="bg-gray-50">
@@ -36,12 +36,12 @@
             </div>
         </div>
 
-    <nav class="bg-[#fffaf0] border-t border-b border-black shadow-inner">
-        <ul class="flex justify-center space-x-16 py-4 text-lg font-semibold text-black">
-            <li><a href="{% url 'lista_productos' %}" class="hover:underline">PRODUCTOS</a></li>
-            <li><a href="{% url 'ventas_admin_index' %}" class="hover:underline">VENTAS</a></li>
-            <li><a href="#" class="hover:underline">PEDIDOS</a></li>
-            <li><a href="{% url 'clientes_admin_index' %}" class="hover:underline">USUARIOS</a></li>  
+    <nav class="bg-white border-b border-gray-200 shadow-sm">
+        <ul class="flex justify-center space-x-12 py-1 text-lg text-gray-700">
+            <li><a href="{% url 'lista_productos' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PRODUCTOS</a></li>
+            <li><a href="{% url 'ventas_admin_index' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">VENTAS</a></li>
+            <li><a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PEDIDOS</a></li>
+            <li><a href="{% url 'clientes_admin_index' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">USUARIOS</a></li>  
         </ul>
     </nav>
     </header>
@@ -97,7 +97,7 @@
                     </div>
                     <p class="text-gray-600 mb-4">Administra las cuentas de clientes y empleados.</p>
                     <a href="{% url 'clientes_admin_index' %}"  
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#8b9935] transition font-medium">
+                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Usuarios →
                     </a>
                 </div>
