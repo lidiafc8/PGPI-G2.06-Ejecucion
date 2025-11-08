@@ -1,0 +1,123 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block content %}
+
+<main class="py-12 md:py-16 bg-[#fdfaf5]"> 
+    <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl border-2 border-gray-100">
+            
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
+                MI PERFIL
+            </h2>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="message bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <p>{{ message }}</p>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" class="perfil-form space-y-6" id="perfil-form-guardar">
+                {% csrf_token %}
+                
+                <h3 class="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">Datos Personales</h3>
+                
+                <div class="field-wrapper">
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        <label for="{{ user_form.nombre.id_for_label }}" class="sr-only">NOMBRE</label>
+                        {{ user_form.nombre }} 
+                    </div>
+                    {% for error in user_form.nombre.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="field-wrapper">
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        <label for="{{ user_form.apellidos.id_for_label }}" class="sr-only">APELLIDOS</label>
+                        {{ user_form.apellidos }}
+                    </div>
+                    {% for error in user_form.apellidos.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="field-wrapper">
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        <label for="{{ user_form.corre_electronico.id_for_label }}" class="sr-only">CORREO ELECTRÓNICO</label>
+                        {{ user_form.corre_electronico }}
+                    </div>
+                    {% for error in user_form.corre_electronico.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <h3 class="text-2xl font-bold mb-4 pt-6 border-b pb-2 text-gray-700">Opciones de Compra</h3>
+
+                <div class="field-wrapper">
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        <label for="{{ perfil_form.telefono.id_for_label }}" class="sr-only">TELÉFONO</label>
+                        {{ perfil_form.telefono }}
+                    </div>
+                    {% for error in perfil_form.telefono.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="field-wrapper">
+                    <label for="{{ perfil_form.tipo_pago.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 ml-1">
+                        TIPO DE PAGO
+                    </label>
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        {{ perfil_form.tipo_pago }}
+                    </div>
+                    {% for error in perfil_form.tipo_pago.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                
+                <div class="field-wrapper">
+                    <label for="{{ perfil_form.tipo_envio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 ml-1">
+                        TIPO ENVÍO
+                    </label>
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        {{ perfil_form.tipo_envio }}
+                    </div>
+                    {% for error in perfil_form.tipo_envio.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="field-wrapper">
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        <label for="{{ perfil_form.direccion_envio.id_for_label }}" class="sr-only">DIRECCIÓN ENVÍO</label>
+                        {{ perfil_form.direccion_envio }}
+                    </div>
+                    {% for error in perfil_form.direccion_envio.errors %}
+                        <p class="errorlist">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            </form>
+            <div class="flex justify-between pt-4"> 
+                
+                <form action="{% url 'inicio_sesion:logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-8 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
+                        CERRAR SESIÓN
+                    </button>
+                </form>
+                
+                <button type="submit" form="perfil-form-guardar"
+                        class="px-8 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#bf7149] transition duration-300">
+                    GUARDAR CAMBIOS
+                </button>
+            </div>
+            </div>
+    </div>
+</main>
+
+
+{% endblock %}

@@ -22,6 +22,7 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index, name='home'),
+    path('admin/', admin.site.urls),
     path('subcategorias/<slug:categoria>/', views.index, name='productos_por_categoria'),    
     path('catalogoAdmin/', include('catalogo_admin.urls')),
     path('producto/<int:pk>/', views.detalle_producto, name='detalle_producto'),
@@ -30,7 +31,8 @@ urlpatterns = [
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
     path('registro/', include('registro_usuario.urls')),
-    path('inicio_sesion/', include(('inicio_sesion.urls', 'inicio_sesion'), namespace='inicio_sesion')),    
+    path('inicio_sesion/', include('inicio_sesion.urls')),
+    path('perfil/', include(('perfil.urls', 'perfil'), namespace='perfil')),
 ]
 
 # BLOQUE CONDICIONAL AÑADIDO:
@@ -39,7 +41,3 @@ if settings.DEBUG:
     # Mapea /static/ a la carpeta definida en STATICFILES_DIRS.
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-
-
-

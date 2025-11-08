@@ -100,18 +100,26 @@ class RegistroUsuarioForm(forms.Form):
         return cleaned_data
 
 
+    # forms.py (FUNCIÓN save() CORREGIDA)
+
     def save(self):
         
         cd = self.cleaned_data
         
-        usuario = Usuario.objects.create(
+        # 1. Crea la instancia del usuario (sin guardarla en la DB todavía)
+        usuario = Usuario(
             nombre=cd['nombre'],
             apellidos=cd['apellidos'],
             corre_electronico=cd['corre_electronico']
         )
+        
+        # 2. Cifra la contraseña y la asigna al objeto 'usuario'
         usuario.set_password(cd['password'])
+        
+        # 3. Guarda el usuario cifrado en la base de datos (¡una sola vez!)
         usuario.save()
 
+        # --- Creación del perfil cliente (Esto está bien) ---
         tipo_pago_final = cd.get('tipo_pago') or TipoPago.PASARELA_PAGO 
         
         cliente = UsuarioCliente.objects.create(
