@@ -8,11 +8,13 @@ def custom_logout_view(request):
     logout(request)
     return redirect('/') 
 
+app_name = 'inicio_sesion'
+
 urlpatterns = [
+    # Solución: El 'name='login' va fuera de as_view()
     path('login/', auth_views.LoginView.as_view(
         template_name='login.html', 
         authentication_form=ClienteAuthenticationForm,
-        next_page='/'
     ), name='login'),
     
     path('logout/', custom_logout_view, name='logout'), 

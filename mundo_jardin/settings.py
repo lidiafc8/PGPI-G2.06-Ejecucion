@@ -27,6 +27,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+# settings.py
+
+LOGIN_REDIRECT_URL = '/perfil/' # Esto lleva al usuario a /perfil/ después del login
+
 
 # Application definition
 
@@ -44,6 +48,7 @@ INSTALLED_APPS = [
     'clientes_admin',
     'registro_usuario',
     'inicio_sesion',
+    'perfil',
 ]
 
 MIDDLEWARE = [
@@ -115,6 +120,12 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    # Usa la ruta completa a tu clase ClienteBackend
+    'inicio_sesion.backends.ClienteBackend', 
+    'django.contrib.auth.backends.ModelBackend', # Mantenlo por si acaso
 ]
 
 
