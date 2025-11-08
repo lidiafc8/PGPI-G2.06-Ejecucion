@@ -25,7 +25,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('subcategorias/<slug:categoria>/', views.index, name='productos_por_categoria'),    
     path('catalogoAdmin/', include('catalogo_admin.urls')),
-    
+    path('producto/<int:pk>/', views.detalle_producto, name='detalle_producto'),
+    path('buscar/', views.buscar_productos, name='buscar'), # Nueva URL de búsqueda
     path('adminpanel/', include('adminpanel.urls')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
