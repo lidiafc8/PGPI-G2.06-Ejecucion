@@ -27,10 +27,7 @@ urlpatterns = [
     path('adminpanel/', include('adminpanel.urls')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
-<<<<<<< HEAD
-=======
     path('registro/', include('registro_usuario.urls')),
->>>>>>> 3bad154631e24b286563ffb9c4f3619e56e53030
     
 ]
 
