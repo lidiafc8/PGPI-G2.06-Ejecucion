@@ -29,8 +29,7 @@ urlpatterns = [
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
     path('registro/', include('registro_usuario.urls')),
-    path('inicio_sesion/', include('inicio_sesion.urls')),
-    
+    path('inicio_sesion/', include(('inicio_sesion.urls', 'inicio_sesion'), namespace='inicio_sesion')),    
 ]
 
 # BLOQUE CONDICIONAL AÑADIDO:
