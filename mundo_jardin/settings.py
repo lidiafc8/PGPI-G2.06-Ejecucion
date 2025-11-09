@@ -27,9 +27,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-# settings.py
-
-LOGIN_REDIRECT_URL = '/perfil/' # Esto lleva al usuario a /perfil/ después del login
+# settings.py¡
+LOGIN_URL = '/inicio_sesion/login/'
+LOGIN_REDIRECT_URL ='/perfil/' # Esto lleva al usuario a /perfil/ después del login
 
 
 # Application definition
@@ -123,11 +123,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 AUTHENTICATION_BACKENDS = [
-    # Usa la ruta completa a tu clase ClienteBackend
     'inicio_sesion.backends.ClienteBackend', 
-    'django.contrib.auth.backends.ModelBackend', # Mantenlo por si acaso
+    'django.contrib.auth.backends.ModelBackend',
 ]
-
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

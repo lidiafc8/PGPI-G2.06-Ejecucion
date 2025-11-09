@@ -1,10 +1,6 @@
-# home/models.py
-
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.hashers import make_password, check_password
-
-# --- CLASES CHOICES (SIN CAMBIOS) ---
 
 class TipoPago(models.TextChoices):
     PASARELA_PAGO = 'PASARELA_PAGO',
@@ -47,7 +43,6 @@ class Categoria(models.TextChoices):
     MUEBLES_Y_DECORACION='MUEBLES_Y_DECORACION',
     ILUMINACION_EXTERIOR='ILUMINACION_EXTERIOR',
 
-# --- 🚨 CORRECCIÓN ESTRUCTURAL: MANAGER DE USUARIOS ---
 class UsuarioManager(BaseUserManager):
     def create_user(self, corre_electronico, clave=None, **extra_fields):
         if not corre_electronico:
@@ -95,8 +90,6 @@ class Usuario(models.Model):
     @property
     def is_authenticated(self):
         """Retorna True si el usuario ha sido validado correctamente."""
-        # Si tienes una lógica de usuario anónimo, podrías verificar la ID o la sesión aquí.
-        # Para un usuario que pasa el login, es True.
         return True 
 
     @property
@@ -116,24 +109,29 @@ class Usuario(models.Model):
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.clave)
+    
+    @property
+    def es_administrador(self):
+        """Verifica si el Usuario tiene un registro Administrador asociado."""
+        try:
+            return self.administrador is not None
+        except Administrador.DoesNotExist:
+            return False
 
     def __str__(self):
         return self.corre_electronico
 
-# --- 🚨 CORRECCIÓN FUNCIONAL: MODELO USUARIOCLIENTE ---
 class UsuarioCliente(models.Model):
 
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
     tipo_pago= models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
     telefono = models.CharField(max_length=15, blank=True, null=True)
-    # 🚨 CORRECCIÓN: Se añade blank=True para que el perfil se pueda crear vacío (soluciona el bug de get_or_create)
     direccion_envio = models.CharField(max_length=255, blank=True) 
     tipo_envio= models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA)
     
     def __str__(self):
         return self.usuario.nombre
 
-# --- RESTO DE MODELOS (SIN CAMBIOS) ---
 class Administrador(models.Model):
 
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)

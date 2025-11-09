@@ -23,6 +23,21 @@ class RegistroUsuarioForm(forms.Form):
         error_messages={'invalid': '¡Vaya! Introduce una dirección de correo válida. Por ejemplo: nombre@dominio.com'},
         widget=forms.EmailInput(attrs={'placeholder': 'CORREO ELECTRÓNICO'})
     )
+
+    # 🟢 CORRECCIÓN AÑADIDA AQUÍ: Validación de unicidad
+    def clean_corre_electronico(self):
+        email = self.cleaned_data.get('corre_electronico')
+        
+        # 1. Busca si ya existe un usuario con este correo electrónico
+        if Usuario.objects.filter(corre_electronico=email).exists():
+            # 2. Si existe, lanza un error de validación
+            raise forms.ValidationError(
+                "¡Error! Ya existe una cuenta registrada con este correo electrónico."
+            )
+        
+        # 3. Si no existe, devuelve el email
+        return email
+    # -----------------------------------------------
     
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'CONTRASEÑA'}),
@@ -70,10 +85,7 @@ class RegistroUsuarioForm(forms.Form):
 
 
     def clean_password2(self):
-        """
-        Valida que la segunda contraseña coincida con la primera.
-        Si no coinciden, lanza un error específico.
-        """
+        # ... (código existente para validar contraseñas) ...
         cd = self.cleaned_data
         password = cd.get('password')
         password2 = cd.get('password2')
@@ -84,10 +96,7 @@ class RegistroUsuarioForm(forms.Form):
         return password2
 
     def clean(self):
-        """
-        Valida la lógica condicional: La dirección de envío es obligatoria 
-        si el tipo de envío NO es 'RECOGIDA_TIENDA'.
-        """
+        # ... (código existente para validar dirección de envío) ...
         cleaned_data = super().clean()
         
         tipo_envio = cleaned_data.get("tipo_envio")
@@ -100,10 +109,8 @@ class RegistroUsuarioForm(forms.Form):
         return cleaned_data
 
 
-    # forms.py (FUNCIÓN save() CORREGIDA)
-
     def save(self):
-        
+        # ... (código existente para guardar) ...
         cd = self.cleaned_data
         
         # 1. Crea la instancia del usuario (sin guardarla en la DB todavía)
@@ -117,9 +124,10 @@ class RegistroUsuarioForm(forms.Form):
         usuario.set_password(cd['password'])
         
         # 3. Guarda el usuario cifrado en la base de datos (¡una sola vez!)
+        # Si clean_corre_electronico() pasó, esta línea ya no dará el IntegrityError
         usuario.save()
 
-        # --- Creación del perfil cliente (Esto está bien) ---
+        # --- Creación del perfil cliente ---
         tipo_pago_final = cd.get('tipo_pago') or TipoPago.PASARELA_PAGO 
         
         cliente = UsuarioCliente.objects.create(
