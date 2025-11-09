@@ -28,7 +28,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # settings.py¡
-LOGIN_URL = '/inicio_sesion/login/'
+LOGIN_URL = 'inicio_sesion:login'
 LOGIN_REDIRECT_URL ='/' 
 
 
@@ -133,8 +133,7 @@ AUTHENTICATION_BACKENDS = [
 # Prioridad de algoritmos de Hashing más fuertes para las nuevas contraseñas
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
-    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher'
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher'
 ]
 
 # Internationalization
