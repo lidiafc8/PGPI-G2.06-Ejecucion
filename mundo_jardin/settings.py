@@ -103,6 +103,9 @@ DATABASES = {
     }
 }
 
+# Authentication User Model
+AUTH_USER_MODEL = 'home.Usuario'
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -125,6 +128,13 @@ AUTH_PASSWORD_VALIDATORS = [
 AUTHENTICATION_BACKENDS = [
     'inicio_sesion.backends.ClienteBackend', 
     'django.contrib.auth.backends.ModelBackend',
+]
+
+# Prioridad de algoritmos de Hashing más fuertes para las nuevas contraseñas
+PASSWORD_HASHERS = [
+    'django.contrib.auth.hashers.Argon2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+    'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher'
 ]
 
 # Internationalization
@@ -151,3 +161,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 MEDIA_URL = '/Imgproductos/'
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'
+
+# Seguridad avanzada para HTTPS producción 
+# Usamos DEBUG is False para que sean True solo en producción, evitando errores en desarrollo (HTTP)
+SESSION_COOKIE_SECURE = DEBUG is False
+CSRF_COOKIE_SECURE = DEBUG is False
+
+# Protección contra ataques de secuencias de comandos entre sitios (XSS)
+# (impide que JavaScript acceda a las cookies)
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
