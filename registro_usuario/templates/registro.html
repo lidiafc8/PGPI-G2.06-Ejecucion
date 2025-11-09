@@ -17,7 +17,6 @@
             margin-bottom: 0; 
         }
         
-        /* Ocultar etiquetas para el diseño del placeholder */
         .sr-only { 
             position: absolute; 
             width: 1px; 
@@ -30,12 +29,11 @@
             border-width: 0; 
         }
 
-        /* Estilo para los campos de input y select dentro del recuadro negro */
         form input[type="text"],
         form input[type="email"],
         form input[type="password"],
         form input[type="tel"],
-        form select { /* AÑADIDO SELECT */
+        form select { 
             width: 100%;
             padding: 0; 
             border: none; 
@@ -49,7 +47,6 @@
             outline: none; 
         }
         
-        /* Estilo para las listas de errores */
         .errorlist {
             list-style-type: none;
             padding: 0;
@@ -390,10 +387,6 @@
                     </div>
                 {% endif %}
 
-                {# ---------------------------------------------------- #}
-                {# Campos del formulario #}
-                {# He eliminado los bordes dobles y el bg-white de los campos #}
-                {# para replicar el estilo de inicio de sesión (aunque en Django forms son más complejos) #}
                 
                 <div class="field-wrapper">
                     <label for="{{ form.nombre.id_for_label }}" class="sr-only">{{ form.nombre.label }}</label>
@@ -490,7 +483,6 @@
                     {% endfor %}
                 </div>
                 
-                {# ---------------------------------------------------- #}
                 
                 <form action="/">
                     <button type="submit" 
@@ -502,7 +494,6 @@
                 </form>
             </form>
             
-            {# Añadimos el enlace para iniciar sesión al final #}
             <div class="mt-6 text-center">
                 <p class="text-gray-600 text-sm">
                     ¿Ya tienes una cuenta? 

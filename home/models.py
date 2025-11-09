@@ -128,6 +128,8 @@ class UsuarioCliente(models.Model):
     telefono = models.CharField(max_length=15, blank=True, null=True)
     direccion_envio = models.CharField(max_length=255, blank=True) 
     tipo_envio= models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA)
+
+    last_login = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
         return self.usuario.nombre

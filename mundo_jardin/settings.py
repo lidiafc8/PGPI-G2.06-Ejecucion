@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 # settings.py¡
 LOGIN_URL = '/inicio_sesion/login/'
-LOGIN_REDIRECT_URL ='/perfil/' # Esto lleva al usuario a /perfil/ después del login
+LOGIN_REDIRECT_URL ='/' 
 
 
 # Application definition
