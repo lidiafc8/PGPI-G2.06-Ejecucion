@@ -8,12 +8,12 @@ Usuarios = get_user_model()
 class UsuarioAdminForm(forms.ModelForm):
     class Meta:
         model = Usuarios
-        fields = ['first_name', 'last_name', 'email'] 
+        fields = ['nombre', 'apellidos', 'corre_electronico'] 
         
         widgets = {
-            'first_name': forms.TextInput(attrs={'placeholder': 'NOMBRE', 'class': 'w-full outline-none'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'APELLIDOS', 'class': 'w-full outline-none'}),
-            'email': forms.EmailInput(attrs={'placeholder': 'CORREO ELECTRÓNICO', 'class': 'w-full outline-none', 'readonly': 'readonly'}),
+            'nombre': forms.TextInput(attrs={'placeholder': 'NOMBRE', 'class': 'w-full outline-none'}),
+            'apellidos': forms.TextInput(attrs={'placeholder': 'APELLIDOS', 'class': 'w-full outline-none'}),
+            'corre_electronico': forms.EmailInput(attrs={'placeholder': 'CORREO ELECTRÓNICO', 'class': 'w-full outline-none', 'readonly': 'readonly'}),
         }
 
 class UsuarioForm(forms.ModelForm):
@@ -22,8 +22,8 @@ class UsuarioForm(forms.ModelForm):
         fields = ('nombre', 'apellidos', 'corre_electronico') 
         
         widgets = {
-            'first_name': forms.TextInput(attrs={'placeholder': 'NOMBRE', 'class': 'w-full outline-none'}),
-            'last_name': forms.TextInput(attrs={'placeholder': 'APELLIDOS', 'class': 'w-full outline-none'}),
+            'nombre': forms.TextInput(attrs={'placeholder': 'NOMBRE', 'class': 'w-full outline-none'}),
+            'apellidos': forms.TextInput(attrs={'placeholder': 'APELLIDOS', 'class': 'w-full outline-none'}),
             'corre_electronico': forms.EmailInput(attrs={'placeholder': 'CORREO ELECTRÓNICO', 'class': 'w-full outline-none', 'readonly': 'readonly'}),
         }
 

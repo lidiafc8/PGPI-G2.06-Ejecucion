@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password
 
 class TipoPago(models.TextChoices):
@@ -71,11 +71,16 @@ class UsuarioManager(BaseUserManager):
         return self.create_user(corre_electronico, clave, **extra_fields)
 
 
-class Usuario(models.Model): 
+class Usuario(AbstractBaseUser, PermissionsMixin): 
     nombre = models.CharField(max_length=200)
     apellidos = models.CharField(max_length=200)
     corre_electronico = models.EmailField(max_length=200, unique=True)
     clave = models.CharField(max_length=128)
+    
+    # Asignar el gestor personalizado
+    # Esto le indica a Django que use UsuarioManager para todas
+    # las operaciones de consulta y creación de usuarios
+    objects = UsuarioManager()
 
     last_login = models.DateTimeField(null=True, blank=True)
     
@@ -87,15 +92,23 @@ class Usuario(models.Model):
     is_staff = models.BooleanField(default=False) 
     is_superuser = models.BooleanField(default=False)
 
-    @property
-    def is_authenticated(self):
-        """Retorna True si el usuario ha sido validado correctamente."""
-        return True 
+    # Ya heredado de AbstractBaseUser: se anula la lógica de seguridad de Django, 
+    # lo que puede ocasionar que un usuario no autenticado pueda acceder a ciertas funcionalidades.
+    # @property
+    # def is_authenticated(self):
+    #    """Retorna True si el usuario ha sido validado correctamente."""
+    #    return True 
 
-    @property
-    def is_anonymous(self):
-        """Retorna False para un objeto de usuario real."""
-        return False
+    # @property
+    #def is_anonymous(self):
+    #    """Retorna False para un objeto de usuario real."""
+    #    return False
+    
+    def get_full_name(self):
+        return f"{self.nombre} {self.apellidos}"
+    
+    def get_short_name(self):
+        return self.nombre
 
     def has_perm(self, perm, obj=None):
         return self.is_superuser
