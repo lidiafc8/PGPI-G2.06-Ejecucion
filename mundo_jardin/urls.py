@@ -27,17 +27,14 @@ urlpatterns = [
     path('catalogoAdmin/', include('catalogo_admin.urls')),
     path('producto/<int:pk>/', views.detalle_producto, name='detalle_producto'),
     path('buscar/', views.buscar_productos, name='buscar'), # Nueva URL de búsqueda
-    path('adminpanel/', include('adminpanel.urls')),
+    path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
     path('registro/', include('registro_usuario.urls')),
     path('inicio_sesion/', include('inicio_sesion.urls')),
-    path('perfil/', include(('perfil.urls', 'perfil'), namespace='perfil')),
+    path('perfil/', include(('perfil.urls','perfil'), namespace='perfil')),
 ]
 
-# BLOQUE CONDICIONAL AÑADIDO:
-# Esto solo se ejecuta cuando DEBUG=True, permitiendo que el servidor local sirva estáticos.
 if settings.DEBUG:
-    # Mapea /static/ a la carpeta definida en STATICFILES_DIRS.
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

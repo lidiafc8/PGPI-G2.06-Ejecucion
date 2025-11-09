@@ -1,0 +1,69 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block content %}
+
+<main class="py-12 md:py-16 bg-[#fdfaf5]"> 
+    <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8"> 
+        <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl border-2 border-gray-100">
+            
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
+                PERFIL DEL ADMINISTRADOR
+            </h2>
+
+            {% comment %} Incluir mensajes de éxito o error aquí {% endcomment %}
+            {% if messages %}
+                <ul class="messages mb-6">
+                    {% for message in messages %}
+                        <li{% if message.tags %} class="{{ message.tags }} text-center p-3 rounded-lg {% if 'success' in message.tags %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}"{% endif %}>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            <form method="post" class="perfil-form space-y-6" id="perfil-form-guardar">
+                {% csrf_token %}
+                
+                <h3 class="text-2xl font-bold mb-4 border-b pb-2 text-gray-700">Datos de Usuario</h3>
+                
+                {# CAMPOS DE USUARIO BASE (Nombre, Apellidos, Correo Electrónico) #}
+                {% for field in user_form %}
+                <div class="field-wrapper">
+                    <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1 ml-1">
+                        {{ field.label|upper }}
+                    </label>
+                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                        {{ field }} 
+                    </div>
+                    {% for error in field.errors %}
+                        <p class="errorlist text-red-600 text-sm mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endfor %}
+            </form>
+            
+            <div class="flex justify-between pt-8 items-center"> 
+                
+                <form action="{% url 'inicio_sesion:logout' %}" method="post" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="px-5 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300 text-sm">
+                        CERRAR SESIÓN
+                    </button>
+                </form>
+                
+                <a href="{% url 'adminpanel:adminpanel_index' %}" 
+                    class="px-5 py-3 bg-gray-500 text-white font-semibold rounded-lg hover:bg-gray-600 transition duration-300 text-sm flex items-center justify-center">
+                        VOLVER AL PANEL
+                    </a>
+                
+                <button type="submit" form="perfil-form-guardar"
+                        class="px-5 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#bf7149] transition duration-300 text-sm">
+                    GUARDAR CAMBIOS
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+
+{% endblock %}
