@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 # settings.py¡
 LOGIN_URL = 'inicio_sesion:login'
-LOGIN_REDIRECT_URL ='/' 
+LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
 
 
 # Application definition
@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'registro_usuario',
     'inicio_sesion',
     'perfil',
+    'info_tienda',
 ]
 
 MIDDLEWARE = [

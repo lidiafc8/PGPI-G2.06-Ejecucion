@@ -102,11 +102,7 @@
             </form>
             
             <div class="flex justify-between items-center pt-8 space-x-4"> 
-                
-                <a href="{% url 'home' %}" 
-                    class="flex-1 text-center px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition duration-300">
-                    ← VOLVER A INICIO
-                </a>
+            
                 <form action="{% url 'inicio_sesion:logout' %}" method="post" class="inline">
                     {% csrf_token %}
                     <button type="submit" 
