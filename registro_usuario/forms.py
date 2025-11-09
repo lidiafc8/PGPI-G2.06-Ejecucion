@@ -2,6 +2,7 @@ from django import forms
 from home.models import Usuario, UsuarioCliente 
 from home.models import TipoPago, TipoEnvio 
 from django.core.validators import MinLengthValidator, RegexValidator
+from django.contrib.auth import password_validation
 
 class RegistroUsuarioForm(forms.Form):
     
@@ -36,7 +37,8 @@ class RegistroUsuarioForm(forms.Form):
     
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'CONTRASEÑA'}),
-        label="Contraseña"
+        label="Contraseña",
+        validators=[password_validation.validate_password]
     )
     
     password2 = forms.CharField(
@@ -91,6 +93,13 @@ class RegistroUsuarioForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        
+        password = cleaned_data.get("password")
+        if password:
+            try:
+                password_validation.validate_password(password, None)
+            except forms.ValidationError as error:
+                self.add_error('password', error)
         
         tipo_envio = cleaned_data.get("tipo_envio")
         direccion_envio = cleaned_data.get("direccion_envio")
