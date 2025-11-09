@@ -30,7 +30,7 @@ urlpatterns = [
     path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
-    path('registro/', include('registro_usuario.urls')),
+    path('registro/', include(('registro_usuario.urls', 'registro_usuario'), namespace='registro')),
     path('inicio_sesion/', include('inicio_sesion.urls')),
     path('perfil/', include(('perfil.urls','perfil'), namespace='perfil')),
 ]

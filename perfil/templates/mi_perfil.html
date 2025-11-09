@@ -8,7 +8,7 @@
         <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl border-2 border-gray-100">
             
             <h2 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
-                MI PERFIL
+                MI PERFIL 🪴
             </h2>
 
             {% if messages %}
@@ -30,7 +30,7 @@
                         {{ user_form.nombre }} 
                     </div>
                     {% for error in user_form.nombre.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
                 
@@ -40,7 +40,7 @@
                         {{ user_form.apellidos }}
                     </div>
                     {% for error in user_form.apellidos.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
                 
@@ -50,7 +50,7 @@
                         {{ user_form.corre_electronico }}
                     </div>
                     {% for error in user_form.corre_electronico.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
                 
@@ -62,7 +62,7 @@
                         {{ perfil_form.telefono }}
                     </div>
                     {% for error in perfil_form.telefono.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
 
@@ -74,7 +74,7 @@
                         {{ perfil_form.tipo_pago }}
                     </div>
                     {% for error in perfil_form.tipo_pago.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
                 
@@ -86,7 +86,7 @@
                         {{ perfil_form.tipo_envio }}
                     </div>
                     {% for error in perfil_form.tipo_envio.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
 
@@ -96,22 +96,27 @@
                         {{ perfil_form.direccion_envio }}
                     </div>
                     {% for error in perfil_form.direccion_envio.errors %}
-                        <p class="errorlist">{{ error }}</p>
+                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
             </form>
-            <div class="flex justify-between pt-4"> 
+            
+            <div class="flex justify-between items-center pt-8 space-x-4"> 
                 
+                <a href="{% url 'home' %}" 
+                    class="flex-1 text-center px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition duration-300">
+                    ← VOLVER A INICIO
+                </a>
                 <form action="{% url 'inicio_sesion:logout' %}" method="post" class="inline">
                     {% csrf_token %}
                     <button type="submit" 
-                            class="px-8 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
+                            class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
                         CERRAR SESIÓN
                     </button>
                 </form>
                 
                 <button type="submit" form="perfil-form-guardar"
-                        class="px-8 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#bf7149] transition duration-300">
+                        class="flex-1 px-4 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#525a09] transition duration-300">
                     GUARDAR CAMBIOS
                 </button>
             </div>
