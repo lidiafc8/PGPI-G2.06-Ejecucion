@@ -8,7 +8,7 @@ from django.urls import reverse_lazy # Importar para usar con redirect, aunque '
 
 # Asegúrate de que estas importaciones son correctas
 from home.models import UsuarioCliente 
-from .forms import UsuarioForm, PerfilClienteForm 
+from .forms import UsuarioForm, PerfilClienteForm, UsuarioAdminForm
 
 Usuario = get_user_model() 
 
@@ -20,7 +20,7 @@ def mi_perfil(request):
     usuario_instancia = request.user
     
     if usuario_instancia.is_superuser or (hasattr(usuario_instancia, 'es_administrador') and usuario_instancia.es_administrador):
-        messages.warning(request, "Acceso denegado a la vista de cliente. Redirigiendo.")
+        messages.warning(request, "Eres Admin")
         # Redirige al administrador a su perfil específico
         return redirect('perfil:admin_perfil')
         
@@ -60,16 +60,11 @@ def admin_perfil(request):
     Muestra y maneja la edición del perfil para Administradores.
     """
     usuario_instancia = request.user
-
-    # ❌ VALIDACIÓN: Si no es Admin, lo mandamos a su perfil de Cliente.
-    if not usuario_instancia.is_superuser and not request.user.es_administrador:
-        messages.warning(request, "Acceso denegado. Redirigiendo a tu perfil de cliente.")
-        return redirect('perfil:mi_perfil')
     
     # Manejo de POST (Guardar cambios del Admin)
     if request.method == 'POST':
         # Inicializar el formulario con la instancia de request.user
-        user_form = UsuarioForm(request.POST, instance=usuario_instancia)
+        user_form = UsuarioAdminForm(request.POST, instance=usuario_instancia)
         
         if user_form.is_valid():
             user_form.save()
@@ -81,7 +76,7 @@ def admin_perfil(request):
             messages.error(request, "Error al actualizar el perfil de Administrador.")
     else:
         # Manejo de GET (Mostrar formulario del Admin)
-        user_form = UsuarioForm(instance=usuario_instancia)
+        user_form = UsuarioAdminForm(instance=usuario_instancia)
     
     contexto_admin = {
         'user_form': user_form,

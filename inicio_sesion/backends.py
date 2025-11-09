@@ -23,6 +23,9 @@ class ClienteBackend(BaseBackend):
     
     def get_user(self, user_id):
         try:
-            return Usuarios.objects.get(pk=user_id) 
+            return Usuarios.objects.get(pk=user_id)
         except Usuarios.DoesNotExist:
-            return None
+            try:
+                return Usuario.objects.get(pk=user_id)
+            except Usuario.DoesNotExist:
+                return None
