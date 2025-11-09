@@ -29,7 +29,7 @@ ALLOWED_HOSTS = []
 
 # settings.py¡
 LOGIN_URL = '/inicio_sesion/login/'
-LOGIN_REDIRECT_URL ='/' 
+LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
 
 
 # Application definition
