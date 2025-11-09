@@ -44,18 +44,18 @@ class Categoria(models.TextChoices):
     ILUMINACION_EXTERIOR='ILUMINACION_EXTERIOR',
 
 class UsuarioManager(BaseUserManager):
-    def create_user(self, corre_electronico, clave=None, **extra_fields):
+    def create_user(self, corre_electronico, password=None, **extra_fields):
         if not corre_electronico:
             raise ValueError('El correo electrónico es obligatorio')
         user = self.model(
             corre_electronico=self.normalize_email(corre_electronico),
             **extra_fields
         )
-        user.set_password(clave)
+        user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, corre_electronico, clave=None, **extra_fields):
+    def create_superuser(self, corre_electronico, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
@@ -68,14 +68,14 @@ class UsuarioManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
 
-        return self.create_user(corre_electronico, clave, **extra_fields)
+        return self.create_user(corre_electronico, password, **extra_fields)
 
 
 class Usuario(AbstractBaseUser, PermissionsMixin): 
     nombre = models.CharField(max_length=200)
     apellidos = models.CharField(max_length=200)
     corre_electronico = models.EmailField(max_length=200, unique=True)
-    clave = models.CharField(max_length=128)
+    password = models.CharField(max_length=128)
     
     # Asignar el gestor personalizado
     # Esto le indica a Django que use UsuarioManager para todas
@@ -116,12 +116,12 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
     def has_module_perms(self, app_label):
         return self.is_superuser
 
-    def set_password(self, raw_password):
-        self.clave = make_password(raw_password)
-        self._password = raw_password 
+    #def set_password(self, raw_password):
+    #    self.password = make_password(raw_password)
+    #    self._password = raw_password 
 
-    def check_password(self, raw_password):
-        return check_password(raw_password, self.clave)
+    #def check_password(self, raw_password):
+    #    return check_password(raw_password, self.password)
     
     @property
     def es_administrador(self):
