@@ -87,13 +87,29 @@
                 <div class="flex-1 bg-[#fff6e4] border-2 border-black rounded-full px-6 py-4 shadow-sm">                    
                     <div class="grid grid-cols-6 items-center text-gray-700 text-sm">
                         
-                        <span class="truncate pr-2 font-bold">{{ cliente.usuario.nombre }} {{ cliente.usuario.apellidos }}</span>
+                        <span class="pr-2 font-bold whitespace-normal break-words">
+                            {{ cliente.usuario.nombre }} {{ cliente.usuario.apellidos }}
+                        </span>
                         
-                        <span class="truncate pr-2">{{ cliente.telefono|default:"N/A" }}</span>
-                        <span class="truncate pr-2">{{ cliente.usuario.corre_electronico }}</span>
-                        <span class="truncate pr-2">{{ cliente.direccion_envio|default:"N/A" }}</span>
-                        <span class="truncate pr-2">{{ cliente.tipo_pago|default:"N/A" }}</span>
-                        <span class="truncate pr-2">{{ cliente.tipo_envio|default:"N/A" }}</span>
+                        <span class="pr-2 font whitespace-normal break-words">
+                            {{ cliente.telefono|default:"N/A" }}
+                        </span>
+
+                        <span class="pr-2 font whitespace-normal break-words">
+                            {{ cliente.usuario.corre_electronico }}
+                        </span>
+
+                        <span class="pr-2 font whitespace-normal break-words">
+                            {{ cliente.direccion_envio|default:"N/A" }}
+                        </span>
+
+                        <span class="pr-2 font whitespace-normal break-words">
+                            {{ cliente.tipo_pago|default:"N/A" }}
+                        </span>
+
+                        <span class="pr-2 font whitespace-normal break-words">
+                            {{ cliente.tipo_envio|default:"N/A" }}
+                        </span>
                     </div>
                 </div>
             </div>
