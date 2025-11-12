@@ -369,6 +369,22 @@
             </nav>
         </div>
     </header>
+    <div class="bg-gray-100 py-3 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{% url 'home' %}" class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+                            INICIO
+                        </a>
+                    </li>
+                    
+                    {% block breadcrumbs %}
+                        {% endblock breadcrumbs %}
+                </ol>
+            </nav>
+        </div>
+    </div>
 
     <div class="main-content">
         {% block content %}
