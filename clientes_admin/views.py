@@ -4,6 +4,8 @@ from django.http import HttpResponseNotAllowed
 
 # ESTA ES LA VISTA QUE ENVÍA LOS DATOS A TU PLANTILLA
 def gestion_clientes(request):
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return redirect('home')
     
     if request.method == 'GET':
         # Esta línea es la que busca los clientes

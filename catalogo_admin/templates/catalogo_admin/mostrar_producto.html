@@ -17,9 +17,9 @@
                      alt="{{ producto.nombre }}" 
                      class="w-full h-auto max-h-80 object-cover rounded-xl shadow-md border-2 lm-border-green">
             {% else %}
-                <div class="w-full h-64 bg-gray-200 flex items-center justify-center rounded-xl text-gray-500 border border-dashed">
-                    Sin Imagen Disponible
-                </div>
+                <img src="{% static 'imagen1.jpg' %}" 
+                     alt="Imagen por defecto"
+                     class="w-full h-auto max-h-80 object-cover rounded-xl shadow-md border-2 lm-border-green">
             {% endif %}
         </div>
 
