@@ -39,6 +39,7 @@
 {% endblock extra_css %}
 
 {% block content %}
+{% load static %}
 <main class="py-4 md:py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -57,14 +58,17 @@
                                         alt="Imagen de {{ producto.nombre }}" 
                                         class="max-h-full max-w-full object-cover rounded-lg ">
                                 {% else %}
-                                    <span class="text-7xl text-gray-400" role="img" aria-label="Sin imagen">🖼️</span>
+                                <div class="relative w-full h-32 mb-4 flex justify-center items-center">
+                                    <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                                            class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                    </div>
                                 {% endif %}
                             </div>
 
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
                                 <div class="flex-auto overflow-y-auto overflow-x-auto mt-12 pr-20" style="max-height: calc(300px - 5rem);">
                                     <h4 class="text-4xl font-extrabold text-gray-900 mb-2 ">{{ producto.nombre|upper }}</h4>
-<p class="text-xs text-gray-500 mb-2">
+                            <p class="text-xs text-gray-500 mb-2">
                                 Fabricante: {{ producto.fabricante }}
                             </p>                                    <p class="text-[#bf7149] text-xs">
                                         <span class="font-medium"></span> {{ producto.get_categoria_display }} / 
