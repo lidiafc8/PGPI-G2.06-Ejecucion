@@ -1,0 +1,14 @@
+# Archivos de Python generados automáticamente
+__pycache__/
+*.pyc
+
+# Entornos virtuales (venv)
+venv/
+env/
+.venv/
+
+# Logs
+*.log
+
+# Archivos de VS Code
+.vscode/
