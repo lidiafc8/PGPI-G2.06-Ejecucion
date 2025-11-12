@@ -9,16 +9,9 @@ def index(request, categoria=None):
     categoria_valor = None # Usaremos esta variable para guardar el valor de la categoría
     template_name = 'index.html' 
 
-    # 1. Lógica Condicional: Determinar el filtro y la plantilla
     if categoria:
-        # CASO 1: URL contiene un SLUG (Ej: /subcategorias/CORTASETOS_Y_MOTOSIERRAS/)
         
-        # El valor de la URL ya es la cadena que necesitas. 
-        # NOTA: Las URL con slug suelen ser minúsculas con guiones.
-        # Si tu slug en la URL viene en mayúsculas (como CORTASETOS_Y_MOTOSIERRAS), 
-        # úsalo directamente. Si Django lo convierte a minúsculas, úsalo en minúsculas.
-        
-        categoria_valor = categoria.upper() # Asumo que lo tienes en mayúsculas en el modelo
+        categoria_valor = categoria.upper() 
         
         
         # Filtramos los productos directamente en el campo CharField.
@@ -55,15 +48,9 @@ def detalle_producto(request, pk):
     productos_relacionados = Producto.objects.filter(
         categoria=categoria_actual
     ).exclude(
-        pk=pk  # <-- ¡ESTO EXCLUYE EL PRODUCTO ACTUAL!
+        pk=pk 
     )
     
-    # Opcional: Para que el carrusel sea más dinámico, puedes añadir:
-    # .order_by('?') 
-    # Y limitar si tienes miles de productos:
-    # .order_by('?')[:20] 
-
-    # 4. Preparar el contexto
     contexto = {
         'producto': producto,
         'productos_relacionados': productos_relacionados,
