@@ -1,0 +1,117 @@
+[33m7f6fb6f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfix-desarrollo-de-catalogo-Ref-#15[m[33m, [m[1;31morigin/fix-desarrollo-de-catalogo-Ref-#15[m[33m)[m Merge branches 'fix-desarrollo-de-catalogo-Ref-#15' and 'feature_correccion_catalogo' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33mf31d18c[m[33m ([m[1;31morigin/feature_correccion_catalogo[m[33m)[m fix: ultimos cambios realizados
+[33m5a45d86[m agotado
+[33mb1abb0e[m arreglos
+[33mf5f6281[m correccion logo cuadrado
+[33me7a1f43[m nav
+[33m4d469ad[m fix: enumerados mostrados correctamente
+[33mf380c88[m fix: otros arreglos realizados en front y back
+[33m4f1272b[m fix: correcciones varias
+[33m1ff3fc0[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33m3b93a73[m h
+[33maf7a1b3[m com
+[33mc5f2ea4[m cosas
+[33mb58b309[m fix: arreglo frontend en gestion clientes admin
+[33m76da399[m[33m ([m[1;33mtag: [m[1;33mv1.0.0[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge branch 'feature_marca_corporativa' into develop
+[33m5f1f7e7[m[33m ([m[1;31morigin/feature_seguridad_login_registro[m[33m)[m corrección login admin
+[33m6ccadd5[m[33m ([m[1;31morigin/feature_marca_corporativa[m[33m)[m rama develop sin cambios de esther - todo funciona
+[33mf4bf91f[m feat: Información sobre Mundo Jardín S.A
+[33mfe981d2[m Merge pull request #51 from lidiafc8/feature_seguridad_login_registro
+[33md831acd[m seguridad inicio de sesión
+[33mfa1d889[m seguridad registro
+[33m0abde51[m Corrección ortográfica
+[33m8fdc8ca[m feat: Configuración inicial. Se añade .gitignore, requirements.txt y se limpian archivos de caché locales.
+[33mb0ea360[m Merge pull request #49 from lidiafc8/feature_inicio_de_sesión
+[33mb9b0c12[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_inicio_de_sesión
+[33m3dc3e58[m terminado lo de inciiar sesion
+[33mfd40f2a[m Merge pull request #48 from lidiafc8/feature_inicio_de_sesión
+[33mc0987f7[m correcion de inicio de sesion
+[33mcd48d9e[m camibos parael inico de administrador
+[33m9a1759d[m Merge pull request #47 from lidiafc8/feature_perfil
+[33mf4441b1[m[33m ([m[1;31morigin/feature_perfil[m[33m)[m registro
+[33me562d35[m cambios
+[33m99d0646[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_perfil
+[33m7ca6afb[m perfil usuario
+[33mf6d6bca[m Merge pull request #46 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33m8afb9a6[m herramienta búsqueda
+[33m68c7626[m Merge pull request #45 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33m698bb5e[m css
+[33m5922070[m Merge pull request #44 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33m05fc424[m cor
+[33m4fe9214[m b
+[33m661592d[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33m4e27505[m Merge pull request #43 from lidiafc8/feature_inicio_de_sesión
+[33m5d58eaf[m vision productos
+[33m06cf60d[m cambio css
+[33mc50c3e3[m logout
+[33mc19553f[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_inicio_de_sesión
+[33meb84bf5[m cambios de redireccion
+[33mf1a25e6[m Merge pull request #42 from lidiafc8/feature_registro_usuario
+[33mdd40898[m[33m ([m[1;31morigin/feature_registro_usuario[m[33m)[m prueba cambios
+[33m8db593b[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_registro_usuario
+[33m60f28ba[m Merge pull request #41 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33m802344b[m css
+[33m2afd69f[m css
+[33md10832c[m registro corregido
+[33m7f8af97[m correcion merge
+[33m8bf9ef7[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_inicio_de_sesión
+[33m40f19fb[m registro de usuario
+[33m822a7ad[m Merge pull request #40 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33md02fb57[m k
+[33m11df4c6[m Merge pull request #39 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33me066b71[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33m5673acb[m filtros y catálogo
+[33mfd8837a[m Puestos filtros, falta html catalogo
+[33m3bad154[m Merge pull request #38 from lidiafc8/feature_registro_usuario
+[33m0dc22e5[m correccion registro usuario
+[33m6db457f[m registro que se guarda
+[33m3019ab0[m registro_de_usuario
+[33m66cea4f[m m
+[33me8c139c[m todo unido funcionando
+[33m9a8e28f[m Merge branch 'feature_gestion_clientes_admin' into develop
+[33mf8d8887[m[33m ([m[1;31morigin/feature_gestion_clientes_admin[m[33m)[m feat: Gestión de usuarios para el administrador
+[33mbb1e185[m .
+[33m2eb8490[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into develop
+[33m7ded9af[m feat: restricciones implementadas en la creación de productos
+[33m8d7cb15[m Merge pull request #37 from lidiafc8/fix-desarrollo-de-catalogo-Ref-#15
+[33m5766eb2[m f
+[33ma39ee93[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33mb6bb584[m c
+[33m938ac3a[m csv
+[33m79a4eef[m CSV
+[33m62d112b[m[33m ([m[1;31morigin/feature_gestion_ventas_admin[m[33m)[m feat: Desarrollo de gestión de ventas admin
+[33m64b9972[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33mf682378[m escaparate hecho
+[33m886e90c[m[33m ([m[1;31morigin/feature_registro[m[33m)[m correcciones y desarrollo casi terminado
+[33m4ccc65b[m merge
+[33m0f9d0c9[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_gestion_ventas_admin
+[33m5000124[m Desarrollo de gestión de ventas casi terminada
+[33mc3ae743[m Merge branch 'feature_catalogo' into develop
+[33mcf81087[m .
+[33mc6b0d10[m[33m ([m[1;31morigin/feature_catalogo[m[33m)[m feat: Ordenas productos
+[33m7a402bb[m fix: correccion rutas
+[33m27b88a6[m .
+[33me3c9fa0[m Merge branch 'feature_catalogo' into develop
+[33m0295100[m extra
+[33m0459085[m feat: Gestión completa de productos (añadir, editar, ver y eliminar)
+[33mdb0f4cc[m Merge remote-tracking branch 'origin/feature_panel_admin' into feature_catalogo
+[33m7b214fe[m Estructura base para añadir productos y eliminar (sin vistas)
+[33ma024537[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into feature_gestion_ventas_admin
+[33mf2ef1f3[m[33m ([m[1;31morigin/feature_panel_admin[m[33m)[m Panel de administrador creado sin funcionalidades
+[33m9f09241[m develop merge
+[33m708638d[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33m8bcebad[m Merge branch 'feature_productos' into develop
+[33m5177895[m[33m ([m[1;31morigin/feature_productos[m[33m)[m fix: Correccion errores modelo
+[33m14009bd[m Merge branch 'develop' of https://github.com/lidiafc8/PGPI-G2.06-Ejecucion into fix-desarrollo-de-catalogo-Ref-#15
+[33m0cef7e0[m a
+[33m2319e91[m Merge branch 'feature_productos' into develop
+[33mc6cd1a5[m feat:eliminacion modelo escaparate
+[33mbfc04f1[m Merge branch 'feature_productos' into develop
+[33mffe820d[m feat: Cambio en el modelo de datos
+[33mbd81ee0[m cambio color
+[33m34507b7[m front basico (incompleta funcionalidad)
+[33m5d2f20e[m Merge: feature_productos
+[33m6f9e762[m Feat: Modelo de datos
+[33mfbce73e[m[33m ([m[1;31morigin/feature_gestion_ventas_admin1[m[33m, [m[1;32mmain[m[33m)[m docs: modelo de dominio
+[33m0cf1a68[m App launch
+[33m07d2291[m Initial commit
