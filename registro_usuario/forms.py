@@ -2,6 +2,7 @@ from django import forms
 from home.models import Usuario, UsuarioCliente 
 from home.models import TipoPago, TipoEnvio 
 from django.core.validators import MinLengthValidator, RegexValidator
+from django.contrib.auth import password_validation
 
 class RegistroUsuarioForm(forms.Form):
     
@@ -23,10 +24,21 @@ class RegistroUsuarioForm(forms.Form):
         error_messages={'invalid': '¡Vaya! Introduce una dirección de correo válida. Por ejemplo: nombre@dominio.com'},
         widget=forms.EmailInput(attrs={'placeholder': 'CORREO ELECTRÓNICO'})
     )
+
+    def clean_corre_electronico(self):
+        email = self.cleaned_data.get('corre_electronico')
+        
+        if Usuario.objects.filter(corre_electronico=email).exists():
+            raise forms.ValidationError(
+                "¡Error! Ya existe una cuenta registrada con este correo electrónico."
+            )
+        
+        return email
     
     password = forms.CharField(
         widget=forms.PasswordInput(attrs={'placeholder': 'CONTRASEÑA'}),
-        label="Contraseña"
+        label="Contraseña",
+        validators=[password_validation.validate_password]
     )
     
     password2 = forms.CharField(
@@ -70,10 +82,6 @@ class RegistroUsuarioForm(forms.Form):
 
 
     def clean_password2(self):
-        """
-        Valida que la segunda contraseña coincida con la primera.
-        Si no coinciden, lanza un error específico.
-        """
         cd = self.cleaned_data
         password = cd.get('password')
         password2 = cd.get('password2')
@@ -84,11 +92,14 @@ class RegistroUsuarioForm(forms.Form):
         return password2
 
     def clean(self):
-        """
-        Valida la lógica condicional: La dirección de envío es obligatoria 
-        si el tipo de envío NO es 'RECOGIDA_TIENDA'.
-        """
         cleaned_data = super().clean()
+        
+        password = cleaned_data.get("password")
+        if password:
+            try:
+                password_validation.validate_password(password, None)
+            except forms.ValidationError as error:
+                self.add_error('password', error)
         
         tipo_envio = cleaned_data.get("tipo_envio")
         direccion_envio = cleaned_data.get("direccion_envio")
@@ -101,15 +112,16 @@ class RegistroUsuarioForm(forms.Form):
 
 
     def save(self):
-        
         cd = self.cleaned_data
         
-        usuario = Usuario.objects.create(
+        usuario = Usuario(
             nombre=cd['nombre'],
             apellidos=cd['apellidos'],
             corre_electronico=cd['corre_electronico']
         )
+        
         usuario.set_password(cd['password'])
+        
         usuario.save()
 
         tipo_pago_final = cd.get('tipo_pago') or TipoPago.PASARELA_PAGO 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mundo Jardín - Iniciar Sesión</title>
+    <title>Mundo Jardín S.A- Iniciar Sesión</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -56,7 +56,7 @@
                     <img src="{% static 'logo.png' %}" 
                         alt="Logo Mundo Jardín" 
                         class="h-20 w-20 mr-3 rounded-full">
-                    Mundo Jardín
+                    Mundo Jardín S.A
                 </a>
                 <a href="#" class="flex flex-col items-center flex-shrink-0 text-[#6a760c] ">
                     <img src="{% static 'i1.png' %}" 
@@ -225,7 +225,7 @@
                                             
                                             <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
                                             
-                                            <span> 🌱 CULTIVO Y HUELTO</span>
+                                            <span> 🌱 CULTIVO Y HUERTO</span>
                                         </a>
                                         
                                         <ul id="submenu-CULTIVO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
@@ -347,7 +347,7 @@
                     
                     <div class="flex">
                         <li class="group relative">
-                            <a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN</a>
+                            <a href="{% url 'info_tienda:info_tienda' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN S.A</a>
                         </li>
                     </div>
                     
@@ -356,7 +356,6 @@
         </div>
     </header>
 
-    {# --- CONTENIDO PRINCIPAL (Formulario de Login) --- #}
     <main class="py-20 md:py-24">
         <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8"> 
             <div class="bg-gray-50 p-8 md:p-10"> 
@@ -368,7 +367,6 @@
                 <form method="post">
                     {% csrf_token %} 
                     
-                    {# Aquí se renderizarán los campos con los placeholders configurados #}
                     {{ form.as_p }} 
                     
                     <button type="submit" class=" w-full mt-2 py-4 px-4 rounded-lg text-white font-normal text-lg lm-green hover:bg-[#bf7149] transition duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6a760c]">
@@ -385,7 +383,7 @@
                 <div class="mt-4 text-center">
                     <p class="text-gray-600 text-sm">
                         ¿No tienes una cuenta? 
-                        <a href="{% url 'registro' %}" class="lm-text-green hover:text-[#bf7149] font-medium transition">
+                        <a href="{% url 'registro_usuario:registro' %}" class="lm-text-green hover:text-[#bf7149] font-medium transition">
                             Regístrate aquí
                         </a>
                     </p>
@@ -395,10 +393,9 @@
         </div>
     </main>
 
-    {# --- PIE DE PÁGINA (Footer) --- #}
-    <footer class="bg-gray-800 text-white mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <p class="text-center text-gray-400">&copy; 2025 Mundo Jardín. Todos los derechos reservados.</p>
+     <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm">
+            © 2025 Mundo Jardín S.A
         </div>
     </footer>
 

@@ -1,12 +1,13 @@
 from django.contrib.auth.forms import AuthenticationForm
-from home.models import Usuario, UsuarioCliente 
 from django import forms
 from django.core.exceptions import ValidationError 
+from django.contrib.auth import authenticate 
 
 class ClienteAuthenticationForm(AuthenticationForm):
     """
-    Formulario personalizado para la autenticación del Cliente. 
-    Utiliza 'corre_electronico' como campo de identificación principal.
+    Formulario personalizado para la autenticación. 
+    Utiliza 'corre_electronico' como campo de identificación principal 
+    y elimina la validación de rol para permitir el acceso a cualquier usuario autenticado.
     """
     
     username = forms.CharField(
@@ -28,33 +29,24 @@ class ClienteAuthenticationForm(AuthenticationForm):
     
     def clean(self):
         
-        corre_electronico = self.cleaned_data.get('username') 
+        username_input = self.cleaned_data.get('username') 
         password = self.cleaned_data.get('password')
         
-        if corre_electronico and password:
-            try:
-                usuario = Usuario.objects.get(corre_electronico=corre_electronico)
-                
-                if not usuario.check_password(password):
-                    raise self.get_invalid_login_error() 
-            
-            except Usuario.DoesNotExist:
-                raise self.get_invalid_login_error()
-            
-            if not UsuarioCliente.objects.filter(usuario=usuario).exists():
-                raise ValidationError(
-                    'Solo los usuarios con perfil de cliente pueden acceder.',
-                    code='inactive' 
-                )
-            
-            self.user_cache = usuario
+        if username_input and password:
+            self.user_cache = authenticate(
+                self.request, 
+                username=username_input, 
+                password=password
+            )
 
-        return self.cleaned_data
-    
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+
+            self.confirm_login_allowed(self.user_cache)
+            
+        return super().clean()
+
     def get_invalid_login_error(self):
-        """
-        Un método auxiliar para generar el error genérico de login.
-        """
         return ValidationError(
             self.error_messages['invalid_login'],
             code='invalid_login',

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mundo Jardín - Registro</title>
+    <title>Mundo Jardín S.A - Registro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -17,7 +17,6 @@
             margin-bottom: 0; 
         }
         
-        /* Ocultar etiquetas para el diseño del placeholder */
         .sr-only { 
             position: absolute; 
             width: 1px; 
@@ -30,12 +29,11 @@
             border-width: 0; 
         }
 
-        /* Estilo para los campos de input y select dentro del recuadro negro */
         form input[type="text"],
         form input[type="email"],
         form input[type="password"],
         form input[type="tel"],
-        form select { /* AÑADIDO SELECT */
+        form select { 
             width: 100%;
             padding: 0; 
             border: none; 
@@ -49,7 +47,6 @@
             outline: none; 
         }
         
-        /* Estilo para las listas de errores */
         .errorlist {
             list-style-type: none;
             padding: 0;
@@ -71,7 +68,7 @@
                     <img src="{% static 'logo.png' %}" 
                         alt="Logo Mundo Jardín" 
                         class="h-20 w-20 mr-3 rounded-full">
-                    Mundo Jardín
+                    Mundo Jardín S.A
                 </a>
                 <a href="#" class="flex flex-col items-center flex-shrink-0 text-[#6a760c] ">
                     <img src="{% static 'i1.png' %}" 
@@ -240,7 +237,7 @@
                                             
                                             <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
                                             
-                                            <span> 🌱 CULTIVO Y HUELTO</span>
+                                            <span> 🌱 CULTIVO Y HUERTO</span>
                                         </a>
                                         
                                         <ul id="submenu-CULTIVO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
@@ -362,7 +359,7 @@
                     
                     <div class="flex">
                         <li class="group relative">
-                            <a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN</a>
+                            <a href="{% url 'info_tienda:info_tienda' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN S.A</a>
                         </li>
                     </div>
                     
@@ -390,10 +387,6 @@
                     </div>
                 {% endif %}
 
-                {# ---------------------------------------------------- #}
-                {# Campos del formulario #}
-                {# He eliminado los bordes dobles y el bg-white de los campos #}
-                {# para replicar el estilo de inicio de sesión (aunque en Django forms son más complejos) #}
                 
                 <div class="field-wrapper">
                     <label for="{{ form.nombre.id_for_label }}" class="sr-only">{{ form.nombre.label }}</label>
@@ -490,17 +483,17 @@
                     {% endfor %}
                 </div>
                 
-                {# ---------------------------------------------------- #}
                 
-                <button type="submit" 
-                        class="w-full mt-2 py-4 px-4 rounded-lg text-white font-normal text-lg 
-                               bg-[#6a760c] hover:bg-[#bf7149] transition duration-200 
-                               shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6a760c]">
-                    REGISTRO
-                </button>
+                <form action="/">
+                    <button type="submit" 
+                            class="w-full mt-2 py-4 px-4 rounded-lg text-white font-normal text-lg 
+                                bg-[#6a760c] hover:bg-[#bf7149] transition duration-200 
+                                shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#6a760c]">
+                        REGISTRO
+                    </button>
+                </form>
             </form>
             
-            {# Añadimos el enlace para iniciar sesión al final #}
             <div class="mt-6 text-center">
                 <p class="text-gray-600 text-sm">
                     ¿Ya tienes una cuenta? 
@@ -516,7 +509,7 @@
     
     <footer class="bg-gray-800 text-white mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm">
-            © 2025 Mundo Jardín
+            © 2025 Mundo Jardín S.A
         </div>
     </footer>
 
