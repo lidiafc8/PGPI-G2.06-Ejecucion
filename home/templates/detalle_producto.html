@@ -120,10 +120,14 @@
             <hr style="margin: 15px 0;">
 
             <p><strong>Fabricante:</strong> {{ producto.fabricante }}</p>
+
+            {% load text_filters %}
+
+            <p><strong>Categoría:</strong> {{ producto.categoria|espaciar }}</p>
             
-            <p><strong>Categoría:</strong> {{ producto.categoria }}</p>
-            
-            <p><strong>Sección:</strong> {{ producto.seccion}}</p>
+            <p><strong>Sección:</strong> {{ producto.seccion|espaciar }}</p>
+
+
         </div>
     </details>
 </div>
