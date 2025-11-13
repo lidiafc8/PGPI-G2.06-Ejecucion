@@ -59,27 +59,31 @@ def detalle_producto(request, pk):
     return render(request, 'detalle_producto.html', contexto)
 
 def buscar_productos(request):
-    # 1. Obtener el término de búsqueda
-    query = request.GET.get('q')
+    query = request.GET.get('q', '').strip()
     productos_encontrados = []
-    
-    # 2. Lógica de filtrado
-    if query:
-        # Filtra productos donde el 'nombre' contiene la consulta (icontains)
-        # Puedes añadir más campos a la búsqueda, por ejemplo:
-        productos_encontrados = Producto.objects.filter(
-            Q(nombre__icontains=query) |
-            Q(descripcion__icontains=query) |
-            Q(fabricante__icontains=query)|
-            Q(departamento__icontains=query)
-        ).distinct() # Usa distinct() para evitar duplicados si hay múltiples coincidencias
 
-    # 3. Prepara el contexto y renderiza
+    if query:
+        query_lower = query.lower()
+
+        # Traemos todos los productos (puedes filtrar por visibilidad si lo deseas)
+        todos_productos = Producto.objects.all()
+
+        # Filtramos manualmente comparando con display() y con otros campos
+        for producto in todos_productos:
+            if (
+                query_lower in producto.nombre.lower() or
+                query_lower in producto.descripcion.lower() or
+                query_lower in producto.fabricante.lower() or
+                query_lower in producto.departamento.lower() or
+                query_lower in producto.get_seccion_display().lower() or
+                query_lower in producto.get_categoria_display().lower()
+            ):
+                productos_encontrados.append(producto)
+
     contexto = {
         'query': query,
-        'productos_destacados': productos_encontrados, # Usamos el mismo nombre que en index.html si quieres reutilizar la plantilla
+        'productos_destacados': productos_encontrados,
         'categoria_actual': f'Resultados para "{query}"' if query else 'Búsqueda',
     }
-    
-    # Podrías reutilizar la plantilla 'catalogo.html' o 'index.html' si muestra listas de productos
+
     return render(request, 'catalogo.html', contexto)

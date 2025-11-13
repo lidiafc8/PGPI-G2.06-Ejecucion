@@ -45,6 +45,8 @@
 {% endblock extra_css %}
 
 {% block content %}
+{% load static %}
+
 <main class="py-4 md:py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -63,8 +65,9 @@
                                         alt="Imagen de {{ producto.nombre }}" 
                                         class="max-h-full max-w-full object-cover rounded-lg ">
                                 {% else %}
-                                    <span class="text-7xl text-gray-400" role="img" aria-label="Sin imagen">🖼️</span>
-                                {% endif %}
+<img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                                            class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                    </div>                                {% endif %}
                             </a>
 
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
@@ -96,7 +99,7 @@
                                         </span> 
                                         
                                         <a href=# class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
-                                            COMPRAR
+                                            AÑADIR A LA CESTA
                                         </a>
                                     </div>
                                 </div>
