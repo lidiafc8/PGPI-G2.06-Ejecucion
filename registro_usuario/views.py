@@ -1,7 +1,5 @@
-# registro_usuario/views.py (Código corregido)
-
 from django.shortcuts import render, redirect
-from django.contrib.auth import login 
+from django.contrib.auth import login, authenticate 
 from .forms import RegistroUsuarioForm 
 
 def registro(request):
@@ -10,13 +8,21 @@ def registro(request):
         if form.is_valid():
             user = form.save() 
             
-            # 🌟 CORRECCIÓN CLAVE: Especificar el backend
-            login(request, user, backend='inicio_sesion.backends.ClienteBackend') 
+            email_a_autenticar = form.cleaned_data.get('corre_electronico')
+            password = form.cleaned_data.get('password2') 
             
-            # Redirige al usuario
-            return redirect('home') 
-        # Si el formulario no es válido, asegúrate de que se renderiza el template.
-        # Recuerda la corrección de la ruta del template que vimos antes.
+            authenticated_user = authenticate(
+                request,
+                username=email_a_autenticar, 
+                password=password,
+                backend='inicio_sesion.backends.ClienteBackend'
+            )
+
+            if authenticated_user is not None:
+                login(request, authenticated_user) 
+                
+                return redirect('home') 
+
     else:
         form = RegistroUsuarioForm()
     
