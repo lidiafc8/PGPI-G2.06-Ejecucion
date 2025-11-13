@@ -34,6 +34,7 @@ urlpatterns = [
     path('inicio_sesion/', include('inicio_sesion.urls')),
     path('perfil/', include(('perfil.urls','perfil'), namespace='perfil')),
     path('info_tienda/', include(('info_tienda.urls','info_tienda'), namespace='info_tienda')),
+    path('carrito/', include(('carrito.urls','carrito'), namespace='carrito')),
 ]
 
 if settings.DEBUG:
