@@ -97,13 +97,19 @@
 
                                     <div class="flex items-center space-x-4 mr-12 ">
                                         <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                            {{ producto.precio|floatformat:0}},<span class="text-2xl">{{ producto.precio|floatformat:2|slice:"-2:" }}€
-                                            </span>
-                                        </span> 
+                                        {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
+                                        </span>
                                         
-                                        <a href=# class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
-                                            AÑADIR A LA CESTA
-                                        </a>
+                                        {% if not user.is_authenticated or not user.is_staff %}
+                                        <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg 
+                                                    hover:bg-yellow-600 transition duration-300">
+                                                AÑADIR A LA CESTA
+                                            </button>
+                                        </form>
+                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -133,6 +139,40 @@
         <ol id="dot-navigation" class="flex justify-center mt-6 space-x-3"></ol>
 
     </div>
+
+   {% if messages %}
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2">
+        {% for message in messages %}
+        <div class="toast {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <style>
+    .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: #16a34a; /* verde éxito */
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        z-index: 9999;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    </style>
+
+
 </main>
 {% endblock content %}
 
@@ -224,4 +264,61 @@
         startAutoSlide();
     });
     </script>
+
+    <script>
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+
+                const productId = this.dataset.productId;
+                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                fetch(`/cesta/agregar/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: new URLSearchParams({cantidad: 1})
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        showToast(data.mensaje);
+
+                        const badge = document.querySelector('#cesta-badge');
+                        if(badge){
+                            badge.textContent = data.total_items;
+                        } else {
+                            const cestaLink = document.querySelector('a[href="{% url 'ver_cesta' %}"]');
+                            const span = document.createElement('span');
+                            span.id = "cesta-badge";
+                            span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                            span.textContent = data.total_items;
+                            cestaLink.appendChild(span);
+                        }
+                    }
+                });
+            });
+        });
+
+        function showToast(mensaje){
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+
+            // Forzar reflow para que se active la transición
+            void toast.offsetWidth;
+
+            // Mostrar suavemente
+            toast.classList.add('show');
+
+            // Ocultar después de 3 segundos
+            setTimeout(() => {
+                toast.classList.remove('show'); // inicia transición de desaparición
+                setTimeout(() => toast.remove(), 500); // eliminar del DOM
+            }, 3000);
+        }
+        </script>
 {% endblock extra_js %}

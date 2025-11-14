@@ -34,4 +34,4 @@ def post_login_redirect(request):
     if user.is_superuser or (hasattr(user, 'es_administrador') and user.es_administrador):
         return redirect(reverse_lazy('adminpanel:adminpanel_index'))
     else:
-        return redirect(reverse_lazy('/'))
+        return redirect('/')

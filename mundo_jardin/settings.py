@@ -29,7 +29,8 @@ ALLOWED_HOSTS = []
 
 # settings.py¡
 LOGIN_URL = 'inicio_sesion:login'
-LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
+# LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
+LOGIN_REDIRECT_URL = 'inicio_sesion:post_login_redirect'
 
 
 # Application definition
@@ -75,6 +76,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'home.context_processors.productos_en_cesta',
             ],
         },
     },
