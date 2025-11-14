@@ -28,13 +28,11 @@ def cambio_rol(request):
 app_name = 'inicio_sesion'
 
 urlpatterns = [
-    path('login/', auth_views.LoginView.as_view(
-        template_name='login.html', 
-        authentication_form=ClienteAuthenticationForm,
-    ), name='login'),
+    path('login/', views.login_view, name='login'),
 
     path('logout/', custom_logout_view, name='logout'), 
 
     # URL para la redirección condicional
     path('cambio_rol/', cambio_rol, name='cambio_rol'),
+    path('post_login_redirect/', views.post_login_redirect, name='post_login_redirect'),
 ]
