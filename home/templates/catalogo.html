@@ -191,7 +191,7 @@
                         if(badge){
                             badge.textContent = data.total_items;
                         } else {
-                            const cestaLink = document.querySelector('a[href="{% url 'ver_cesta' %}"]');
+                            const cestaLink = document.querySelector('a[href="{% url "carrito:carrito" %}"]');
                             const span = document.createElement('span');
                             span.id = "cesta-badge";
                             span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";

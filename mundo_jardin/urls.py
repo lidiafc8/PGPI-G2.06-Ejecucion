@@ -17,6 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from home import views 
+from carrito import views as carrito_views
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -36,7 +37,7 @@ urlpatterns = [
     path('info_tienda/', include(('info_tienda.urls','info_tienda'), namespace='info_tienda')),
     path('carrito/', include(('carrito.urls','carrito'), namespace='carrito')),
     path('cesta/agregar/<int:producto_id>/', views.agregar_a_cesta, name='agregar_a_cesta'),
-    path('cesta/', views.ver_cesta, name='ver_cesta'),
+    path('cesta/', carrito_views.ver_cesta, name='ver_cesta'),
 ]
 
 if settings.DEBUG:

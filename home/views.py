@@ -5,6 +5,7 @@ from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra
 from django.contrib import messages
 from django.http import JsonResponse
 
+
 # El parámetro 'categoria' contendrá el valor de la URL (ej: 'CORTASETOS_Y_MOTOSIERRAS')
 def index(request, categoria=None):
     productos_a_mostrar = Producto.objects.all()
@@ -119,27 +120,3 @@ def agregar_a_cesta(request, producto_id):
     })
 
 
-def ver_cesta(request):
-    """
-    Muestra la cesta unificada para todos los usuarios.
-    """
-    items = []
-    total = 0
-
-    if request.user.is_authenticated:
-        # Usuario registrado
-        usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
-        cesta, creada = CestaCompra.objects.get_or_create(usuario_cliente=usuario_cliente)
-    else:
-        # Usuario anónimo
-        session_id = request.session.get("cesta_id")
-        if session_id:
-            cesta = CestaCompra.objects.filter(session_id=session_id).first()
-        else:
-            cesta = None
-
-    if cesta:
-        items = cesta.items.all()
-        total = cesta.get_total_cesta()
-
-    return render(request, "cesta.html", {"items": items, "total": total})

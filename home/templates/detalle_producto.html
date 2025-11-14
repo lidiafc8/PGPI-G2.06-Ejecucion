@@ -416,7 +416,7 @@ function changeQuantity(button, amount) {
             if(badge){
                 badge.textContent = totalItems;
             } else {
-                const cestaLink = document.querySelector('a[href="{% url "ver_cesta" %}"]');
+                const cestaLink = document.querySelector('a[href="{% url "carrito:carrito" %}"]');
                 if(cestaLink){
                     const span = document.createElement('span');
                     span.id = "cesta-badge";

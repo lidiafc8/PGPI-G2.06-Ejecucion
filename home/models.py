@@ -184,7 +184,7 @@ class CestaCompra(models.Model):
         return f'Cesta anónima {self.session_id}'
 
     def get_total_cesta(self):
-        return sum(item.total for item in self.items.all())
+        return sum(item.total* item.cantidad for item in self.items.all())
 
 
 class ItemCestaCompra(models.Model):
