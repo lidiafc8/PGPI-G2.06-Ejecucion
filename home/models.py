@@ -1,4 +1,5 @@
 from django.db import models
+import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password
 
@@ -174,11 +175,14 @@ class Producto(models.Model):
         return self.nombre
 
 class CestaCompra(models.Model):
+    usuario_cliente = models.OneToOneField('UsuarioCliente', on_delete=models.CASCADE, null=True, blank=True)
+    session_id = models.UUIDField(default=None, null=True, blank=True, unique=True)
 
-    usuario_cliente= models.OneToOneField('UsuarioCliente', on_delete=models.CASCADE)
     def __str__(self):
-        return f'Cesta de {self.usuario_cliente.usuario.corre_electronico}'
-    
+        if self.usuario_cliente:
+            return f'Cesta de {self.usuario_cliente.usuario.corre_electronico}'
+        return f'Cesta anónima {self.session_id}'
+
     def get_total_cesta(self):
         return sum(item.total for item in self.items.all())
 

@@ -56,8 +56,8 @@
 </h1>
             
             <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                {{ producto.precio|floatformat:0}},<span class="text-2xl">{{ producto.precio|floatformat:2|slice:"-2:" }}€</span>
-                            </span>
+                {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
+            </span>
             
             <p style="font-size: 1em; color: {% if producto.stock > 10 %} green {% else %} orang e{% endif %}; margin-bottom: 25px;">
                 {% if producto.esta_agotado or producto.stock == 0 %}
@@ -70,20 +70,26 @@
                 {% endif %}
             </p>
 
+            {% if not user.is_authenticated or not user.is_staff %}
             <div class="action-row" style="display: flex; align-items: center; gap: 20px; margin-bottom: 40px;">
                 {% if producto.stock != 0 %}
-                <div class="quantity-control" style="display: flex; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
-                    <button type="button" onclick="changeQuantity(-1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">-</button>
-                    <input type="number" id="quantity" value="1" min="1" max="{{ producto.stock }}" style="width: 60px; text-align: center; border: none; outline: none;">
-                    <button type="button" onclick="changeQuantity(1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">+</button>
-                </div>
-
-
-                <button type="button" class="add-to-cart-button" style="padding: 10px 20px; background-color: #bf7149; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" onclick="addToCart()">
-                    Añadir a la Cesta
-                </button>
+                <form class="add-to-cart-form" data-product-id="{{ producto.id }}" style="display: flex; align-items: center; gap: 10px;">
+                    {% csrf_token %}
+                    <div class="quantity-control" style="display: flex; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
+                        <button type="button" onclick="changeQuantity(this, -1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">-</button>
+                        <input type="number" name="cantidad" class="quantity-input" value="1" min="1" max="{{ producto.stock }}" style="width: 60px; text-align: center; border: none; outline: none;">
+                        <button type="button" onclick="changeQuantity(this, 1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">+</button>
+                    </div>
+                    <button type="submit" class="add-to-cart-button" style="padding: 10px 20px; background-color: #bf7149; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
+                        Añadir a la Cesta
+                    </button>
+                </form>
                 {% endif %}
             </div>
+            {% endif %}
+
+            
+
         <div class="info-importante bg-white border border-gray-200 rounded-xl shadow-sm divide-y divide-gray-200 mt-6">
 
           
@@ -239,19 +245,22 @@
                     </div>
 
                     <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                        {{ relacionado.precio|floatformat:0 }},
-                        <span class="text-2xl">{{ relacionado.precio|floatformat:2|slice:"-2:" }}€</span>
+                        {{ relacionado.euros }},<span class="text-2xl">{{ relacionado.centavos|stringformat:"02d" }}€</span>
                     </span>
 
                 </div>
 
                 <!-- BOTÓN AÑADIR -->
-                <button onclick="event.stopPropagation(); window.location.href='/añadir-al-carrito/{{ relacionado.pk }}';"
-                        class="w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md
-                               border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white
-                               transition duration-150 relative z-10 mt-2">
-                    Añadir
+                 {% if not user.is_authenticated or not user.is_staff %}
+                <button onclick="event.stopPropagation();"
+                    class="add-related w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
+                        border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
+                        transition duration-150 relative z-10 mt-2"
+                    data-product-id="{{ relacionado.pk }}">
+                Añadir a la Cesta
                 </button>
+                {% endif %}
+
 
             </a>
             {% endfor %}
@@ -288,79 +297,196 @@
     </div>
     {% endif %}
 
+    {% if messages %}
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2">
+        {% for message in messages %}
+        <div class="toast {{ message.tags }}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <style>
+    .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: #16a34a; /* verde éxito */
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        z-index: 9999;
+    }
+
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    </style>
+
+
 </div>
 
-    <script>
-    function changeQuantity(change) {
-        const quantityInput = document.getElementById('quantity');
-        let current = parseInt(quantityInput.value);
-        let max = parseInt(quantityInput.max);
+
+<script>
+function changeQuantity(button, amount) {
+        const quantityControl = button.parentElement;
+        const input = quantityControl.querySelector('.quantity-input');
+        const min = parseInt(input.min) || 1;
+        const max = parseInt(input.max); // Stock
         
-        let newValue = current + change;
-        
-        if (newValue >= 1 && newValue <= max) {
-            quantityInput.value = newValue;
+        let newValue = (parseInt(input.value) || 1) + amount;
+
+        // Asegurarse de que el valor no sea menor que el mínimo
+        if (newValue < min) {
+            newValue = min;
         }
+        
+        // Asegurarse de que el valor no excede el stock (max)
+        if (!isNaN(max) && newValue > max) {
+            newValue = max;
+        }
+        
+        input.value = newValue;
     }
-    
-    function addToCart() {
-        const quantity = document.getElementById('quantity').value;
-        // Aquí iría la lógica AJAX o la redirección para añadir el producto al carrito
-        alert(`Añadido ${quantity} unidad(es) de {{ producto.nombre }} a la cesta.`);
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const carousel = document.getElementById('product-carousel');
-        
-        // ********************************************
-        // CORRECCIÓN 1: Usar los IDs correctos (prev-btn y next-btn)
-        // ********************************************
-        const prevButton = document.getElementById('prev-btn');
-        const nextButton = document.getElementById('next-btn');
-        
-        // ********************************************
-        // CORRECCIÓN 2: Recalcular el desplazamiento
-        // Queremos desplazar 3 tarjetas (el valor 3 es ajustable)
-        // La tarjeta es ~20% del ancho del contenedor (1200px) + 20px de gap.
-        // ********************************************
-        const cardsToShow = 5;
-        const cardsToScroll = 3; // Cuántas tarjetas desplazar
-        const gapSize = 20;
-        
-        let CARD_WIDTH_PLUS_GAP = 0;
-
-        if (carousel && carousel.children.length > 0) {
-            // Obtenemos el ancho calculado de una sola tarjeta (incluyendo su margen derecho si lo hubiera)
-            const firstCard = carousel.children[0];
-            // clientWidth + margin derecho. Usamos offsetWidth para incluir padding/border
-            CARD_WIDTH_PLUS_GAP = firstCard.offsetWidth + gapSize;
-        } else {
-             // Fallback si no hay productos (aproximadamente 240px + 20px gap)
-             CARD_WIDTH_PLUS_GAP = 260;
-        }
-        
-        const scrollAmount = CARD_WIDTH_PLUS_GAP * cardsToScroll; 
 
 
-        if (carousel && prevButton && nextButton) {
-            prevButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({
-                    left: -scrollAmount,
-                    behavior: 'smooth'
-                });
+    // ===============================================
+    // SCRIPT PRINCIPAL DE LA PÁGINA
+    // ===============================================
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // ----- Lógica del Carrusel -----
+        const carousel = document.getElementById('product-carousel');
+        const prevButton = document.getElementById('prev-btn');
+        const nextButton = document.getElementById('next-btn');
+        
+        const cardsToScroll = 3; 
+        const gapSize = 20;
+        
+        let CARD_WIDTH_PLUS_GAP = 0;
+
+        if (carousel && carousel.children.length > 0) {
+            const firstCard = carousel.children[0];
+            CARD_WIDTH_PLUS_GAP = firstCard.offsetWidth + gapSize;
+        } else {
+             CARD_WIDTH_PLUS_GAP = 260; // Fallback
+        }
+        
+        const scrollAmount = CARD_WIDTH_PLUS_GAP * cardsToScroll; 
+
+        if (carousel && prevButton && nextButton) {
+            prevButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            nextButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+        }
+
+        // ----- Lógica del Carrito (Unificada) -----
+
+        // ===== Función para mostrar toast =====
+        function showToast(mensaje){
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = mensaje;
+            document.body.appendChild(toast);
+
+            void toast.offsetWidth; // Forzar reflow
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        // ===== Función para actualizar badge =====
+        function actualizarBadge(totalItems){
+            const badge = document.querySelector('#cesta-badge');
+            if(badge){
+                badge.textContent = totalItems;
+            } else {
+                const cestaLink = document.querySelector('a[href="{% url "ver_cesta" %}"]');
+                if(cestaLink){
+                    const span = document.createElement('span');
+                    span.id = "cesta-badge";
+                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                    span.textContent = totalItems;
+                    cestaLink.appendChild(span);
+                }
+            }
+        }
+
+        // ===== Función genérica para agregar al carrito =====
+        function agregarAlCarrito(productId, cantidad, csrfToken){
+            fetch(`/cesta/agregar/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded' // Asegura el formato correcto
+                },
+                body: new URLSearchParams({ 'cantidad': cantidad })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success){
+                    showToast(data.mensaje || 'Producto añadido');
+                    actualizarBadge(data.total_items);
+                } else {
+                    showToast(data.mensaje || 'Error al añadir el producto');
+                }
+            })
+            .catch(error => {
+                console.error('Error en fetch:', error);
+                showToast('Error de conexión');
             });
+        }
 
-            nextButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({
-                    left: scrollAmount,
-                    behavior: 'smooth'
-                });
-            });
-        }
+        // ===== Formulario del detalle del producto =====
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const productId = this.dataset.productId;
+                const cantidad = parseInt(this.querySelector('.quantity-input').value) || 1;
+                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+                agregarAlCarrito(productId, cantidad, csrfToken);
+            });
+        });
+
+        // ===== Botones de productos relacionados =====
+        document.querySelectorAll('.add-related').forEach(btn => {
+            btn.addEventListener('click', function(e){
+                e.preventDefault(); // Evita navegar a la página del producto
+                const productId = this.dataset.productId;
+                const cantidad = 1; // siempre 1
+                
+                // ### CORRECCIÓN 2: Buscar CUALQUIER token en la página ###
+                const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                
+                if (csrfTokenInput) {
+                    agregarAlCarrito(productId, cantidad, csrfTokenInput.value);
+                } else {
+                    console.error('No se pudo encontrar el CSRF token');
+                    showToast('Error de seguridad. Recargue la página.');
+                }
+            });
+        });
+
     });
 </script>
+
+
 </main>
 {% endblock content %}
 
