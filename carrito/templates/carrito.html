@@ -14,6 +14,8 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Tu Carrito</h1>
+            <hr class="mb-8">
+
     
     <div class="flex flex-col lg:flex-row gap-8">
         
@@ -104,12 +106,28 @@
                     <span class="text-xl font-bold text-gray-800">Total</span>
                     <span class="text-2xl font-extrabold text-gray-800">{{ total }} €</span>
                 </div>
-                <p class="text-xs text-right text-gray-600">Impuestos incluidos</p>
             </div>
             
-            <button class="w-full {% if articulos %}bg-green-600 hover:bg-green-700{% else %}bg-gray-400{% endif %} text-white font-bold py-3 rounded-md shadow-lg transition duration-150" {% if not articulos %}disabled{% endif %}>
-                Continuar
-            </button>
+            <div class="space-y-2">
+    {% if articulos %}
+    <a href="{% url 'carrito:checkout' %}">
+        <button class="w-full bg-[#6a760c] hover:bg-[#bf7149] text-white font-bold py-3 rounded-md transition duration-150">
+            Continuar al Pago
+        </button>
+    </a>
+    {% else %}
+    <button class="w-full bg-gray-400 text-white font-bold py-3 rounded-md " disabled>
+        Continuar al Pago
+    </button>
+    {% endif %}
+    <a href="{% url 'home' %}">
+        <button class="w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
+                    border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
+                    transition duration-150 relative z-10 mt-2">
+            Seguir Comprando
+        </button>
+    </a>
+</div>
             
         </div>
         

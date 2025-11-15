@@ -4,9 +4,16 @@ from django.http import JsonResponse
 from home.models import Producto 
 from decimal import Decimal 
 from django.contrib import messages
+from home.models import (
+    Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
+    Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido
+)
 
-from home.models import CestaCompra, UsuarioCliente, ItemCestaCompra
 import uuid 
+from django.db import transaction # Importar para asegurar la integridad de los datos
+
+
+
 
 def obtener_cesta_actual(request):
     cesta = None
@@ -118,3 +125,130 @@ def ver_cesta(request):
     }
 
     return render(request, "carrito.html", context)
+
+def checkout(request):
+    """
+    Vista que muestra la página de pago (GET).
+    Asegura que los totales y los artículos de la cesta se pasen a la plantilla.
+    """
+    cesta = obtener_cesta_actual(request)
+    
+    if not cesta or not cesta.items.exists():
+         messages.error(request, "Tu carrito está vacío. Añade productos antes de pagar.")
+         return redirect('carrito:carrito')
+         
+    # Cálculos necesarios para mostrar los valores iniciales en la plantilla
+    subtotal = Decimal('0.00')
+    for item in cesta.items.all():
+        subtotal += item.producto.precio * item.cantidad
+    coste_envio= Decimal('0.00')
+    coste_envio = 0
+    if(subtotal < 50):
+        coste_envio =  5
+  
+    total_inicial=subtotal+coste_envio
+   
+    # En un entorno real, aquí se buscaría la dirección y el teléfono del usuario
+    
+    context = {
+        'articulos': cesta.items.all(), # Usamos la lista de ItemsCestaCompra directamente para el breadcrumbs count
+        'subtotal': f"{subtotal:.2f}",
+        'coste_envio':coste_envio,
+        'total': f"{total_inicial:.2f}", # Total inicial para la plantilla
+    }
+    
+    return render(request, "pago.html", context)
+
+@require_POST
+@transaction.atomic 
+def procesar_pago(request):
+    """
+    Procesa la solicitud POST del formulario de pago:
+    1. Valida y calcula costes.
+    2. Crea el Pedido e ItemPedido.
+    3. Reduce el stock.
+    4. Vacía la cesta.
+    """
+    cesta = obtener_cesta_actual(request)
+    
+    if not cesta or not cesta.items.exists():
+        messages.error(request, "El carrito está vacío. No se puede procesar el pago.")
+        return redirect('carrito:carrito')
+
+    if not request.user.is_authenticated:
+        messages.error(request, "Debes iniciar sesión para completar la compra.")
+        return redirect('carrito:checkout') # O a la página de login
+        
+    try:
+        usuario_cliente = get_object_or_404(UsuarioCliente, usuario=request.user)
+    except UsuarioCliente.DoesNotExist:
+        messages.error(request, "Usuario no encontrado.")
+        return redirect('carrito:checkout')
+
+    # 1. Obtener datos del formulario
+    shipping_option = request.POST.get('shipping_option') # 'standard' o 'express'
+    payment_method_value = request.POST.get('payment_method') # 'gateway' o 'cash'
+    
+    # 2. Calcular costes
+    subtotal = Decimal('0.00')
+    for item in cesta.items.all():
+        subtotal += item.producto.precio * item.cantidad
+
+    coste_entrega = SHIPPING_COSTS.get(shipping_option, SHIPPING_COSTS['standard'])
+    comision_pago = Decimal('0.00')
+    estado_pedido = EstadoPedido.PAGADO
+
+    if payment_method_value == 'cash':
+        comision_pago = CASH_COMMISSION
+        metodo_pago = TipoPago.CONTRAREEMBOLSO
+        # En caso de contrarrembolso, el estado inicial puede ser ENVIADO/PENDIENTE_PAGO
+        # Usaremos PAGADO aquí, pero en un entorno real debe ser un estado intermedio
+    else: 
+        # Simulación de pago con pasarela externa (asumimos éxito)
+        metodo_pago = TipoPago.PASARELA_PAGO
+
+    total_importe = subtotal + coste_entrega + comision_pago
+    
+    # 3. Crear el Pedido (Registro principal)
+    # Dirección y datos de contacto tomados del UsuarioCliente
+    pedido = Pedido.objects.create(
+        usuario_cliente=usuario_cliente,
+        estado=estado_pedido,
+        subtotal_importe=subtotal,
+        coste_entrega=coste_entrega + comision_pago, # Coste total de envío y comisión
+        total_importe=total_importe,
+        metodo_pago=metodo_pago,
+        tipo_envio=TipoEnvio.DOMICILIO, # Asumimos DOMICILIO para Envío Estándar/Express
+        direccion_envio=usuario_cliente.direccion_envio,
+        correo_electronico=usuario_cliente.usuario.corre_electronico,
+        telefono=usuario_cliente.telefono or '',
+    )
+
+    # 4. Crear ItemPedido y Actualizar Stock
+    for item_cesta in cesta.items.select_related('producto'):
+        producto = item_cesta.producto
+        
+        # ⚠️ Verificación de Stock y Reducción
+        if item_cesta.cantidad > producto.stock:
+             # Si el stock falla en este punto, revertimos la transacción
+             messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
+             raise ValueError("Stock insuficiente.") 
+
+        # Crear ItemPedido (Guarda el precio del momento)
+        ItemPedido.objects.create(
+            pedido=pedido,
+            producto=producto,
+            cantidad=item_cesta.cantidad,
+            precio_unitario=item_cesta.producto.precio,
+        )
+        
+        # Reducir Stock
+        producto.stock -= item_cesta.cantidad
+        producto.save()
+
+
+    # 5. Vaciar Cesta
+    cesta.items.all().delete()
+    
+    messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
+    return redirect('carrito:carrito') # O redirigir a una página de confirmación real
