@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
@@ -217,9 +218,28 @@ class Pedido(models.Model):
     correo_electronico = models.EmailField() 
     telefono = models.CharField(max_length=15, blank=True)
     pago = models.BooleanField(default=False)
+    tracking_id = models.CharField(max_length=50, unique=True, blank = True, null = True, verbose_name="ID de seguimiento")
 
+    MINIMO_ENVIO_GRATUITO = Decimal('50.00')
+    COSTO_ESTANDAR_ENVIO = Decimal('5.00')
+    
+    def calculo_coste_entrega(self):
+        """Calcula el coste de entrega según las reglas de negocio."""
+        if self.tipo_envio == TipoEnvio.RECOGIDA_TIENDA:
+            return Decimal('0.00')
+        if self.subtotal_importe >= self.MINIMO_ENVIO_GRATUITO:
+            return Decimal('0.00')
+        return self.COSTO_ESTANDAR_ENVIO
+    
+    def save(self, *args, **kwargs):
+        if not self.tracking_id:
+            self.tracking_id = str(uuid.uuid4().hex[:8]).upper() 
+        self.coste_entrega = self.calculo_coste_entrega()
+        self.total_importe = self.subtotal_importe + self.coste_entrega
+        super().save(*args, **kwargs)
+    
     def __str__(self):
-        return f'Pedido #{self.id} de {self.usuario_cliente.usuario.corre_electronico}' 
+        return f'Pedido #{self.id} ({self.tracking_id}) de {self.usuario_cliente.usuario.corre_electronico if self.usuario_cliente else self.correo_electronico}'
 
 class ItemPedido(models.Model):
 

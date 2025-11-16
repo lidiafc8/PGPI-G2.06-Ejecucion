@@ -1,11 +1,11 @@
 # perfil/views.py
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.urls import reverse_lazy 
-from home.models import UsuarioCliente 
+from home.models import UsuarioCliente, Pedido
 from .forms import UsuarioForm, PerfilClienteForm, UsuarioAdminForm
 
 Usuario = get_user_model() 
@@ -45,6 +45,37 @@ def mi_perfil(request):
     }
     
     return render(request, 'mi_perfil.html', contexto_cliente)
+
+@login_required
+def lista_pedidos_cliente(request):
+    """Muestra una lista de todos los pedidos realizados por el cliente."""
+    try:
+        usuario_cliente = request.user.usuariocliente
+    except UsuarioCliente.DoesNotExist:
+        messages.error(request, "Tu perfil no está registrado como cliente.")
+        return redirect('perfil:mi_perfil') 
+    pedidos = Pedido.objects.filter(usuario_cliente=usuario_cliente).order_by('fecha_creacion')
+    
+    context = {
+        'pedidos': pedidos,
+    }
+    return render(request, 'lista_pedidos_cliente.html', context)
+
+@login_required
+def ver_ticket_pedido(request, pedido_id):
+    """Muestra los detalles completos de un pedido específico (el ticket/factura)."""
+    try:
+        usuario_cliente = request.user.usuariocliente
+    except UsuarioCliente.DoesNotExist:
+        messages.error(request, "Acceso denegado: debes ser un cliente.")
+        return redirect('perfil:mi_perfil') 
+    pedido = get_object_or_404(Pedido, id=pedido_id, usuario_cliente=usuario_cliente)
+    items_pedido = pedido.items.all() 
+    context = {
+        'pedido': pedido,
+        'items': items_pedido,
+    }
+    return render(request, 'ticket_pedido.html', context)
 
 @login_required
 def admin_perfil(request):
