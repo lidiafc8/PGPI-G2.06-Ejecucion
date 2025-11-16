@@ -18,7 +18,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     
     <h1 class="text-3xl font-bold text-gray-800 mb-6">Proceso de Pago</h1>
-            <hr class="mb-8">
+    <hr class="mb-8">
 {% if messages %}
     <div class="mb-6 space-y-3">
         {% for message in messages %}
@@ -45,7 +45,7 @@
                                     <p class="font-medium text-gray-800">Envío a Domicilio</p>
                                     <p class="text-sm text-gray-500">Entrega en 48 horas. (5€, gratis a partir de 50€)</p>
                                 </div>
-                                <span class="font-bold text-sm " data-coste="{{ coste_envio }}">{{coste_envio}} €</span>
+                                <span class="font-bold text-sm " data-coste="{% if coste_envio > 0 %}{{ coste_envio }}{% else %}0{% endif %}">{% if coste_envio > 0 %}{{coste_envio}} €{% else %}GRATIS{% endif %}</span>
                             </div>
                         </label>
                         
@@ -59,7 +59,7 @@
                                 <div>
                                     <label for="address_city" class="block text-sm font-medium text-gray-700">Ciudad</label>
                                     <input type="text" id="address_city" name="address_city" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: Madrid" required>
-                                                                </div>
+                                </div>
                                 <div>
                                     <label for="address_zip" class="block text-sm font-medium text-gray-700">Código Postal</label>
                                     <input type="text" id="address_zip" name="address_zip" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: 28001" required>
@@ -99,23 +99,83 @@
                             <span class="font-medium text-gray-800">Pasarela de Pago (Tarjeta Crédito/Débito)</span>
                         </label>
                         
+                        {# INICIO DE LA SECCIÓN DE TARJETA MODIFICADA #}
                         <div id="gateway-details" class="p-4 border border-green-200 bg-[#f9fdf2] rounded-lg space-y-3">
-                            <p class="font-semibold text-gray-700">Introduce los datos de tu tarjeta:</p>
+                            
+                            {# BLOQUE DE SELECCIÓN DE TARJETAS #}
+                            {% if tiene_tarjeta_guardada %}
+                                <div class="space-y-2">
+                                    <label for="select_card" class="block text-sm font-medium text-gray-700">Seleccionar Tarjeta Guardada:</label>
+                                    <div class="flex gap-2">
+                                        <select id="select_card" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500">
+                                            {% for tarjeta in tarjetas_para_contexto %}
+                                                <option 
+                                                    value="{{ tarjeta.id }}" 
+                                                    data-fecha="{{ tarjeta.fecha_expiracion }}"
+                                                    data-ultimos="{{ tarjeta.ultimos_cuatro }}"
+                                                    {% if forloop.first %}selected{% endif %}>
+                                                    {{ tarjeta.numero_enmascarado }}
+                                                </option>
+                                            {% endfor %}
+                                            <option value="nueva">Usar una nueva tarjeta</option>
+                                        </select>
+                                        <button type="button" id="manage_cards_btn" class="text-sm px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150 whitespace-nowrap">
+                                            Gestionar
+                                        </button>
+                                    </div>
+                                    <input type="hidden" id="selected_card_id" name="selected_card_id" 
+                                        value="{% if tiene_tarjeta_guardada %}{{ tarjetas_para_contexto.0.id }}{% else %}nueva{% endif %}">
+                                </div>
+                                <hr class="my-3">
+                            {% endif %}
+                            
+                            <p class="font-semibold text-gray-700">Datos de la Tarjeta:</p>
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="col-span-2">
-                                    <label for="card_number" class="block text-sm font-medium text-gray-700">Número de Tarjeta</label>
-                                    <input type="text" id="card_number" name="card_number" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="XXXX XXXX XXXX XXXX" required>
+                                    <label for="card_number" class="block text-sm font-medium text-gray-700">Número de Tarjeta (16 dígitos)</label>
+                                    <input type="text" id="card_number" name="card_number" inputmode="numeric" pattern="\d{16}" maxlength="16" 
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" 
+                                        placeholder="XXXX XXXX XXXX XXXX" required 
+                                        {% if tiene_tarjeta_guardada %}
+                                        value="{{ tarjetas_para_contexto.0.numero_enmascarado }}" readonly
+                                        {% endif %}>
                                 </div>
                                 <div>
                                     <label for="expiry_date" class="block text-sm font-medium text-gray-700">Fecha de Caducidad (MM/AA)</label>
-                                    <input type="text" id="expiry_date" name="expiry_date" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="MM/AA" required>
+                                    <input type="text" id="expiry_date" name="expiry_date" inputmode="numeric" pattern="(0[1-9]|1[0-2])\/\d{2}" maxlength="5" 
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" 
+                                        placeholder="MM/AA" required 
+                                        {% if tiene_tarjeta_guardada %}
+                                        value="{{ tarjetas_para_contexto.0.fecha_expiracion }}" readonly
+                                        {% endif %}>
                                 </div>
                                 <div>
-                                    <label for="cvv" class="block text-sm font-medium text-gray-700">CVV</label>
-                                    <input type="text" id="cvv" name="cvv" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="123" required>
+                                    <label for="cvv" class="block text-sm font-medium text-gray-700">CVV (3 dígitos)</label>
+                                    <input type="text" id="cvv" name="cvv" inputmode="numeric" pattern="\d{3}" maxlength="3" 
+                                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" 
+                                        placeholder="123" required 
+                                        value="">
                                 </div>
                             </div>
+                            
+                            {# LÓGICA CONDICIONAL DE GUARDADO DE TARJETA #}
+                            <div id="save_card_checkbox_container" {% if tiene_tarjeta_guardada %}class="hidden"{% endif %}>
+                                {% if user.is_authenticated %}
+                                    <div class="flex items-center mt-3">
+                                        <input type="checkbox" id="save_card" name="save_card" class="form-checkbox h-4 w-4 text-green-600 rounded focus:ring-green-500">
+                                        <label for="save_card" class="ml-2 block text-sm text-gray-900">
+                                            Guardar esta tarjeta para futuras compras.
+                                        </label>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div id="saved_card_info_message" {% if not tiene_tarjeta_guardada %}class="hidden"{% endif %} class="mt-3 p-3 bg-green-50 rounded-lg text-sm text-gray-700">
+                                💳 **Tarjeta Guardada Seleccionada.** Por seguridad, solo se muestra el número enmascarado y **debes introducir el CVV** en cada compra.
+                            </div>
+                            
                         </div>
+                        {# FIN DE LA SECCIÓN DE TARJETA MODIFICADA #}
                         
                         <div class="h-px bg-gray-200 my-4"></div>
 
@@ -131,7 +191,7 @@
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. Datos de Contacto</h2>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. Datos de Contacto</h2>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="contact_first_name" class="block text-sm font-medium text-gray-700">Nombre</label>
@@ -167,7 +227,7 @@
                         <div class="flex justify-between text-sm text-gray-700" id="gastos_envio_linea">
                             <span>Gastos de envío:</span>
                             <span class="font-medium text-[#bf7149]" id="shipping_cost_display">
-                                + {{coste_envio}} € (Est.)
+                                {% if coste_envio > 0 %}+ {{coste_envio}} € (Est.){% else %}GRATIS{% endif %}
                             </span>
                         </div>
                         
@@ -187,8 +247,8 @@
                     </button>
                     <a href="{% url 'carrito:carrito' %}" class="block">
                         <button type="button" class="add-related w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
-                                 border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
-                                 transition duration-150 relative z-10 ">
+                                     border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
+                                     transition duration-150 relative z-10 ">
                             Volver al Carrito
                         </button>
                     </a>
@@ -202,125 +262,269 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bloque de Elementos de Pago
-        const gatewayRadio = document.getElementById('payment-gateway');
-        const cashRadio = document.getElementById('payment-cash');
-        const gatewayDetails = document.getElementById('gateway-details');
-        const cashDetails = document.getElementById('cash-details');
-        
-        // Bloque de Inputs de Tarjeta
-        const cardNumberInput = document.getElementById('card_number');
-        const expiryDateInput = document.getElementById('expiry_date');
-        const cvvInput = document.getElementById('cvv');
 
-        // Bloque de Elementos de Envío
-        const shippingStandardRadio = document.getElementById('shipping-standard');
-        const shippingPickupRadio = document.getElementById('shipping-pickup');
-        const shippingDetailsStandard = document.getElementById('shipping-details-standard'); // Nuevo desplegable de dirección
-        const pickupDetailsMessage = document.getElementById('pickup-details-message');     // Nuevo mensaje de tienda
-        
-        // Bloque de Inputs de Dirección
-        const addressStreetInput = document.getElementById('address_street');
-        const addressCityInput = document.getElementById('address_city');
-        const addressZipInput = document.getElementById('address_zip');
-        const addressCountryInput = document.getElementById('address_country');
+    /**
+     * Valida si la cadena tiene el formato MM/AA y no ha expirado.
+     * @param {string} date - La fecha en formato MM/AA.
+     */
+    function isValidExpiryDate(date) {
+        const pattern = /^(0[1-9]|1[0-2])\/\d{2}$/;
+        if (!pattern.test(date)) {
+            return false;
+        }
+        
+        const [month, yearStr] = date.split('/');
+        const now = new Date();
+        const currentYear = now.getFullYear() % 100;
+        const currentMonth = now.getMonth() + 1;
 
-        // Referencias para el resumen de pedido
-        const shippingCostDisplay = document.getElementById('shipping_cost_display');
-        const totalValueDisplay = document.getElementById('total_value_display');
-        const subtotalElement = document.getElementById('subtotal_value');
+        const inputYear = parseInt(yearStr, 10);
+        const inputMonth = parseInt(month, 10);
 
-        // Valores iniciales (se asume que {{ coste_envio }} y {{ subtotal }} son flotantes o números en el contexto de Django)
-        // Usamos la propiedad data-coste del span hermano del radio button estándar
-        const initialShippingCostSpan = shippingStandardRadio.closest('label').querySelector('span[data-coste]');
-        const initialShippingCost = parseFloat(initialShippingCostSpan ? initialShippingCostSpan.dataset.coste : 0) || 0;
-        const subtotal = parseFloat(subtotalElement.textContent.trim()) || 0;
+        if (inputYear > currentYear) {
+            return true;
+        }
+        
+        if (inputYear === currentYear && inputMonth >= currentMonth) {
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Valida si el número de tarjeta es un número de 16 dígitos.
+     * Si el campo es de solo lectura (tarjeta guardada), solo valida el formato.
+     * @param {string} cardNumber - El número de tarjeta.
+     */
+    function isValidCardNumber(cardNumber) {
+        // Si el campo es de solo lectura (readonly) y empieza con '*', asumimos que es una tarjeta guardada
+        if (cardNumberInput.readOnly && cardNumber.startsWith('*')) {
+            // Validamos que el formato enmascarado sea correcto (ej: ************1111)
+            return /^[*]{12}\d{4}$/.test(cardNumber);
+        }
+        
+        // Para una tarjeta nueva, validamos 16 dígitos.
+        const cleaned = cardNumber.replace(/[\s-]/g, '');
+        return /^\d{16}$/.test(cleaned);
+    }
+
+    /**
+     * Valida si el CVV es un número de 3 dígitos.
+     * @param {string} cvv - El CVV.
+     */
+    function isValidCVV(cvv) {
+        return /^\d{3}$/.test(cvv);
+    }
 
 
-        // --- Lógica de Tipo de Pago (Existente) ---
-        function togglePaymentDetails() {
-            if (gatewayRadio.checked) {
-                // Mostrar detalles de tarjeta, hacer campos requeridos
-                gatewayDetails.classList.remove('hidden');
-                cashDetails.classList.add('hidden');
-                
-                cardNumberInput.required = true;
-                expiryDateInput.required = true;
-                cvvInput.required = true;
+    document.addEventListener('DOMContentLoaded', function() {
+        const paymentForm = document.getElementById('payment-form');
+        
+        // Bloque de Elementos de Pago
+        const gatewayRadio = document.getElementById('payment-gateway');
+        const cashRadio = document.getElementById('payment-cash');
+        const gatewayDetails = document.getElementById('gateway-details');
+        const cashDetails = document.getElementById('cash-details');
+        
+        // Bloque de Inputs de Tarjeta
+        const cardNumberInput = document.getElementById('card_number');
+        const expiryDateInput = document.getElementById('expiry_date');
+        const cvvInput = document.getElementById('cvv');
 
-            } else if (cashRadio.checked) {
-                // Ocultar detalles de tarjeta, quitar el requisito
-                gatewayDetails.classList.add('hidden');
-                cashDetails.classList.remove('hidden');
-                
-                cardNumberInput.required = false;
-                expiryDateInput.required = false;
-                cvvInput.required = false;
-            }
-        }
+        // NUEVOS ELEMENTOS DE SELECCIÓN DE TARJETA
+        const selectCard = document.getElementById('select_card');
+        const selectedCardIdInput = document.getElementById('selected_card_id');
+        const saveCardCheckboxContainer = document.getElementById('save_card_checkbox_container');
+        const savedCardInfoMessage = document.getElementById('saved_card_info_message');
+        const manageCardsBtn = document.getElementById('manage_cards_btn');
+        // FIN NUEVOS ELEMENTOS
 
-        // --- Lógica de Tipo de Envío (Modificada) ---
-        function updateShippingCostAndAddress() {
-            let currentShippingCost = 0;
-            let shippingText = '';
+        // Bloque de Elementos de Envío
+        const shippingStandardRadio = document.getElementById('shipping-standard');
+        const shippingPickupRadio = document.getElementById('shipping-pickup');
+        const shippingDetailsStandard = document.getElementById('shipping-details-standard');
+        const pickupDetailsMessage = document.getElementById('pickup-details-message');
+        
+        // Bloque de Inputs de Dirección
+        const addressStreetInput = document.getElementById('address_street');
+        const addressCityInput = document.getElementById('address_city');
+        const addressZipInput = document.getElementById('address_zip');
+        const addressCountryInput = document.getElementById('address_country');
 
-            if (shippingPickupRadio.checked) {
-                // Opción Recogida en Tienda (Gratis)
-                currentShippingCost = 0;
-                shippingText = 'GRATIS';
-                
-                // Mostrar mensaje de recogida, ocultar detalles de dirección, quitar requisitos de dirección
-                pickupDetailsMessage.classList.remove('hidden');
-                shippingDetailsStandard.classList.add('hidden');
+        // Referencias para el resumen de pedido
+        const shippingCostDisplay = document.getElementById('shipping_cost_display');
+        const totalValueDisplay = document.getElementById('total_value_display');
+        const subtotalElement = document.getElementById('subtotal_value');
 
-                addressStreetInput.required = false;
-                addressCityInput.required = false;
-                addressZipInput.required = false;
-                addressCountryInput.required = false;
+        // Valores iniciales
+        const initialShippingCostSpan = shippingStandardRadio.closest('label').querySelector('span[data-coste]');
+        const initialShippingCost = parseFloat(initialShippingCostSpan ? initialShippingCostSpan.dataset.coste : 0) || 0;
+        const subtotal = parseFloat(subtotalElement.textContent.trim().replace(/[€\s]/g, '')) || 0;
 
-                // Estilo para GRATIS
-                shippingCostDisplay.classList.remove('text-[#bf7149]');
-                shippingCostDisplay.classList.add('text-[#6a760c]', 'font-bold');
 
-            } else {
-                // Opción Envío a Domicilio (Estándar)
-                currentShippingCost = initialShippingCost;
-                shippingText = `+ ${currentShippingCost.toFixed(2)} € (Est.)`;
-                
-                // Ocultar mensaje de recogida, mostrar detalles de dirección, hacer campos de dirección requeridos
-                pickupDetailsMessage.classList.add('hidden');
-                shippingDetailsStandard.classList.remove('hidden');
+        // --- LÓGICA DE SELECCIÓN DE TARJETA (NUEVA) ---
+        function handleCardSelection() {
+            if (!selectCard) return; // Salir si no hay selector (e.g., usuario no autenticado o sin tarjetas)
+            
+            const selectedOption = selectCard.options[selectCard.selectedIndex];
+            const cardValue = selectedOption.value; // ID de la tarjeta o 'nueva'
 
-                addressStreetInput.required = true;
-                addressCityInput.required = true;
-                addressZipInput.required = true;
-                addressCountryInput.required = true;
-                
-                // Estilo para el coste de envío
-                shippingCostDisplay.classList.remove('text-[#6a760c]', 'font-bold');
-                shippingCostDisplay.classList.add('text-[#bf7149]');
-            }
+            if (cardValue === 'nueva') {
+                // Tarjeta Nueva: Campos vacíos y editables
+                cardNumberInput.value = '';
+                expiryDateInput.value = '';
+                
+                cardNumberInput.readOnly = false;
+                expiryDateInput.readOnly = false;
+                
+                // Mostrar opción de guardar y ocultar mensaje de tarjeta guardada
+                if (saveCardCheckboxContainer) saveCardCheckboxContainer.classList.remove('hidden');
+                if (savedCardInfoMessage) savedCardInfoMessage.classList.add('hidden');
 
-            // Actualizar la línea de gastos de envío
-            shippingCostDisplay.innerHTML = shippingText;
+            } else {
+                // Tarjeta Guardada: Campos rellenos con enmascaramiento y NO editables (excepto CVV)
+                const maskedNumber = selectedOption.textContent.trim();
+                const expiryDate = selectedOption.dataset.fecha;
+                
+                // Rellenar campos
+                cardNumberInput.value = maskedNumber;
+                expiryDateInput.value = expiryDate;
+                cvvInput.value = ''; // CVV siempre vacío
+                
+                // Deshabilitar la edición y mostrar mensaje de tarjeta guardada
+                cardNumberInput.readOnly = true;
+                expiryDateInput.readOnly = true;
+                if (saveCardCheckboxContainer) saveCardCheckboxContainer.classList.add('hidden');
+                if (savedCardInfoMessage) savedCardInfoMessage.classList.remove('hidden');
+            }
+            
+            selectedCardIdInput.value = cardValue; // Actualizar el ID para el envío al backend
+            cvvInput.focus(); // Enfoque en el CVV
+        }
+        
+        // Inicializar el estado de solo lectura para la primera tarjeta si existe
+        if (selectCard) {
+            selectCard.addEventListener('change', handleCardSelection);
+            
+            // Opcional: listener para el botón de gestionar
+            if (manageCardsBtn) {
+                manageCardsBtn.addEventListener('click', function() {
+                    alert('Navegando a la página de Gestión de Tarjetas.');
+                    // window.location.href = '/ruta-a-gestion-de-tarjetas'; 
+                });
+            }
+        }
+        // --- FIN LÓGICA DE SELECCIÓN DE TARJETA ---
 
-            // Calcular y actualizar el total a pagar
-            const newTotal = subtotal + currentShippingCost;
-            totalValueDisplay.textContent = `${newTotal.toFixed(2)} €`;
-        }
 
-        // Event Listeners para Tipo de Pago
-        gatewayRadio.addEventListener('change', togglePaymentDetails);
-        cashRadio.addEventListener('change', togglePaymentDetails);
-        
-        // Event Listeners para Tipo de Envío
-        shippingStandardRadio.addEventListener('change', updateShippingCostAndAddress);
-        shippingPickupRadio.addEventListener('change', updateShippingCostAndAddress);
+        // --- Lógica de Tipo de Pago (Modificada para siempre mostrar los detalles si se selecciona) ---
+        function togglePaymentDetails() {
+            if (gatewayRadio.checked) {
+                gatewayDetails.classList.remove('hidden');
+                cashDetails.classList.add('hidden');
+                
+                // Requerir campos de tarjeta
+                cardNumberInput.required = true;
+                expiryDateInput.required = true;
+                cvvInput.required = true;
 
-        // Ejecutar al cargar la página para establecer el estado inicial
-        togglePaymentDetails();
-        updateShippingCostAndAddress();
-    });
+            } else if (cashRadio.checked) {
+                gatewayDetails.classList.add('hidden');
+                cashDetails.classList.remove('hidden');
+                
+                // No requerir campos de tarjeta
+                cardNumberInput.required = false;
+                expiryDateInput.required = false;
+                cvvInput.required = false;
+            }
+        }
+
+        // --- Lógica de Tipo de Envío (Sin cambios) ---
+        function updateShippingCostAndAddress() {
+            let currentShippingCost = 0;
+            let shippingText = '';
+
+            if (shippingPickupRadio.checked) {
+                currentShippingCost = 0;
+                shippingText = 'GRATIS';
+                
+                pickupDetailsMessage.classList.remove('hidden');
+                shippingDetailsStandard.classList.add('hidden');
+
+                addressStreetInput.required = false;
+                addressCityInput.required = false;
+                addressZipInput.required = false;
+                addressCountryInput.required = false;
+
+                shippingCostDisplay.classList.remove('text-[#bf7149]');
+                shippingCostDisplay.classList.add('text-[#6a760c]', 'font-bold');
+
+            } else {
+                currentShippingCost = initialShippingCost;
+                shippingText = `+ ${currentShippingCost.toFixed(2)} € (Est.)`;
+                
+                pickupDetailsMessage.classList.add('hidden');
+                shippingDetailsStandard.classList.remove('hidden');
+
+                addressStreetInput.required = true;
+                addressCityInput.required = true;
+                addressZipInput.required = true;
+                addressCountryInput.required = true;
+                
+                shippingCostDisplay.classList.remove('text-[#6a760c]', 'font-bold');
+                shippingCostDisplay.classList.add('text-[#bf7149]');
+            }
+
+            shippingCostDisplay.innerHTML = shippingText;
+            const newTotal = subtotal + currentShippingCost;
+            totalValueDisplay.textContent = `${newTotal.toFixed(2)} €`;
+        }
+        
+        // --- Event Listener para Validación de Formulario (Modificada para aceptar enmascaramiento) ---
+        paymentForm.addEventListener('submit', function(e) {
+            
+            if (gatewayRadio.checked) {
+                const cardNumber = cardNumberInput.value.trim();
+                const expiryDate = expiryDateInput.value.trim();
+                const cvv = cvvInput.value.trim();
+
+                let validationError = null;
+
+                // VALIDACIÓN MEJORADA (utiliza la lógica de readonly)
+                if (!isValidCardNumber(cardNumber)) {
+                    validationError = 'Por favor, introduce un número de tarjeta válido (16 dígitos) o selecciona una tarjeta guardada.';
+                } else if (!isValidExpiryDate(expiryDate)) {
+                    validationError = 'La fecha de caducidad es incorrecta (formato MM/AA) o la tarjeta ha expirado.';
+                } else if (!isValidCVV(cvv)) {
+                    validationError = 'El CVV debe ser un código de 3 dígitos.';
+                }
+                
+                if (validationError) {
+                    e.preventDefault();
+                    alert('Error de Pago: ' + validationError); 
+                    
+                    if (!isValidCardNumber(cardNumber)) cardNumberInput.focus();
+                    else if (!isValidExpiryDate(expiryDate)) expiryDateInput.focus();
+                    else cvvInput.focus();
+                    
+                    return;
+                }
+            }
+        });
+
+
+        // Event Listeners para Tipo de Pago
+        gatewayRadio.addEventListener('change', togglePaymentDetails);
+        cashRadio.addEventListener('change', togglePaymentDetails);
+        
+        // Event Listeners para Tipo de Envío
+        shippingStandardRadio.addEventListener('change', updateShippingCostAndAddress);
+        shippingPickupRadio.addEventListener('change', updateShippingCostAndAddress);
+
+        // Ejecutar al cargar la página para establecer el estado inicial
+        togglePaymentDetails();
+        updateShippingCostAndAddress();
+    });
 </script>
 {% endblock content %}

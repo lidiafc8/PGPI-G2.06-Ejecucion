@@ -6,7 +6,7 @@ from decimal import Decimal
 from django.contrib import messages
 from home.models import (
     Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
-    Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido
+    Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido, Tarjeta
 )
 
 import uuid 
@@ -147,14 +147,40 @@ def checkout(request):
         coste_envio =  5
   
     total_inicial=subtotal+coste_envio
-   
-    # En un entorno real, aquí se buscaría la dirección y el teléfono del usuario
-    
+    tarjetas_guardadas = None
+    tiene_tarjeta_guardada = False
+    tarjetas_para_contexto = []
+    if request.user.is_authenticated:
+        try:
+            usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+            tarjetas_guardadas = usuario_cliente.tarjetas.all()
+            
+            # 1. Procesar y enmascarar las tarjetas para el frontend
+            for tarjeta in tarjetas_guardadas:
+                # La tarjeta enmascarada tendrá 12 asteriscos + los 4 dígitos finales
+                numero_enmascarado = f"************{tarjeta.ultimos_cuatro}"
+                
+                tarjetas_para_contexto.append({
+                    'id': tarjeta.id,
+                    'numero_enmascarado': numero_enmascarado,
+                    'ultimos_cuatro': tarjeta.ultimos_cuatro,
+                    'fecha_expiracion': tarjeta.card_expiry, # Pasa la fecha real (MM/AA)
+                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first()) # Marcar la primera por defecto
+                })
+            
+        except UsuarioCliente.DoesNotExist:
+            pass
+
+    # 2. Actualizar el contexto con la nueva lista de tarjetas
     context = {
-        'articulos': cesta.items.all(), # Usamos la lista de ItemsCestaCompra directamente para el breadcrumbs count
+        'articulos': cesta.items.all(),
         'subtotal': f"{subtotal:.2f}",
-        'coste_envio':coste_envio,
-        'total': f"{total_inicial:.2f}", # Total inicial para la plantilla
+        'coste_envio': coste_envio,
+        'total': f"{total_inicial:.2f}",
+        
+        # Nuevas variables de tarjeta:
+        'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
+        'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), # True si la lista no está vacía
     }
     
     return render(request, "pago.html", context)
@@ -186,6 +212,12 @@ def procesar_pago(request):
     cpi = request.POST.get('address_zip') # 'gateway' o 'cash'
     pais = request.POST.get('address_country') # 'gateway' o 'cash'
 
+    # Datos de Tarjeta (solo si el método es 'gateway')
+    card_number = request.POST.get('card_number')
+    expiry_date = request.POST.get('expiry_date') # MM/AA
+    card_cvv = request.POST.get('cvv') #  CV
+    # Flag para guardar tarjeta (solo presente si el usuario está autenticado)
+    save_card_flag = request.POST.get('save_card') == 'on'
 
     # 1. Obtener direccion
     direccion = f"{calle}, {cpi} {ciudad}, {pais}"
@@ -224,6 +256,23 @@ def procesar_pago(request):
         try:
             # Asume que tu modelo UsuarioCliente tiene una FK llamada 'usuario' al User de Django
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+            if metodo_pago == TipoPago.PASARELA_PAGO and save_card_flag and card_number and expiry_date and card_cvv:
+                
+                # Crear instancia del nuevo modelo
+                nueva_tarjeta = Tarjeta(
+                    usuario_cliente=usuario_cliente
+                )
+                
+                # Hashear y asignar detalles (usa el método que definimos en models.py)
+                nueva_tarjeta.set_card_details(card_number, expiry_date, card_cvv)
+                
+                # Intentar guardar, verificando si ya existe un hash idéntico para este usuario
+                try:
+                    nueva_tarjeta.save()
+                    messages.info(request, f"💳 Tarjeta que termina en {nueva_tarjeta.ultimos_cuatro} guardada de forma segura.")
+                except Exception:
+                    # Si falla al guardar (unique_together error), significa que ya existe
+                    messages.warning(request, "Esta tarjeta ya está guardada en su perfil.")
         except UsuarioCliente.DoesNotExist:
             messages.error(request, "Error: No se encontró el perfil de cliente asociado a su cuenta.")
             
