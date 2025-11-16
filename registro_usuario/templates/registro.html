@@ -184,12 +184,50 @@
                     {% endfor %}
                 </div>
 
-                <div class="field-wrapper">
-                    <label for="{{ form.direccion_envio.id_for_label }}" class="sr-only">{{ form.direccion_envio.label }}</label>
-                    <div class="p-4 rounded-lg bg-white shadow-sm flex items-center h-16 border border-gray-300">
-                        {{ form.direccion_envio }}
+                <h3 class="text-lg font-semibold text-gray-700 mt-4 mb-2">Dirección de Envío</h3>
+
+                <div class="grid grid-cols-2 gap-4">
+                    {# Campo Calle - Usando el campo 'direccion_calle' del formulario #}
+                    <div class="field-wrapper col-span-2">
+                        <label for="id_direccion_calle" class="sr-only">Calle y Número</label>
+                        <div class="p-4 rounded-lg bg-white shadow-sm flex items-center h-16 border border-gray-300">
+                            {{ form.direccion_calle }}
+                        </div>
+                        {% for error in form.direccion_calle.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
                     </div>
-                    {% for error in form.direccion_envio.errors %}
+
+                    {# Campo Código Postal - Usando el campo 'direccion_cp' del formulario #}
+                    <div class="field-wrapper">
+                        <label for="id_direccion_cp" class="sr-only">Código Postal</label>
+                        <div class="p-4 rounded-lg bg-white shadow-sm flex items-center h-16 border border-gray-300">
+                            {{ form.direccion_cp }}
+                        </div>
+                        {% for error in form.direccion_cp.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    {# Campo Ciudad - Usando el campo 'direccion_ciudad' del formulario #}
+                    <div class="field-wrapper">
+                        <label for="id_direccion_ciudad" class="sr-only">Ciudad</label>
+                        <div class="p-4 rounded-lg bg-white shadow-sm flex items-center h-16 border border-gray-300">
+                            {{ form.direccion_ciudad }}
+                        </div>
+                        {% for error in form.direccion_ciudad.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# Campo País - Usando el campo 'direccion_pais' del formulario #}
+                <div class="field-wrapper">
+                    <label for="id_direccion_pais" class="sr-only">País</label>
+                    <div class="p-4 rounded-lg bg-white shadow-sm flex items-center h-16 border border-gray-300">
+                        {{ form.direccion_pais }}
+                    </div>
+                    {% for error in form.direccion_pais.errors %}
                         <p class="text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
                 </div>
