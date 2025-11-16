@@ -13,7 +13,7 @@ class TipoEnvio(models.TextChoices):
     RECOGIDA_TIENDA = 'RECOGIDA_TIENDA',
 
 class EstadoPedido(models.TextChoices):
-    PAGADO = 'PAGADO',
+    PEDIDO = 'PEDIDO',
     ENVIADO = 'ENVIADO', 
     ENTREGADO = 'ENTREGADO',
 
@@ -203,18 +203,19 @@ class ItemCestaCompra(models.Model):
         return f'{self.cantidad} x {self.producto.nombre}'
 
 class Pedido(models.Model):
-    
-    usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.CASCADE) 
+    #permite q se realice un pedido si no hay cliente registrado y q si se borra un user los pedidos se mantengan pa el historial de ventas
+    usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.SET_NULL,  blank=True, null=True) 
     fecha_creacion = models.DateTimeField(auto_now_add=True) 
-    estado = models.CharField(max_length=20, choices=EstadoPedido.choices, default=EstadoPedido.PAGADO)
+    estado = models.CharField(max_length=20, choices=EstadoPedido.choices, default=EstadoPedido.PEDIDO)
     subtotal_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
     coste_entrega = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     metodo_pago = models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
     tipo_envio = models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA) 
-    direccion_envio = models.CharField(max_length=255) 
+    direccion_envio = models.CharField(max_length=255, blank=True, null=True) #si se recoje  en tienda puede estar vacío
     correo_electronico = models.EmailField() 
     telefono = models.CharField(max_length=15, blank=True)
+    pago = models.BooleanField(default=False)
 
     def __str__(self):
         return f'Pedido #{self.id} de {self.usuario_cliente.usuario.corre_electronico}' 

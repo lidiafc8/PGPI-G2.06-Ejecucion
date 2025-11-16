@@ -174,81 +174,116 @@ def procesar_pago(request):
     if not cesta or not cesta.items.exists():
         messages.error(request, "El carrito está vacío. No se puede procesar el pago.")
         return redirect('carrito:carrito')
-
-    if not request.user.is_authenticated:
-        messages.error(request, "Debes iniciar sesión para completar la compra.")
-        return redirect('carrito:checkout') # O a la página de login
         
-    try:
-        usuario_cliente = get_object_or_404(UsuarioCliente, usuario=request.user)
-    except UsuarioCliente.DoesNotExist:
-        messages.error(request, "Usuario no encontrado.")
-        return redirect('carrito:checkout')
 
-    # 1. Obtener datos del formulario
-    shipping_option = request.POST.get('shipping_option') # 'standard' o 'express'
+    # 0. Obtener datos del formulario
+    entrega_value = request.POST.get('shipping_option') # 'standard' o 'express'
     payment_method_value = request.POST.get('payment_method') # 'gateway' o 'cash'
-    
+    email = request.POST.get('contact_email') # 'gateway' o 'cash'
+    telefon = request.POST.get('contact_phone') # 'gateway' o 'cash'
+    calle = request.POST.get('address_street') # 'gateway' o 'cash'
+    ciudad = request.POST.get('address_city') # 'gateway' o 'cash'
+    cpi = request.POST.get('address_zip') # 'gateway' o 'cash'
+    pais = request.POST.get('address_country') # 'gateway' o 'cash'
+
+
+    # 1. Obtener direccion
+    direccion = f"{calle}, {cpi} {ciudad}, {pais}"
+
+
     # 2. Calcular costes
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
         subtotal += item.producto.precio * item.cantidad
 
-    coste_entrega = SHIPPING_COSTS.get(shipping_option, SHIPPING_COSTS['standard'])
-    comision_pago = Decimal('0.00')
-    estado_pedido = EstadoPedido.PAGADO
+    coste_entrega = Decimal('0.00')
+    coste_entrega = 0
+    if(subtotal < 50):
+        coste_entrega =  5
+  
 
     if payment_method_value == 'cash':
-        comision_pago = CASH_COMMISSION
         metodo_pago = TipoPago.CONTRAREEMBOLSO
-        # En caso de contrarrembolso, el estado inicial puede ser ENVIADO/PENDIENTE_PAGO
-        # Usaremos PAGADO aquí, pero en un entorno real debe ser un estado intermedio
     else: 
-        # Simulación de pago con pasarela externa (asumimos éxito)
         metodo_pago = TipoPago.PASARELA_PAGO
+    
+    if entrega_value == 'standard':
+        metodo_envio = TipoEnvio.DOMICILIO
+    else: 
+        metodo_envio = TipoEnvio.RECOGIDA_TIENDA
 
-    total_importe = subtotal + coste_entrega + comision_pago
+    total_importe = subtotal + coste_entrega
+    
+    if metodo_pago == TipoPago.PASARELA_PAGO:
+        pago = True
+    else:
+        pago = False
+
+    usuario_cliente = None
+    if request.user.is_authenticated:
+        try:
+            # Asume que tu modelo UsuarioCliente tiene una FK llamada 'usuario' al User de Django
+            usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+        except UsuarioCliente.DoesNotExist:
+            messages.error(request, "Error: No se encontró el perfil de cliente asociado a su cuenta.")
+            
+    
     
     # 3. Crear el Pedido (Registro principal)
     # Dirección y datos de contacto tomados del UsuarioCliente
-    pedido = Pedido.objects.create(
-        usuario_cliente=usuario_cliente,
-        estado=estado_pedido,
-        subtotal_importe=subtotal,
-        coste_entrega=coste_entrega + comision_pago, # Coste total de envío y comisión
-        total_importe=total_importe,
-        metodo_pago=metodo_pago,
-        tipo_envio=TipoEnvio.DOMICILIO, # Asumimos DOMICILIO para Envío Estándar/Express
-        direccion_envio=usuario_cliente.direccion_envio,
-        correo_electronico=usuario_cliente.usuario.corre_electronico,
-        telefono=usuario_cliente.telefono or '',
-    )
-
-    # 4. Crear ItemPedido y Actualizar Stock
-    for item_cesta in cesta.items.select_related('producto'):
-        producto = item_cesta.producto
-        
-        # ⚠️ Verificación de Stock y Reducción
-        if item_cesta.cantidad > producto.stock:
-             # Si el stock falla en este punto, revertimos la transacción
-             messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
-             raise ValueError("Stock insuficiente.") 
-
-        # Crear ItemPedido (Guarda el precio del momento)
-        ItemPedido.objects.create(
-            pedido=pedido,
-            producto=producto,
-            cantidad=item_cesta.cantidad,
-            precio_unitario=item_cesta.producto.precio,
+    try:
+        # 3. Crear el Pedido (Registro principal)
+        pedido = Pedido.objects.create(
+            usuario_cliente=usuario_cliente, # Instancia o None
+            estado=EstadoPedido.PEDIDO, 
+            subtotal_importe=subtotal,
+            coste_entrega=coste_entrega, 
+            total_importe=total_importe,
+            metodo_pago=metodo_pago,
+            tipo_envio=metodo_envio, 
+            direccion_envio=direccion,
+            correo_electronico=email,
+            telefono=telefon,
+            pago=pago,
         )
-        
-        # Reducir Stock
-        producto.stock -= item_cesta.cantidad
-        producto.save()
 
+        # 4. Crear ItemPedido y Actualizar Stock
+        for item_cesta in cesta.items.select_related('producto'):
+            producto = item_cesta.producto
+            
+            # ⚠️ Verificación de Stock y Reducción
+            if item_cesta.cantidad > producto.stock:
+                messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
+                # Si el stock falla, lanzamos la excepción. Esta acción fuerza el rollback de @transaction.atomic 
+                # y es capturada por el bloque 'except ValueError' para redirigir al carrito.
+                raise ValueError("Stock insuficiente.") 
+
+            # Crear ItemPedido (Guarda el precio del momento)
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=producto,
+                cantidad=item_cesta.cantidad,
+                precio_unitario=item_cesta.producto.precio,
+            )
+            
+            # Reducir Stock
+            producto.stock -= item_cesta.cantidad
+            producto.save()
+
+
+        # 5. Vaciar Cesta (Solo se ejecuta si el loop de stock termina con éxito)
+        cesta.items.all().delete()
+        
+        messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
+        
+    except ValueError:
+        # Se captura el ValueError lanzado durante la verificación de stock.
+        # La transacción ya fue revertida por @transaction.atomic.
+        # Ahora redirigimos al carrito sin un error 500.
+        return redirect('carrito:carrito') 
 
     # 5. Vaciar Cesta
     cesta.items.all().delete()
     
-    messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
-    return redirect('carrito:carrito') # O redirigir a una página de confirmación real
+    messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! ")
+    return redirect('home') # O redirigir a una página de confirmación real

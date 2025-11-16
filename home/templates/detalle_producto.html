@@ -76,10 +76,15 @@
                 <form class="add-to-cart-form" data-product-id="{{ producto.id }}" style="display: flex; align-items: center; gap: 10px;">
                     {% csrf_token %}
                     <div class="quantity-control" style="display: flex; border: 1px solid #ccc; border-radius: 4px; overflow: hidden;">
-                        <button type="button" onclick="changeQuantity(this, -1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">-</button>
-                        <input type="number" name="cantidad" class="quantity-input" value="1" min="1" max="{{ producto.stock }}" style="width: 60px; text-align: center; border: none; outline: none;">
-                        <button type="button" onclick="changeQuantity(this, 1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">+</button>
-                    </div>
+    <!-- El botón de decremento -->
+    <button type="button" onclick="changeQuantity(this, -1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">-</button>
+    
+    <!-- Este input tiene el MAX dinámico de Django -->
+    <input type="number" name="cantidad" class="quantity-input" value="1" min="1" max="{{ producto.stock }}" style="width: 60px; text-align: center; border: none; outline: none;">
+    
+    <!-- El botón de incremento -->
+    <button type="button" onclick="changeQuantity(this, 1)" style="padding: 10px 15px; background-color: #f9f9f9; border: none; cursor: pointer;">+</button>
+</div>
                     <button type="submit" class="add-to-cart-button" style="padding: 10px 20px; background-color: #bf7149; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
                         Añadir a la Cesta
                     </button>
