@@ -104,11 +104,16 @@
                     {% endfor %}
                 </div>
 
-                <div class="field-wrapper">
+                <div class="field-wrapper" id="direccion-envio-wrapper"> 
                     <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
-                        <label for="{{ perfil_form.direccion_envio.id_for_label }}" class="sr-only">DIRECCIÓN ENVÍO</label>
                         {{ perfil_form.direccion_envio }}
+                        
                     </div>
+                    
+                    {% if perfil_form.direccion_envio.help_text %}
+                        <small class="text-gray-500 mt-1 block">{{ perfil_form.direccion_envio.help_text }}</small>
+                    {% endif %}
+                    
                     {% for error in perfil_form.direccion_envio.errors %}
                         <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
