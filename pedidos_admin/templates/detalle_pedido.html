@@ -40,11 +40,11 @@
                     
                     <div>
                         <p class="text-sm font-medium text-gray-500">Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ pedido.usuario.get_full_name|default:pedido.usuario.username }}</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ pedido.usuario_cliente.usuario.get_full_name|default:pedido.usuario_cliente.usuario.corre_electronico }}</p>
                     </div>
                     <div>
                         <p class="text-sm font-medium text-gray-500">Email</p>
-                        <p class="text-lg text-gray-700">{{ pedido.usuario.email|default:"N/A" }}</p>
+                        <p class="text-lg text-gray-700">{{ pedido.usuario_cliente.usuario.corre_electronico|default:"N/A" }}</p>
                     </div>
 
                     <div class="sm:col-span-2">
@@ -64,16 +64,16 @@
             <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Artículos</h2>
                 
-                {% if pedido.lineas_pedido.all %}
+                {% if pedido.items.all %}
                     <div class="space-y-4">
-                        {% for item in pedido.lineas_pedido.all %}
+                        {% for item in pedido.items.all %}
                         <div class="flex justify-between items-center py-2 border-b last:border-b-0">
                             <div class="flex items-center space-x-4">
                                 <p class="text-base font-semibold text-gray-800">{{ item.producto.nombre|default:"Producto Eliminado" }}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-sm text-gray-600">x{{ item.cantidad }}</p>
-                                <p class="font-bold text-gray-900">{{ item.precio|floatformat:2 }}€</p>
+                                <p class="font-bold text-gray-900">{{ item.precio_unitario|floatformat:2 }}€</p>
                             </div>
                         </div>
                         {% endfor %}
@@ -86,15 +86,15 @@
                     <div class="text-right w-full sm:w-1/2">
                         <div class="flex justify-between font-semibold text-gray-800 mb-2">
                             <span>Subtotal:</span>
-                            <span>{{ pedido.subtotal|default:"N/A"|floatformat:2 }}€</span>
+                            <span>{{ pedido.subtotal_importe|default:"N/A"|floatformat:2 }}€</span>
                         </div>
                         <div class="flex justify-between font-semibold text-gray-800 mb-2">
                             <span>Envío:</span>
-                            <span>{{ pedido.costo_envio|default:"0.00"|floatformat:2 }}€</span>
+                            <span>{{ pedido.coste_entrega|default:"0.00"|floatformat:2 }}€</span>
                         </div>
                         <div class="flex justify-between text-xl font-bold lm-text-green pt-2 border-t border-gray-200">
                             <span>Total Final:</span>
-                            <span>{{ pedido.total|default:"N/A"|floatformat:2 }}€</span>
+                            <span>{{ pedido.total_importe|default:"N/A"|floatformat:2 }}€</span>
                         </div>
                     </div>
                 </div>
@@ -107,9 +107,9 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Actualizar Estado</h2>
                 
                 <div class="mb-4 p-3 rounded-lg text-center font-bold text-white 
-                    {% if pedido.estado == 'Pendiente' %}bg-yellow-500
-                    {% elif pedido.estado == 'Enviado' %}bg-blue-500
-                    {% elif pedido.estado == 'Completado' %}bg-green-500
+                    {% if pedido.estado == 'PEDIDO' %}bg-yellow-500
+                    {% elif pedido.estado == 'ENVIADO' %}bg-blue-500
+                    {% elif pedido.estado == 'ENTREGADO' %}bg-green-500
                     {% else %}bg-red-500{% endif %}">
                     Estado Actual: {{ pedido.estado }}
                 </div>

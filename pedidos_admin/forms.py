@@ -21,10 +21,10 @@ class PedidoEstadoForm(forms.ModelForm):
             'estado': 'Estado Actual del Pedido',
         }
         
-    def clean_estado(self):
-        """
+    """def clean_estado(self):
+        
         Validación: Evita cambiar el estado si ya está ENTREGADO.
-        """
+        
         estado = self.cleaned_data.get('estado')
         if self.instance and self.instance.estado == 'ENTREGADO' and estado != 'ENTREGADO':
              if estado != self.instance.estado: 
@@ -32,4 +32,4 @@ class PedidoEstadoForm(forms.ModelForm):
                     "Un pedido marcado como Entregado no puede cambiarse a otro estado."
                 )
         
-        return estado
+        return estado"""
