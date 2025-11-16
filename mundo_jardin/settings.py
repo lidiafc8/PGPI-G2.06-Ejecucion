@@ -28,7 +28,7 @@ DEBUG = False
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
-ALLOWED_HOSTS = ['mundo-jardin.com', 'www.mundo-jardin.com']
+ALLOWED_HOSTS = ['mundo-jardin.onrender.com','mundo-jardin.com','www.mundo-jardin.com']
 
 LOGIN_URL = 'inicio_sesion:login'
 # LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
