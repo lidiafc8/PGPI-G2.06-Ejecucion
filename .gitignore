@@ -12,3 +12,6 @@ env/
 
 # Archivos de VS Code
 .vscode/
+
+#Collectstatic
+staticfiles_collect/
