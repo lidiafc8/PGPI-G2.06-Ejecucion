@@ -4,9 +4,16 @@ from django.http import JsonResponse
 from home.models import Producto 
 from decimal import Decimal 
 from django.contrib import messages
+from home.models import (
+    Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
+    Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido
+)
 
-from home.models import CestaCompra, UsuarioCliente, ItemCestaCompra
 import uuid 
+from django.db import transaction # Importar para asegurar la integridad de los datos
+
+
+
 
 def obtener_cesta_actual(request):
     cesta = None
@@ -118,3 +125,165 @@ def ver_cesta(request):
     }
 
     return render(request, "carrito.html", context)
+
+def checkout(request):
+    """
+    Vista que muestra la página de pago (GET).
+    Asegura que los totales y los artículos de la cesta se pasen a la plantilla.
+    """
+    cesta = obtener_cesta_actual(request)
+    
+    if not cesta or not cesta.items.exists():
+         messages.error(request, "Tu carrito está vacío. Añade productos antes de pagar.")
+         return redirect('carrito:carrito')
+         
+    # Cálculos necesarios para mostrar los valores iniciales en la plantilla
+    subtotal = Decimal('0.00')
+    for item in cesta.items.all():
+        subtotal += item.producto.precio * item.cantidad
+    coste_envio= Decimal('0.00')
+    coste_envio = 0
+    if(subtotal < 50):
+        coste_envio =  5
+  
+    total_inicial=subtotal+coste_envio
+   
+    # En un entorno real, aquí se buscaría la dirección y el teléfono del usuario
+    
+    context = {
+        'articulos': cesta.items.all(), # Usamos la lista de ItemsCestaCompra directamente para el breadcrumbs count
+        'subtotal': f"{subtotal:.2f}",
+        'coste_envio':coste_envio,
+        'total': f"{total_inicial:.2f}", # Total inicial para la plantilla
+    }
+    
+    return render(request, "pago.html", context)
+
+@require_POST
+@transaction.atomic 
+def procesar_pago(request):
+    """
+    Procesa la solicitud POST del formulario de pago:
+    1. Valida y calcula costes.
+    2. Crea el Pedido e ItemPedido.
+    3. Reduce el stock.
+    4. Vacía la cesta.
+    """
+    cesta = obtener_cesta_actual(request)
+    
+    if not cesta or not cesta.items.exists():
+        messages.error(request, "El carrito está vacío. No se puede procesar el pago.")
+        return redirect('carrito:carrito')
+        
+
+    # 0. Obtener datos del formulario
+    entrega_value = request.POST.get('shipping_option') # 'standard' o 'express'
+    payment_method_value = request.POST.get('payment_method') # 'gateway' o 'cash'
+    email = request.POST.get('contact_email') # 'gateway' o 'cash'
+    telefon = request.POST.get('contact_phone') # 'gateway' o 'cash'
+    calle = request.POST.get('address_street') # 'gateway' o 'cash'
+    ciudad = request.POST.get('address_city') # 'gateway' o 'cash'
+    cpi = request.POST.get('address_zip') # 'gateway' o 'cash'
+    pais = request.POST.get('address_country') # 'gateway' o 'cash'
+
+
+    # 1. Obtener direccion
+    direccion = f"{calle}, {cpi} {ciudad}, {pais}"
+
+
+    # 2. Calcular costes
+    subtotal = Decimal('0.00')
+    for item in cesta.items.all():
+        subtotal += item.producto.precio * item.cantidad
+
+    coste_entrega = Decimal('0.00')
+    coste_entrega = 0
+    if(subtotal < 50):
+        coste_entrega =  5
+  
+
+    if payment_method_value == 'cash':
+        metodo_pago = TipoPago.CONTRAREEMBOLSO
+    else: 
+        metodo_pago = TipoPago.PASARELA_PAGO
+    
+    if entrega_value == 'standard':
+        metodo_envio = TipoEnvio.DOMICILIO
+    else: 
+        metodo_envio = TipoEnvio.RECOGIDA_TIENDA
+
+    total_importe = subtotal + coste_entrega
+    
+    if metodo_pago == TipoPago.PASARELA_PAGO:
+        pago = True
+    else:
+        pago = False
+
+    usuario_cliente = None
+    if request.user.is_authenticated:
+        try:
+            # Asume que tu modelo UsuarioCliente tiene una FK llamada 'usuario' al User de Django
+            usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+        except UsuarioCliente.DoesNotExist:
+            messages.error(request, "Error: No se encontró el perfil de cliente asociado a su cuenta.")
+            
+    
+    
+    # 3. Crear el Pedido (Registro principal)
+    # Dirección y datos de contacto tomados del UsuarioCliente
+    try:
+        # 3. Crear el Pedido (Registro principal)
+        pedido = Pedido.objects.create(
+            usuario_cliente=usuario_cliente, # Instancia o None
+            estado=EstadoPedido.PEDIDO, 
+            subtotal_importe=subtotal,
+            coste_entrega=coste_entrega, 
+            total_importe=total_importe,
+            metodo_pago=metodo_pago,
+            tipo_envio=metodo_envio, 
+            direccion_envio=direccion,
+            correo_electronico=email,
+            telefono=telefon,
+            pago=pago,
+        )
+
+        # 4. Crear ItemPedido y Actualizar Stock
+        for item_cesta in cesta.items.select_related('producto'):
+            producto = item_cesta.producto
+            
+            # ⚠️ Verificación de Stock y Reducción
+            if item_cesta.cantidad > producto.stock:
+                messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
+                # Si el stock falla, lanzamos la excepción. Esta acción fuerza el rollback de @transaction.atomic 
+                # y es capturada por el bloque 'except ValueError' para redirigir al carrito.
+                raise ValueError("Stock insuficiente.") 
+
+            # Crear ItemPedido (Guarda el precio del momento)
+            ItemPedido.objects.create(
+                pedido=pedido,
+                producto=producto,
+                cantidad=item_cesta.cantidad,
+                precio_unitario=item_cesta.producto.precio,
+            )
+            
+            # Reducir Stock
+            producto.stock -= item_cesta.cantidad
+            producto.save()
+
+
+        # 5. Vaciar Cesta (Solo se ejecuta si el loop de stock termina con éxito)
+        cesta.items.all().delete()
+        
+        messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
+        
+    except ValueError:
+        # Se captura el ValueError lanzado durante la verificación de stock.
+        # La transacción ya fue revertida por @transaction.atomic.
+        # Ahora redirigimos al carrito sin un error 500.
+        return redirect('carrito:carrito') 
+
+    # 5. Vaciar Cesta
+    cesta.items.all().delete()
+    
+    messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! ")
+    return redirect('home') # O redirigir a una página de confirmación real
