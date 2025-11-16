@@ -1,0 +1,136 @@
+{% extends 'catalogo_admin/base_admin.html' %}
+{% load static %}
+
+{% block title %}Detalle del Pedido #{{ pedido.pk }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h1 class="text-3xl font-bold text-gray-900 lm-text-green">
+            Detalle del Pedido <span class="text-black">#{{ pedido.pk }}</span>
+        </h1>
+        <a href="{% url 'lista_pedidos' %}" 
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H16a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            <span>Volver a Pedidos</span>
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+        <div class="p-4 mb-6 rounded-xl shadow-md 
+            {% if message.tags == 'success' %}bg-green-100 border border-green-400 text-green-700
+            {% elif message.tags == 'error' %}bg-red-100 border border-red-400 text-red-700
+            {% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="md:col-span-2 space-y-6">
+            
+            <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Detalles del Cliente y Envío</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Cliente</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ pedido.usuario.get_full_name|default:pedido.usuario.username }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Email</p>
+                        <p class="text-lg text-gray-700">{{ pedido.usuario.email|default:"N/A" }}</p>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <p class="text-sm font-medium text-gray-500 mt-3">Dirección de Envío</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio.calle|default:"[Dirección no proporcionada]" }}</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio.ciudad|default:"" }}{% if pedido.direccion_envio.ciudad and pedido.direccion_envio.codigo_postal %}, {% endif %}{{ pedido.direccion_envio.codigo_postal|default:"" }}</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio.pais|default:"" }}</p>
+                    </div>
+
+                    <div class="sm:col-span-2 pt-4 border-t mt-4">
+                        <p class="text-sm font-medium text-gray-500">Fecha del Pedido</p>
+                        <p class="text-lg text-gray-700">{{ pedido.fecha_creacion|date:"d M Y - H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Artículos</h2>
+                
+                {% if pedido.lineas_pedido.all %}
+                    <div class="space-y-4">
+                        {% for item in pedido.lineas_pedido.all %}
+                        <div class="flex justify-between items-center py-2 border-b last:border-b-0">
+                            <div class="flex items-center space-x-4">
+                                <p class="text-base font-semibold text-gray-800">{{ item.producto.nombre|default:"Producto Eliminado" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">x{{ item.cantidad }}</p>
+                                <p class="font-bold text-gray-900">{{ item.precio|floatformat:2 }}€</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">Este pedido no contiene artículos visibles.</p>
+                {% endif %}
+
+                <div class="pt-4 mt-4 border-t flex justify-end">
+                    <div class="text-right w-full sm:w-1/2">
+                        <div class="flex justify-between font-semibold text-gray-800 mb-2">
+                            <span>Subtotal:</span>
+                            <span>{{ pedido.subtotal|default:"N/A"|floatformat:2 }}€</span>
+                        </div>
+                        <div class="flex justify-between font-semibold text-gray-800 mb-2">
+                            <span>Envío:</span>
+                            <span>{{ pedido.costo_envio|default:"0.00"|floatformat:2 }}€</span>
+                        </div>
+                        <div class="flex justify-between text-xl font-bold lm-text-green pt-2 border-t border-gray-200">
+                            <span>Total Final:</span>
+                            <span>{{ pedido.total|default:"N/A"|floatformat:2 }}€</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="md:col-span-1">
+            <div class="bg-white shadow-xl rounded-xl p-6 h-fit sticky top-6 border-l-4 lm-border-green">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Actualizar Estado</h2>
+                
+                <div class="mb-4 p-3 rounded-lg text-center font-bold text-white 
+                    {% if pedido.estado == 'Pendiente' %}bg-yellow-500
+                    {% elif pedido.estado == 'Enviado' %}bg-blue-500
+                    {% elif pedido.estado == 'Completado' %}bg-green-500
+                    {% else %}bg-red-500{% endif %}">
+                    Estado Actual: {{ pedido.estado }}
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="{{ form.estado.id_for_label }}" class="block text-sm font-medium text-gray-700">Seleccionar Nuevo Estado</label>
+                        {{ form.estado }}
+                        {% if form.estado.errors %}
+                            <p class="text-red-500 text-sm mt-1">{{ form.estado.errors.as_text }}</p>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full lm-green text-white px-4 py-3 rounded-lg hover:bg-[#bf7149] transition font-semibold">
+                        Guardar Cambio
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

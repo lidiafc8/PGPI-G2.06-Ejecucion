@@ -51,7 +51,7 @@
         <ul class="flex justify-center space-x-12 py-1 text-lg text-gray-700">
             <li><a href="{% url 'lista_productos' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PRODUCTOS</a></li>
             <li><a href="{% url 'ventas_admin_index' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">VENTAS</a></li>
-            <li><a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PEDIDOS</a></li>
+            <li><a href="{% url 'lista_pedidos' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">PEDIDOS</a></li>
             <li><a href="{% url 'clientes_admin_index' %}" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">USUARIOS</a></li>  
         </ul>
     </nav>
@@ -89,14 +89,14 @@
                     </a>
                 </div>
 
-                <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
+               <div class="bg-white rounded-xl shadow-md p-6 border border-gray-100 hover:shadow-xl transition">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xl font-semibold text-gray-800">Gestión de Pedidos</h3>
                         <span class="text-2xl">📦</span>
                     </div>
                     <p class="text-gray-600 mb-4">Accede al registro y estado de todos los pedidos.</p>
-                    <a href="#" 
-                       class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
+                    <a href="{% url 'lista_pedidos' %}" 
+                        class="inline-block bg-[#6a760c] text-white px-5 py-2 rounded-lg hover:bg-[#bf7149] transition font-medium">
                         Ir a Pedidos →
                     </a>
                 </div>
