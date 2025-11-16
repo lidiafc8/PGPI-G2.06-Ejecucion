@@ -2,6 +2,7 @@ from django.db import models
 import uuid
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.hashers import make_password
 
 class TipoPago(models.TextChoices):
     PASARELA_PAGO = 'PASARELA_PAGO',
@@ -235,3 +236,41 @@ class ItemPedido(models.Model):
         
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
+    
+
+class Tarjeta(models.Model):
+    usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.CASCADE, related_name='tarjetas')
+    card_hash = models.CharField(max_length=128)
+    card_cvv_hash = models.CharField(max_length=128, blank=True, null=True)
+    card_expiry = models.CharField(max_length=5)
+    ultimos_cuatro = models.CharField(max_length=4)
+    
+    class Meta:
+        unique_together = ('usuario_cliente', 'card_hash')
+
+    def __str__(self):
+        return f'Tarjeta que termina en {self.ultimos_cuatro} de {self.usuario_cliente.usuario.corre_electronico}'
+
+    def set_card_details(self, card_number, expiry_date, cvv): # <-- CVV AÑADIDO
+        """Hashea el número de tarjeta y el CVV (cuidado con la seguridad del CVV)."""
+                
+        # Hashing del número de tarjeta
+        self.card_hash = make_password(card_number)
+        
+        # Hashing del CVV (¡PELIGRO PCI-DSS!)
+        self.card_cvv_hash = make_password(cvv) # <-- LÓGICA DE CVV AÑADIDA
+
+        self.ultimos_cuatro = card_number[-4:]
+        self.card_expiry = expiry_date
+
+    def check_card(self, card_number):
+        """Verifica si un número de tarjeta coincide con el hash guardado."""
+        from django.contrib.auth.hashers import check_password
+        return check_password(card_number, self.card_hash)
+        
+    def check_cvv(self, cvv): # <-- NUEVO MÉTODO PARA VERIFICAR CVV
+        """Verifica si un CVV coincide con el hash guardado."""
+        from django.contrib.auth.hashers import check_password
+        if not self.card_cvv_hash:
+             return False
+        return check_password(cvv, self.card_cvv_hash)
