@@ -38,6 +38,7 @@ urlpatterns = [
     path('carrito/', include(('carrito.urls','carrito'), namespace='carrito')),
     path('cesta/agregar/<int:producto_id>/', views.agregar_a_cesta, name='agregar_a_cesta'),
     path('cesta/', carrito_views.ver_cesta, name='ver_cesta'),
+    path('pedidos/', include('pedidos_admin.urls'))
 ]
 
 if settings.DEBUG:

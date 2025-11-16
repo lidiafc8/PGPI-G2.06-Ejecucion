@@ -49,7 +49,7 @@ INSTALLED_APPS = [
     'registro_usuario',
     'inicio_sesion',
     'perfil',
-    'pedidos_admin'
+    'pedidos_admin',
     'info_tienda',
     'carrito',
 ]
