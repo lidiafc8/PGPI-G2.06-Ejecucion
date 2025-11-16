@@ -73,7 +73,7 @@
 
                         <label class="block">
                             <div class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer has-[:checked]:border-[#6a760c]">
-                                <input type="radio" id="shipping-pickup" name="shipping_option" value="pickup" {% if datos_cliente.tipo_envio_default == 'RECOGIDA_TIENDA' %}checked{% endif %} class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
+                                <input type="radio" id="shipping-pickup" name="shipping_option" value="express" {% if datos_cliente.tipo_envio_default == 'RECOGIDA_TIENDA' %}checked{% endif %} class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
                                 <div class="flex-grow">
                                     <p class="font-medium text-gray-800">Recogida en Tienda</p>
                                     <p class="text-sm text-gray-500">Disponible para recoger en 24 horas.</p>
