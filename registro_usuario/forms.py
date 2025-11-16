@@ -73,11 +73,32 @@ class RegistroUsuarioForm(forms.Form):
         initial=TipoEnvio.RECOGIDA_TIENDA 
     )
     
-    direccion_envio = forms.CharField(
-        max_length=255, 
+    direccion_calle = forms.CharField(
+        max_length=150,
         required=False, 
-        label="Dirección de Envío",
-        widget=forms.TextInput(attrs={'placeholder': 'DIRECCIÓN ENVÍO'})
+        label="Calle y Número",
+        widget=forms.TextInput(attrs={'placeholder': 'CALLE Y NÚMERO'})
+    )
+    
+    direccion_cp = forms.CharField(
+        max_length=10,
+        required=False,
+        label="Código Postal",
+        widget=forms.TextInput(attrs={'placeholder': 'CÓDIGO POSTAL'})
+    )
+    
+    direccion_ciudad = forms.CharField(
+        max_length=100,
+        required=False, 
+        label="Ciudad",
+        widget=forms.TextInput(attrs={'placeholder': 'CIUDAD'})
+    )
+    
+    direccion_pais = forms.CharField(
+        max_length=100,
+        required=False, 
+        label="País",
+        widget=forms.TextInput(attrs={'placeholder': 'PAÍS'})
     )
 
 
@@ -102,11 +123,23 @@ class RegistroUsuarioForm(forms.Form):
                 self.add_error('password', error)
         
         tipo_envio = cleaned_data.get("tipo_envio")
-        direccion_envio = cleaned_data.get("direccion_envio")
+        
+        calle = cleaned_data.get("direccion_calle")
+        cp = cleaned_data.get("direccion_cp")
+        ciudad = cleaned_data.get("direccion_ciudad")
+        pais = cleaned_data.get("direccion_pais")
         
         if tipo_envio and tipo_envio != TipoEnvio.RECOGIDA_TIENDA:
-            if not direccion_envio:
-                self.add_error('direccion_envio', 'Este campo es obligatorio al seleccionar Envío a Domicilio.')
+            mensaje_error = 'Este campo es obligatorio al seleccionar Envío a Domicilio.'
+            
+            if not calle:
+                self.add_error('direccion_calle', mensaje_error)
+            if not cp:
+                self.add_error('direccion_cp', mensaje_error)
+            if not ciudad:
+                self.add_error('direccion_ciudad', mensaje_error)
+            if not pais:
+                self.add_error('direccion_pais', mensaje_error)
 
         return cleaned_data
 
@@ -119,17 +152,25 @@ class RegistroUsuarioForm(forms.Form):
             apellidos=cd['apellidos'],
             corre_electronico=cd['corre_electronico']
         )
-        
         usuario.set_password(cd['password'])
-        
         usuario.save()
 
+        calle = cd.get('direccion_calle', '').strip()
+        cp = cd.get('direccion_cp', '').strip()
+        ciudad = cd.get('direccion_ciudad', '').strip()
+        pais = cd.get('direccion_pais', '').strip()
+        
+        if calle or cp or ciudad or pais:
+             direccion_envio_final = f"{calle}, {cp} {ciudad}, {pais}".strip()
+        else:
+             direccion_envio_final = ""
+        
         tipo_pago_final = cd.get('tipo_pago') or TipoPago.PASARELA_PAGO 
         
         cliente = UsuarioCliente.objects.create(
             usuario=usuario, 
             telefono=cd.get('telefono', ''), 
-            direccion_envio=cd.get('direccion_envio', ''), 
+            direccion_envio=direccion_envio_final, 
             tipo_pago=tipo_pago_final,
             tipo_envio=cd['tipo_envio']
         )

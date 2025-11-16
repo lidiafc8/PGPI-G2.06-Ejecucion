@@ -1,15 +1,29 @@
 {% extends "base.html" %} 
+{% block breadcrumbs %}
+    
+    <li>
+        <span class="text-lg text-gray-500">></span>
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            MI PERFIL
+        </span>
+    </li>
+{% endblock breadcrumbs %}
 {% load static %}
 
 {% block content %}
 
-<main class="py-12 md:py-16 bg-[#fdfaf5]"> 
+<style>
+    .shadow-hard-halo {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+</style>
+<main class="py-12 "> 
     <div class="max-w-xl mx-auto px-4 sm:px-6 lg:px-8"> 
-        <div class="bg-white p-8 md:p-10 rounded-xl shadow-2xl border-2 border-gray-100">
+        <div class="bg-white p-8 md:p-10 rounded-xl shadow-hard-halo border-2 border-gray-100">
             
-            <h2 class="text-4xl font-extrabold text-gray-900 mb-10 text-center">
-                MI PERFIL 🪴
-            </h2>
+            <h1 class="text-4xl font-bold text-gray-900 mb-4 text-center tracking-wider">
+            MI PERFIL🪴   
+        </h1>
 
             {% if messages %}
                 {% for message in messages %}
@@ -90,11 +104,16 @@
                     {% endfor %}
                 </div>
 
-                <div class="field-wrapper">
+                <div class="field-wrapper" id="direccion-envio-wrapper"> 
                     <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
-                        <label for="{{ perfil_form.direccion_envio.id_for_label }}" class="sr-only">DIRECCIÓN ENVÍO</label>
                         {{ perfil_form.direccion_envio }}
+                        
                     </div>
+                    
+                    {% if perfil_form.direccion_envio.help_text %}
+                        <small class="text-gray-500 mt-1 block">{{ perfil_form.direccion_envio.help_text }}</small>
+                    {% endif %}
+                    
                     {% for error in perfil_form.direccion_envio.errors %}
                         <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
                     {% endfor %}
@@ -102,21 +121,17 @@
             </form>
             
             <div class="flex justify-between items-center pt-8 space-x-4"> 
-                
-                <a href="{% url 'home' %}" 
-                    class="flex-1 text-center px-4 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-100 transition duration-300">
-                    ← VOLVER A INICIO
-                </a>
+            
                 <form action="{% url 'inicio_sesion:logout' %}" method="post" class="inline">
                     {% csrf_token %}
                     <button type="submit" 
-                            class="flex-1 px-4 py-3 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
+                            class="flex-1 px-4 py-3 bg-[#A91B0D] text-white font-semibold rounded-lg hover:bg-red-700 transition duration-300">
                         CERRAR SESIÓN
                     </button>
                 </form>
                 
                 <button type="submit" form="perfil-form-guardar"
-                        class="flex-1 px-4 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#525a09] transition duration-300">
+                        class="flex-1 px-4 py-3 bg-[#6a760c] text-white font-semibold rounded-lg hover:bg-[#bf7149] transition duration-300">
                     GUARDAR CAMBIOS
                 </button>
             </div>

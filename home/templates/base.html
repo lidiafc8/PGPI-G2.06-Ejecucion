@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mundo Jardín - Home</title>
+    <title>Mundo Jardín S.A- Home</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -55,12 +55,12 @@
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
                 
                 <a href ="{% url 'home' %}" class="flex items-center text-2xl font-extrabold lm-text-green tracking-tight flex-shrink-0 mr-5">
-                    <img src="{% static 'logo.png' %}" 
+                    <img src="{% static 'loga.png' %}" 
                         alt="Logo Mundo Jardín" 
                         class="h-20 w-20 mr-3 rounded-full">
-                    Mundo Jardín
+                    Mundo Jardín S.A
                 </a>
-                <a href="#" class="flex flex-col items-center flex-shrink-0 text-[#6a760c] ">
+                <a class="flex flex-col items-center flex-shrink-0 text-[#6a760c] ">
                     <img src="{% static 'i1.png' %}" 
                         alt="Logo ubicacion" 
                         class="h-7 w-7 mb-1 rounded-full">
@@ -73,7 +73,7 @@
         <input type="search" 
                name="q" 
                id="q"
-               placeholder="Buscar productos, guías o ideas..." 
+               placeholder="Buscar productos, fabricantes, secciones, categorías..." 
                class="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm">
         
         <button type="submit" 
@@ -83,25 +83,52 @@
     </form>
 </div>
 
-                <div class="flex items-center space-x-6 flex-shrink-0">
-                        <a href="{% if user.is_authenticated %}
-                                {% url 'perfil:mi_perfil' %}
-                            {% else %}
-                                {% url 'inicio_sesion:login' %}
-                            {% endif %}" 
-                        class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                <div class="flex items-center space-x-6">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'perfil:mi_perfil' %}"
+                             class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                        <span class="text-xs">Mi Cuenta</span>
+                        <span class="text-xs">Mi Perfil</span>
+                       </a>     
+                            
+                            
+                     {% else %}
+                     <a href="{% url 'perfil:mi_perfil' %}"
+                             class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <span class="text-xs">Iniciar Sesión</span>
+                            
                     </a>
-                </div>
+                    {% endif %}
 
-                    <a href="#" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                        <span class="text-xs">Carrito</span>
-                        <span class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
-                            3
-                        </span>
+                    {% if user.is_authenticated and user.is_staff %}
+                    <a href="{% url 'adminpanel:adminpanel_index' %}" 
+                    class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M3 3h7v7H3V3zM14 3h7v4h-7V3zM14 9h7v4h-7V9zM3 12h7v9H3v-9zM14 15h7v6h-7v-6z"/>
+                        </svg>
+                        <span class="text-xs">Gestión</span>
                     </a>
+                    {% endif %}
+
+
+                    {% if not user.is_authenticated or not user.is_staff %}
+                    <a href="{% url 'carrito:carrito' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                        <span class="text-xs">Cesta</span>
+                        {% if total_items_cesta > 0 %}
+                        <span id="cesta-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                            {{ total_items_cesta }}
+
+                        </span>
+                        {% endif %}
+                    </a>
+                    {% endif %}
+                </div>
+            
                 </div>
             </div>
         </div>
@@ -361,7 +388,7 @@
                     
                     <div class="flex">
                         <li class="group relative">
-                            <a href="#" class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN</a>
+                            <a href="{% url 'info_tienda:info_tienda' %}"  class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN S.A</a>
                         </li>
                     </div>
                     
@@ -369,6 +396,22 @@
             </nav>
         </div>
     </header>
+    <div class="bg-gray-100 py-3 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{% url 'home' %}" class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+                            INICIO
+                        </a>
+                    </li>
+                    
+                    {% block breadcrumbs %}
+                        {% endblock breadcrumbs %}
+                </ol>
+            </nav>
+        </div>
+    </div>
 
     <div class="main-content">
         {% block content %}
@@ -377,7 +420,7 @@
     
     <footer class="bg-gray-800 text-white mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm">
-            © 2025 Mundo Jardín
+            © 2025 Mundo Jardín S.A
         </div>
     </footer>
 
