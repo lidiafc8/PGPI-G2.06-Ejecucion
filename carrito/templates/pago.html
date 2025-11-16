@@ -40,7 +40,7 @@
                     <div class="space-y-4">
                         <label class="block">
                             <div class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer has-[:checked]:border-[#6a760c]">
-                                <input type="radio" id="shipping-standard" name="shipping_option" value="standard" checked class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
+                                <input type="radio" id="shipping-standard" name="shipping_option" value="standard" {% if datos_cliente.tipo_envio_default == 'DOMICILIO' %}checked{% endif %} class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
                                 <div class="flex-grow">
                                     <p class="font-medium text-gray-800">Envío a Domicilio</p>
                                     <p class="text-sm text-gray-500">Entrega en 48 horas. (5€, gratis a partir de 50€)</p>
@@ -54,26 +54,26 @@
                             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
                                     <label for="address_street" class="block text-sm font-medium text-gray-700">Calle y Número</label>
-                                    <input type="text" id="address_street" name="address_street" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: Av. Principal 123" required>
+                                    <input type="text" id="address_street" name="address_street" value="{{ datos_cliente.direccion_calle|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: Av. Principal 123" required>
                                 </div>
                                 <div>
                                     <label for="address_city" class="block text-sm font-medium text-gray-700">Ciudad</label>
-                                    <input type="text" id="address_city" name="address_city" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: Madrid" required>
-                                                                </div>
+                                    <input type="text" id="address_city" name="address_city" value="{{ datos_cliente.direccion_ciudad|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: Sevilla" required>
+                                </div>
                                 <div>
                                     <label for="address_zip" class="block text-sm font-medium text-gray-700">Código Postal</label>
-                                    <input type="text" id="address_zip" name="address_zip" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: 28001" required>
+                                    <input type="text" id="address_zip" name="address_zip" value="{{ datos_cliente.direccion_cp|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tu Postal" required>
                                 </div>
                                 <div>
                                     <label for="address_country" class="block text-sm font-medium text-gray-700">País</label>
-                                    <input type="text" id="address_country" name="address_country" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: España" required>
+                                    <input type="text" id="address_country" name="address_country" value="{{ datos_cliente.direccion_pais|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: España" required>
                                 </div>
                             </div>
                         </div>
 
                         <label class="block">
                             <div class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer has-[:checked]:border-[#6a760c]">
-                                <input type="radio" id="shipping-pickup" name="shipping_option" value="pickup" class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
+                                <input type="radio" id="shipping-pickup" name="shipping_option" value="pickup" {% if datos_cliente.tipo_envio_default == 'RECOGIDA_TIENDA' %}checked{% endif %} class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
                                 <div class="flex-grow">
                                     <p class="font-medium text-gray-800">Recogida en Tienda</p>
                                     <p class="text-sm text-gray-500">Disponible para recoger en 24 horas.</p>
@@ -95,7 +95,9 @@
                     
                     <div class="space-y-4">
                         <label for="payment-gateway" class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer has-[:checked]:border-[#6a760c]">
-                            <input type="radio" id="payment-gateway" name="payment_method" value="gateway" checked class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
+                            <input type="radio" id="payment-gateway" name="payment_method" value="gateway" 
+                                {% if datos_cliente.tipo_pago_default == 'PASARELA_PAGO' %}checked{% endif %} 
+                                class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
                             <span class="font-medium text-gray-800">Pasarela de Pago (Tarjeta Crédito/Débito)</span>
                         </label>
                         
@@ -120,7 +122,7 @@
                         <div class="h-px bg-gray-200 my-4"></div>
 
                         <label for="payment-cash" class="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer has-[:checked]:border-[#6a760c]">
-                            <input type="radio" id="payment-cash" name="payment_method" value="cash" class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
+                            <input type="radio" id="payment-cash" name="payment_method" value="cash" {% if datos_cliente.tipo_pago_default == 'CONTRAREEMBOLSO' %}checked{% endif %} class="form-radio h-4 w-4 text-green-600 focus:ring-green-500">
                             <span class="font-medium text-gray-800">Contrarrembolso</span>
                         </label>
                         
@@ -131,23 +133,23 @@
                     </div>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. Datos de Contacto</h2>
+                    <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">3. Datos de Contacto</h2>
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label for="contact_first_name" class="block text-sm font-medium text-gray-700">Nombre</label>
-                            <input type="text" id="contact_first_name" name="contact_first_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tu nombre" required>
+                            <input type="text" id="contact_first_name" name="contact_first_name" value="{{ datos_cliente.nombre|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tu nombre" required>
                         </div>
                         <div>
                             <label for="contact_last_name" class="block text-sm font-medium text-gray-700">Apellidos</label>
-                            <input type="text" id="contact_last_name" name="contact_last_name" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tus apellidos" required>
+                            <input type="text" id="contact_last_name" name="contact_last_name" value="{{ datos_cliente.apellidos|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tus apellidos" required>
                         </div>
                         <div class="sm:col-span-2">
                             <label for="contact_email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" id="contact_email" name="contact_email" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="ejemplo@correo.com" required>
+                            <input type="email" id="contact_email" name="contact_email" value="{{ datos_cliente.email|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Tu email" required>
                         </div>
                         <div>
                             <label for="contact_phone" class="block text-sm font-medium text-gray-700">Teléfono</label>
-                            <input type="tel" id="contact_phone" name="contact_phone" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: 600123456" required>
+                           <input type="tel" id="contact_phone" name="contact_phone" value="{{ datos_cliente.telefono|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 focus:border-green-500 focus:ring-green-500" placeholder="Ej: 600123456" required>
                         </div>
                     </div>
                 </div>
@@ -202,125 +204,125 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Bloque de Elementos de Pago
-        const gatewayRadio = document.getElementById('payment-gateway');
-        const cashRadio = document.getElementById('payment-cash');
-        const gatewayDetails = document.getElementById('gateway-details');
-        const cashDetails = document.getElementById('cash-details');
-        
-        // Bloque de Inputs de Tarjeta
-        const cardNumberInput = document.getElementById('card_number');
-        const expiryDateInput = document.getElementById('expiry_date');
-        const cvvInput = document.getElementById('cvv');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Bloque de Elementos de Pago
+        const gatewayRadio = document.getElementById('payment-gateway');
+        const cashRadio = document.getElementById('payment-cash');
+        const gatewayDetails = document.getElementById('gateway-details');
+        const cashDetails = document.getElementById('cash-details');
+        
+        // Bloque de Inputs de Tarjeta
+        const cardNumberInput = document.getElementById('card_number');
+        const expiryDateInput = document.getElementById('expiry_date');
+        const cvvInput = document.getElementById('cvv');
 
-        // Bloque de Elementos de Envío
-        const shippingStandardRadio = document.getElementById('shipping-standard');
-        const shippingPickupRadio = document.getElementById('shipping-pickup');
-        const shippingDetailsStandard = document.getElementById('shipping-details-standard'); // Nuevo desplegable de dirección
-        const pickupDetailsMessage = document.getElementById('pickup-details-message');     // Nuevo mensaje de tienda
-        
-        // Bloque de Inputs de Dirección
-        const addressStreetInput = document.getElementById('address_street');
-        const addressCityInput = document.getElementById('address_city');
-        const addressZipInput = document.getElementById('address_zip');
-        const addressCountryInput = document.getElementById('address_country');
+        // Bloque de Elementos de Envío
+        const shippingStandardRadio = document.getElementById('shipping-standard');
+        const shippingPickupRadio = document.getElementById('shipping-pickup');
+        const shippingDetailsStandard = document.getElementById('shipping-details-standard'); // Nuevo desplegable de dirección
+        const pickupDetailsMessage = document.getElementById('pickup-details-message');     // Nuevo mensaje de tienda
+        
+        // Bloque de Inputs de Dirección
+        const addressStreetInput = document.getElementById('address_street');
+        const addressCityInput = document.getElementById('address_city');
+        const addressZipInput = document.getElementById('address_zip');
+        const addressCountryInput = document.getElementById('address_country');
 
-        // Referencias para el resumen de pedido
-        const shippingCostDisplay = document.getElementById('shipping_cost_display');
-        const totalValueDisplay = document.getElementById('total_value_display');
-        const subtotalElement = document.getElementById('subtotal_value');
+        // Referencias para el resumen de pedido
+        const shippingCostDisplay = document.getElementById('shipping_cost_display');
+        const totalValueDisplay = document.getElementById('total_value_display');
+        const subtotalElement = document.getElementById('subtotal_value');
 
-        // Valores iniciales (se asume que {{ coste_envio }} y {{ subtotal }} son flotantes o números en el contexto de Django)
-        // Usamos la propiedad data-coste del span hermano del radio button estándar
-        const initialShippingCostSpan = shippingStandardRadio.closest('label').querySelector('span[data-coste]');
-        const initialShippingCost = parseFloat(initialShippingCostSpan ? initialShippingCostSpan.dataset.coste : 0) || 0;
-        const subtotal = parseFloat(subtotalElement.textContent.trim()) || 0;
+        // Valores iniciales (se asume que {{ coste_envio }} y {{ subtotal }} son flotantes o números en el contexto de Django)
+        // Usamos la propiedad data-coste del span hermano del radio button estándar
+        const initialShippingCostSpan = shippingStandardRadio.closest('label').querySelector('span[data-coste]');
+        const initialShippingCost = parseFloat(initialShippingCostSpan ? initialShippingCostSpan.dataset.coste : 0) || 0;
+        const subtotal = parseFloat(subtotalElement.textContent.trim()) || 0;
 
 
-        // --- Lógica de Tipo de Pago (Existente) ---
-        function togglePaymentDetails() {
-            if (gatewayRadio.checked) {
-                // Mostrar detalles de tarjeta, hacer campos requeridos
-                gatewayDetails.classList.remove('hidden');
-                cashDetails.classList.add('hidden');
-                
-                cardNumberInput.required = true;
-                expiryDateInput.required = true;
-                cvvInput.required = true;
+        // --- Lógica de Tipo de Pago (Existente) ---
+        function togglePaymentDetails() {
+            if (gatewayRadio.checked) {
+                // Mostrar detalles de tarjeta, hacer campos requeridos
+                gatewayDetails.classList.remove('hidden');
+                cashDetails.classList.add('hidden');
+                
+                cardNumberInput.required = true;
+                expiryDateInput.required = true;
+                cvvInput.required = true;
 
-            } else if (cashRadio.checked) {
-                // Ocultar detalles de tarjeta, quitar el requisito
-                gatewayDetails.classList.add('hidden');
-                cashDetails.classList.remove('hidden');
-                
-                cardNumberInput.required = false;
-                expiryDateInput.required = false;
-                cvvInput.required = false;
-            }
-        }
+            } else if (cashRadio.checked) {
+                // Ocultar detalles de tarjeta, quitar el requisito
+                gatewayDetails.classList.add('hidden');
+                cashDetails.classList.remove('hidden');
+                
+                cardNumberInput.required = false;
+                expiryDateInput.required = false;
+                cvvInput.required = false;
+            }
+        }
 
-        // --- Lógica de Tipo de Envío (Modificada) ---
-        function updateShippingCostAndAddress() {
-            let currentShippingCost = 0;
-            let shippingText = '';
+        // --- Lógica de Tipo de Envío (Modificada) ---
+        function updateShippingCostAndAddress() {
+            let currentShippingCost = 0;
+            let shippingText = '';
 
-            if (shippingPickupRadio.checked) {
-                // Opción Recogida en Tienda (Gratis)
-                currentShippingCost = 0;
-                shippingText = 'GRATIS';
-                
-                // Mostrar mensaje de recogida, ocultar detalles de dirección, quitar requisitos de dirección
-                pickupDetailsMessage.classList.remove('hidden');
-                shippingDetailsStandard.classList.add('hidden');
+            if (shippingPickupRadio.checked) {
+                // Opción Recogida en Tienda (Gratis)
+                currentShippingCost = 0;
+                shippingText = 'GRATIS';
+                
+                // Mostrar mensaje de recogida, ocultar detalles de dirección, quitar requisitos de dirección
+                pickupDetailsMessage.classList.remove('hidden');
+                shippingDetailsStandard.classList.add('hidden');
 
-                addressStreetInput.required = false;
-                addressCityInput.required = false;
-                addressZipInput.required = false;
-                addressCountryInput.required = false;
+                addressStreetInput.required = false;
+                addressCityInput.required = false;
+                addressZipInput.required = false;
+                addressCountryInput.required = false;
 
-                // Estilo para GRATIS
-                shippingCostDisplay.classList.remove('text-[#bf7149]');
-                shippingCostDisplay.classList.add('text-[#6a760c]', 'font-bold');
+                // Estilo para GRATIS
+                shippingCostDisplay.classList.remove('text-[#bf7149]');
+                shippingCostDisplay.classList.add('text-[#6a760c]', 'font-bold');
 
-            } else {
-                // Opción Envío a Domicilio (Estándar)
-                currentShippingCost = initialShippingCost;
-                shippingText = `+ ${currentShippingCost.toFixed(2)} € (Est.)`;
-                
-                // Ocultar mensaje de recogida, mostrar detalles de dirección, hacer campos de dirección requeridos
-                pickupDetailsMessage.classList.add('hidden');
-                shippingDetailsStandard.classList.remove('hidden');
+            } else {
+                // Opción Envío a Domicilio (Estándar)
+                currentShippingCost = initialShippingCost;
+                shippingText = `+ ${currentShippingCost.toFixed(2)} € (Est.)`;
+                
+                // Ocultar mensaje de recogida, mostrar detalles de dirección, hacer campos de dirección requeridos
+                pickupDetailsMessage.classList.add('hidden');
+                shippingDetailsStandard.classList.remove('hidden');
 
-                addressStreetInput.required = true;
-                addressCityInput.required = true;
-                addressZipInput.required = true;
-                addressCountryInput.required = true;
-                
-                // Estilo para el coste de envío
-                shippingCostDisplay.classList.remove('text-[#6a760c]', 'font-bold');
-                shippingCostDisplay.classList.add('text-[#bf7149]');
-            }
+                addressStreetInput.required = true;
+                addressCityInput.required = true;
+                addressZipInput.required = true;
+                addressCountryInput.required = true;
+                
+                // Estilo para el coste de envío
+                shippingCostDisplay.classList.remove('text-[#6a760c]', 'font-bold');
+                shippingCostDisplay.classList.add('text-[#bf7149]');
+            }
 
-            // Actualizar la línea de gastos de envío
-            shippingCostDisplay.innerHTML = shippingText;
+            // Actualizar la línea de gastos de envío
+            shippingCostDisplay.innerHTML = shippingText;
 
-            // Calcular y actualizar el total a pagar
-            const newTotal = subtotal + currentShippingCost;
-            totalValueDisplay.textContent = `${newTotal.toFixed(2)} €`;
-        }
+            // Calcular y actualizar el total a pagar
+            const newTotal = subtotal + currentShippingCost;
+            totalValueDisplay.textContent = `${newTotal.toFixed(2)} €`;
+        }
 
-        // Event Listeners para Tipo de Pago
-        gatewayRadio.addEventListener('change', togglePaymentDetails);
-        cashRadio.addEventListener('change', togglePaymentDetails);
-        
-        // Event Listeners para Tipo de Envío
-        shippingStandardRadio.addEventListener('change', updateShippingCostAndAddress);
-        shippingPickupRadio.addEventListener('change', updateShippingCostAndAddress);
+        // Event Listeners para Tipo de Pago
+        gatewayRadio.addEventListener('change', togglePaymentDetails);
+        cashRadio.addEventListener('change', togglePaymentDetails);
+        
+        // Event Listeners para Tipo de Envío
+        shippingStandardRadio.addEventListener('change', updateShippingCostAndAddress);
+        shippingPickupRadio.addEventListener('change', updateShippingCostAndAddress);
 
-        // Ejecutar al cargar la página para establecer el estado inicial
-        togglePaymentDetails();
-        updateShippingCostAndAddress();
-    });
+        // Ejecutar al cargar la página para establecer el estado inicial
+        togglePaymentDetails();
+        updateShippingCostAndAddress();
+    });
 </script>
 {% endblock content %}
