@@ -1,0 +1,18 @@
+[run]
+omit =
+    */migrations/*
+    */tests/*
+    */tests.py
+    */admin.py
+    */apps.py
+    manage.py
+    mundo_jardin/asgi.py
+    mundo_jardin/wsgi.py
+    */__init__.py
+    */settings.py
+
+[report]
+exclude_lines =
+    # Don't complain about these pragma
+    pragma: no cover
+    if __name__ == .__main__.

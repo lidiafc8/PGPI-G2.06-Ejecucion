@@ -39,7 +39,7 @@ def update_cart(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request) 
     # Aseguramos que el item exista antes de intentar modificarlo
-    item, created = ItemCestaCompra.objects.get_or_create(cesta_compra=cesta, producto_id=producto_id, defaults={'cantidad': 0})
+    item, created = ItemCestaCompra.objects.get_or_create(cesta_compra=cesta, producto_id=producto_id, defaults={'cantidad': 0, 'precio_unitario': producto.precio})
     
     action = request.POST.get('action') 
 
@@ -377,4 +377,9 @@ def procesar_pago(request):
         return redirect('home')
         
     except ValueError:
+        # Marcar la transacción para rollback si ocurre un error validado (ej. stock insuficiente)
+        try:
+            transaction.set_rollback(True)
+        except Exception:
+            pass
         return redirect('carrito:carrito')
