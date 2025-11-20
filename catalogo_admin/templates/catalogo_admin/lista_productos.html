@@ -15,7 +15,49 @@
         <span>Añadir Nuevo Producto</span>
     </a>
 </div>
+<form id="filtros-form" method="get" class="flex flex-wrap items-center gap-3 mb-6">
+    <div>
+        <label for="seccion-filtro" class="text-gray-700 font-semibold block mb-1">Sección</label>
+        <select id="seccion-filtro" name="seccion" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+            <option value="">Todas las secciones</option>
+            {% for valor, etiqueta in secciones %}
+                <option value="{{ valor }}"{% if seccion_seleccionada == valor %} selected{% endif %}>
+                    {{ etiqueta|cut:"_"|title }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
 
+    <div>
+        <label for="categoria-filtro" class="text-gray-700 font-semibold block mb-1">Categoría</label>
+        <select id="categoria-filtro" name="categoria" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+            <option value="">Todas las categorías</option>
+            {% for valor, etiqueta in categorias %}
+                <option value="{{ valor }}"{% if categoria_seleccionada == valor %} selected{% endif %}>
+                    {{ etiqueta|cut:"_"|title }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div>
+        <label for="fabricante-filtro" class="text-gray-700 font-semibold block mb-1">Fabricante</label>
+        <select id="fabricante-filtro" name="fabricante" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
+            <option value="">Todos los fabricantes</option>
+            {% for fabricante in fabricantes %}
+                <option value="{{ fabricante }}"{% if fabricante_seleccionado == fabricante %} selected{% endif %}>
+                    {{ fabricante }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="self-end flex items-center space-x-2">
+        <button id="limpiar-filtros" type="button" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">
+            Limpiar filtros
+        </button>
+    </div>
+</form>
 <div class="bg-white shadow-xl rounded-xl overflow-hidden">
     {% if productos %}
     <table class="min-w-full divide-y divide-gray-200">
@@ -237,6 +279,17 @@ $(document).ready(function() {
         
         // Guarda el nuevo orden y actualiza el estado de los botones
         saveNewOrder();
+    });
+
+    // ----- Auto-apply filters: submit form on change -----
+    $('#seccion-filtro, #categoria-filtro, #fabricante-filtro').on('change', function() {
+        $('#filtros-form').submit();
+    });
+
+    // ----- Limpiar filtros: vuelve a la vista sin parámetros -----
+    $('#limpiar-filtros').on('click', function() {
+        // Redirige a la URL base de la lista de productos para limpiar todos los filtros
+        window.location.href = "{% url 'lista_productos' %}";
     });
 });
 </script>
