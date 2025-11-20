@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,11 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-s240u(yzd&tfx2igstc5v=jtk$2k)4b%pumbr(o8y9tv))j&nn'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-
-ALLOWED_HOSTS = ['mundo-jardin.onrender.com','mundo-jardin.com','www.mundo-jardin.com']
+ALLOWED_HOSTS = []
 
 LOGIN_URL = 'inicio_sesion:login'
 # LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
@@ -85,7 +82,7 @@ TEMPLATES = [
     },
 ]
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 
 # Dónde buscar archivos estáticos adicionales (como tu carpeta "static" global)
 # Asegúrate de que tu carpeta de imágenes estáticas exista en el nivel superior de tu proyecto
