@@ -100,7 +100,7 @@ WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-no-usar-en-produccion")
 
 DEBUG = os.environ.get("DEBUG", "false") == "true"
-ALLOWED_HOSTS = ["*"]  # Para pruebas, luego cambia al dominio de Koyeb
+ALLOWED_HOSTS = ["good-nadiya-pgpi-mundojardin-be6bfb0f.koyeb.app/"]  # Para pruebas, luego cambia al dominio de Koyeb
 
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
@@ -113,12 +113,6 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
-    
-    import os
-import dj_database_url
-
-
-
 
 
 # Authentication User Model
