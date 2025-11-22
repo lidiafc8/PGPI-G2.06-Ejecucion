@@ -391,9 +391,10 @@ def procesar_pago(request):
 
         # 5. Vaciar Cesta
         cesta.items.all().delete()
+        request.session['ultimo_correo_pedido'] = email
         
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
-        return redirect('home')
+        return redirect('carrito:fin_compra')
         
     except ValueError:
         # Marcar la transacción para rollback si ocurre un error validado (ej. stock insuficiente)
@@ -402,3 +403,24 @@ def procesar_pago(request):
         except Exception:
             pass
         return redirect('carrito:carrito')
+    
+
+def compra_finalizada(request):
+    """Muestra la página de confirmación después de una compra exitosa."""
+    correo_pedido = request.session.pop('ultimo_correo_pedido', '')
+    # Opcional: Recuperar el ID de pedido de la sesión/URL si lo estás manejando
+    # y borrar la cesta de compra (si no se hizo en procesar_pago)
+    opciones_filtro = obtener_opciones_filtro()
+
+    contexto = {
+        'mensaje_final': '¡Gracias por tu compra! Tu pedido ha sido procesado con éxito.',
+        # Puedes añadir más información del pedido si la pasaste
+        'correo': correo_pedido,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+    }
+    return render(request, 'compra_finalizada.html', contexto)
