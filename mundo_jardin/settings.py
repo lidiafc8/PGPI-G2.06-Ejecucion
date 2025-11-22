@@ -144,9 +144,6 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [ BASE_DIR / 'static' ]
 STATIC_ROOT = BASE_DIR / 'staticfiles_collect'
 
-# Usamos 'CompressedStaticFilesStorage' en lugar de 'Manifest' para evitar errores 500 si falta algún archivo
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
-
 # Archivos Multimedia (Subidos por usuario)
 # NOTA: En Koyeb sin S3, estos archivos se borran al redesplegar.
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'
