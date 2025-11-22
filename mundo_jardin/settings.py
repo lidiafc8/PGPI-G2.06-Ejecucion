@@ -99,8 +99,9 @@ WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 # SECRET_KEY desde variable de entorno
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-no-usar-en-produccion")
 
-DEBUG = True
-ALLOWED_HOSTS = ["*"]  # Para pruebas, luego cambia al dominio de Koyeb
+DEBUG = False
+ALLOWED_HOSTS = ["good-nadiya-pgpi-mundojardin-be6bfb0f.koyeb.app"]
+  # Para pruebas, luego cambia al dominio de Koyeb
 
 if os.environ.get("DATABASE_URL"):
     DATABASES = {
@@ -178,7 +179,17 @@ MEDIA_ROOT = BASE_DIR / 'Imgproductos'
 SESSION_COOKIE_SECURE = DEBUG is False
 CSRF_COOKIE_SECURE = DEBUG is False
 
-# Protección contra ataques de secuencias de comandos entre sitios (XSS)
-# (impide que JavaScript acceda a las cookies)
+CSRF_TRUSTED_ORIGINS = ["https://good-nadiya-pgpi-mundojardin-be6bfb0f.koyeb.app"]
+
+# HttpOnly protege las cookies de accesos desde JavaScript
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
+
+# Si tu frontend necesita leer el CSRF token via JS (AJAX), CSRF_COOKIE_HTTPONLY = False
+# Solo activarlo si realmente necesitas AJAX que lea la cookie
+# CSRF_COOKIE_HTTPONLY = False
+
+# Recomendado también para producción
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_SSL_REDIRECT = True  # Redirige HTTP → HTTPS
