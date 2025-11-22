@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Comando para ejecutar Django con Gunicorn en el puerto 8080 (Koyeb usa este puerto)
-CMD ["gunicorn", "tu_proyecto.wsgi:application", "--bind", "0.0.0.0:8080"]
+CMD ["gunicorn", "mundo_jardin.wsgi:application", "--bind", "0.0.0.0:8080"]
