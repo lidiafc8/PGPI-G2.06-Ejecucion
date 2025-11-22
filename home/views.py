@@ -249,3 +249,6 @@ def agregar_a_cesta(request, producto_id):
         "total_items": total_items
         
     })
+
+
+
