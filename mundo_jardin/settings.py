@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import dj_database_url
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,13 +22,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-s240u(yzd&tfx2igstc5v=jtk$2k)4b%pumbr(o8y9tv))j&nn'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
 
 LOGIN_URL = 'inicio_sesion:login'
 # LOGIN_REDIRECT_URL ='/inicio_sesion/cambio_rol'
@@ -100,12 +96,30 @@ WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# SECRET_KEY desde variable de entorno
+SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-no-usar-en-produccion")
+
+DEBUG = os.environ.get("DEBUG", "false") == "true"
+ALLOWED_HOSTS = ["*"]  # Para pruebas, luego cambia al dominio de Koyeb
+
+if os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"))
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+    
+    import os
+import dj_database_url
+
+
+
+
 
 # Authentication User Model
 AUTH_USER_MODEL = 'home.Usuario'
