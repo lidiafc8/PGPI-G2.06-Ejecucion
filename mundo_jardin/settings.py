@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -86,6 +87,8 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static', 
     # O, si la carpeta se llama 'imagenes_estaticas': BASE_DIR / 'imagenes_estaticas',
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # DIRECTORIO DE RECOLECCIÓN (CLAVE PARA PRODUCCIÓN)
 # Al ejecutar 'collectstatic', Django copiará todos los archivos estáticos aquí.
 STATIC_ROOT = BASE_DIR / 'staticfiles_collect'
@@ -192,4 +195,5 @@ CSRF_COOKIE_HTTPONLY = True
 # Recomendado también para producción
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-SECURE_SSL_REDIRECT = True  # Redirige HTTP → HTTPS
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
