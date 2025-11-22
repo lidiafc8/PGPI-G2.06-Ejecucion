@@ -12,6 +12,8 @@ from home.models import (
 import uuid 
 from django.db import transaction
 
+from home.views import obtener_opciones_filtro
+
 
 
 
@@ -114,12 +116,20 @@ def ver_cesta(request):
                     'stock': item.producto.stock,
                 })
         total = subtotal 
+    opciones_filtro = obtener_opciones_filtro()
+
 
     context = {
     
     'articulos': articulos_para_plantilla, 
     'subtotal': f"{subtotal:.2f}",
     'total': f"{total:.2f}", 
+    'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, "carrito.html", context)
@@ -228,6 +238,8 @@ def checkout(request):
     # Asegurar que el coste de envío sea un Decimal para el total final
     total_inicial = subtotal + coste_envio
     
+    opciones_filtro = obtener_opciones_filtro()
+
     context = {
         'articulos': cesta.items.all(), 
         'subtotal': f"{subtotal:.2f}",
@@ -236,6 +248,13 @@ def checkout(request):
         'datos_cliente': datos_cliente,
         'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), # True si la lista no está vacía
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+        
     }
     
     return render(request, "pago.html", context)

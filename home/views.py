@@ -6,7 +6,112 @@ from django.contrib import messages
 from django.http import JsonResponse
 
 
+# Función de ayuda para obtener opciones únicas de filtro
+def obtener_opciones_filtro():
+    """Retorna las opciones únicas para los filtros (Fabricante y Rangos de Precio)."""
+    # Rangos de precio predefinidos (puedes ajustarlos)
+    rangos_precio = [
+        (0, 50, "Menos de 50€"),
+        (50, 100, "50€ - 100€"),
+        (100, 500, "100€ - 500€"),
+        (500, 99999, "Más de 500€"),
+    ]
+
+    # Obtener valores únicos de Fabricante del modelo Producto
+    fabricantes = Producto.objects.values_list('fabricante', flat=True).distinct().order_by('fabricante')
+    
+    # ⚠️ Nota: Ya no se obtiene la lista de categorías/secciones aquí porque es estática en el template.
+
+    return {
+        'precios': rangos_precio,
+        'fabricantes': list(fabricantes),
+        # 'categorias': [], # No es necesario si no se usa
+    }
+
 # El parámetro 'categoria' contendrá el valor de la URL (ej: 'CORTASETOS_Y_MOTOSIERRAS')
+def catalogo(request, categoria=None):
+    """Maneja la visualización del catálogo y la aplicación de filtros."""
+    productos_a_mostrar = Producto.objects.all()
+    categoria_valor = None
+    template_name = 'catalogo.html'
+    filtros_activos = False 
+
+    # Recuperar valores seleccionados del formulario GET
+    precio_rango_str = request.GET.get('precio', '')
+    fabricante_seleccionado = request.GET.get('fabricante', '')
+    # 🌟 CAMBIO: Recuperar el valor del filtro de sección. El nombre del campo es 'seccion_filtro'
+    seccion_filtro_seleccionada = request.GET.get('seccion_filtro', '') 
+    # El valor de la categoría antigua se ignora: categoria_filtro_seleccionada = request.GET.get('categoria_filtro', '') 
+
+
+    # 1. Filtro por URL (Categoría) - Mantenemos esta lógica si la usas en otras rutas
+    # ... (Lógica de filtrado por URL se mantiene como estaba) ...
+    if categoria:
+        categoria_valor = categoria.upper()
+        productos_a_mostrar = productos_a_mostrar.filter(categoria=categoria_valor)
+        categoria_display = categoria_valor.replace('_', ' ')
+    else:
+        if request.resolver_match.url_name == 'home': 
+            productos_a_mostrar = Producto.objects.filter(esta_destacado=True)
+            template_name = 'index.html'
+            categoria_display = None
+        elif request.resolver_match.url_name == 'filtros_globales':
+            categoria_display = 'CATÁLOGO CON FILTROS'
+        else:
+            categoria_display = 'CATÁLOGO COMPLETO'
+
+    # --- 2. Filtros Adicionales por GET (Botón de Búsqueda por Filtro) ---
+    q_filtros = Q()
+    
+    # 2.1. Filtro por Precio
+    if precio_rango_str:
+        try:
+            min_precio, max_precio = map(float, precio_rango_str.split('-'))
+            q_filtros &= Q(precio__gte=min_precio) & Q(precio__lte=max_precio)
+            filtros_activos = True
+        except ValueError:
+            pass
+    
+    # 2.2. Filtro por Fabricante
+    if fabricante_seleccionado:
+        q_filtros &= Q(fabricante__iexact=fabricante_seleccionado)
+        filtros_activos = True
+
+    # 🌟 CAMBIO: 2.3. Filtro por Sección (usando el campo 'seccion' del modelo)
+    if seccion_filtro_seleccionada:
+        q_filtros &= Q(seccion=seccion_filtro_seleccionada)
+        filtros_activos = True
+
+    # Aplicar los filtros combinados
+    if q_filtros:
+        productos_a_mostrar = productos_a_mostrar.filter(q_filtros)
+
+    # --- Cálculo de euros y centavos (y obtención de opciones de filtro) ---
+    for producto in productos_a_mostrar:
+        producto.euros = int(producto.precio)
+        producto.centavos = int((producto.precio - producto.euros) * 100)
+
+    # Obtener las opciones dinámicas (solo precios y fabricantes)
+    opciones_filtro = obtener_opciones_filtro()
+
+    contexto = {
+        'productos_destacados': productos_a_mostrar,
+        'categoria_actual': categoria_display,
+        'opciones_filtro': opciones_filtro,
+        'filtros_activos': filtros_activos,
+        
+        # Valores seleccionados para mantener el estado en el formulario:
+        'precio_seleccionado': precio_rango_str,
+        'fabricante_seleccionado': fabricante_seleccionado,
+        # 🌟 CAMBIO: Pasar el valor de la sección seleccionada
+        'seccion_filtro_seleccionada': seccion_filtro_seleccionada,
+        
+        'es_catalogo': template_name == 'catalogo.html', 
+    }
+
+    return render(request, template_name, contexto)
+# Las demás funciones (index, detalle_producto, buscar_productos, agregar_a_cesta) permanecen IGUAL
+
 def index(request, categoria=None):
     productos_a_mostrar = Producto.objects.all()
     categoria_valor = None
@@ -25,9 +130,16 @@ def index(request, categoria=None):
         producto.euros = int(producto.precio)
         producto.centavos = int((producto.precio - producto.euros) * 100)
 
+    opciones_filtro = obtener_opciones_filtro()
     contexto = {
         'productos_destacados': productos_a_mostrar,
         'categoria_actual': categoria_valor,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, template_name, contexto)
@@ -45,10 +157,19 @@ def detalle_producto(request, pk):
     for p in productos_relacionados:
         p.euros = int(p.precio)
         p.centavos = int((p.precio - p.euros) * 100)
+    
+    opciones_filtro = obtener_opciones_filtro()
+
 
     contexto = {
         'producto': producto,
         'productos_relacionados': productos_relacionados,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, 'detalle_producto.html', contexto)
@@ -75,10 +196,18 @@ def buscar_productos(request):
                 producto.centavos = int((producto.precio - producto.euros) * 100)
                 productos_encontrados.append(producto)
 
+        opciones_filtro = obtener_opciones_filtro()
+
     contexto = {
         'query': query,
         'productos_destacados': productos_encontrados,
         'categoria_actual': f'Resultados para "{query}"' if query else 'Búsqueda',
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, 'catalogo.html', contexto)
@@ -113,10 +242,10 @@ def agregar_a_cesta(request, producto_id):
 
     total_items = sum(i.cantidad for i in cesta.items.all())
 
+
     return JsonResponse({
         "success": True,
         "mensaje": f"✅ {producto.nombre} añadido correctamente a la cesta.",
         "total_items": total_items
+        
     })
-
-
