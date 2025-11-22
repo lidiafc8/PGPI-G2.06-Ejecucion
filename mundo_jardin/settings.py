@@ -61,7 +61,7 @@ INSTALLED_APPS = [
 # ==============================================
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # <--- IMPRESCINDIBLE PARA CSS EN KOYEB
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -185,3 +185,5 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 # 6. HttpOnly (Protege cookies de JS)
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
+
+WHITENOISE_USE_FINDERS = True
