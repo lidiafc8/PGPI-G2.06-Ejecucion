@@ -39,7 +39,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary_storage',
     'django.contrib.staticfiles',
+    'cloudinary',
     # Tus apps
     'home',
     'adminpanel',
@@ -147,8 +149,18 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 # Archivos Multimedia (Subidos por usuario)
 # NOTA: En Koyeb sin S3, estos archivos se borran al redesplegar.
-MEDIA_URL = '/Imgproductos/'
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Esto es solo para referencia interna, Cloudinary pondrá https://res.cloudinary...
+MEDIA_URL = '/Imgproductos/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
