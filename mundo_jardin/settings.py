@@ -99,7 +99,7 @@ WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 # SECRET_KEY desde variable de entorno
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key-no-usar-en-produccion")
 
-DEBUG = os.environ.get("DEBUG", "false") == "true"
+DEBUG = True
 ALLOWED_HOSTS = ["*"]  # Para pruebas, luego cambia al dominio de Koyeb
 
 if os.environ.get("DATABASE_URL"):
