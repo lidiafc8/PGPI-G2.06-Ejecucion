@@ -40,7 +40,8 @@ class HomeModelsTest(TestCase):
         self.assertEqual(cesta.get_total_cesta(), expected)
 
     def test_item_pedido_save_sets_total(self):
-        pedido = Pedido.objects.create(usuario_cliente=self.cliente, correo_electronico='c@test.com')
+        # Asegurarse de proporcionar un Decimal para subtotal para evitar mezclas float/Decimal
+        pedido = Pedido.objects.create(usuario_cliente=self.cliente, subtotal_importe=Decimal('0.00'), correo_electronico='c@test.com')
         item = ItemPedido.objects.create(pedido=pedido, producto=self.producto, cantidad=3, precio_unitario=Decimal('2.00'))
         self.assertEqual(item.total, Decimal('6.00'))
 
