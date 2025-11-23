@@ -2,6 +2,23 @@
 {% load static %}
 
 {% block title %}Confirmar Eliminación{% endblock %}
+{% block breadcrumbs %}
+    
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <a href="{% url 'clientes_admin_index' %}" class="hover:text-[#6a760c] font-medium text-gray-500 hover:underline">
+        USUARIOS
+    </a>
+
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            ELIMINAR USUARIO #{{ cliente.id }}
+        </span>
+
+{% endblock %}
 
 {% block content %}
 <div class="max-w-xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-red-200">
