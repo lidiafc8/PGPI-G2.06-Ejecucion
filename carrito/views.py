@@ -13,6 +13,10 @@ import uuid
 from django.db import transaction
 
 from home.views import obtener_opciones_filtro
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
+from django.urls import reverse
+from django.conf import settings
 
 
 
@@ -389,10 +393,26 @@ def procesar_pago(request):
             producto.stock -= item_cesta.cantidad
             producto.save()
 
+        # Enviar correo de confirmación (intentar, pero no romper la transacción si falla)
+        try:
+            tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', args=[pedido.id, pedido.tracking_id]))
+            subject = f"Confirmación pedido #{pedido.id}"
+            text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
+            html_body = f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p><p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+
+            msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error enviando email de confirmación: %s", e)
+            messages.warning(request, "No se pudo enviar el email de confirmación. Igualmente, su pedido se ha procesado.")
+
         # 5. Vaciar Cesta
         cesta.items.all().delete()
         request.session['ultimo_correo_pedido'] = email
-        
+
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
         return redirect('carrito:fin_compra')
         
