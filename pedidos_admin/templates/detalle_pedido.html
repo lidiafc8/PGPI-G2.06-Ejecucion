@@ -1,7 +1,25 @@
-{% extends 'catalogo_admin/base_admin.html' %}
+{% extends 'base_admin.html' %} 
 {% load static %}
 
 {% block title %}Detalle del Pedido #{{ pedido.pk }}{% endblock %}
+
+{% block breadcrumbs %}
+    
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <a href="{% url 'lista_pedidos' %}" class="hover:text-[#6a760c] font-medium text-gray-500 hover:underline">
+        PEDIDOS
+    </a>
+
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            DETALLE #{{ pedido.pk }}
+        </span>
+
+{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
@@ -10,6 +28,7 @@
         <h1 class="text-3xl font-bold text-gray-900 lm-text-green">
             Detalle del Pedido <span class="text-black">#{{ pedido.pk }}</span>
         </h1>
+        <hr classs="mb-8"> 
         <a href="{% url 'lista_pedidos' %}" 
            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
