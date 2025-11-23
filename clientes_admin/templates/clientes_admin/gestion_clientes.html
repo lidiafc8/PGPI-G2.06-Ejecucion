@@ -1,6 +1,7 @@
 {% extends 'base_admin.html' %} 
 
 {% block title %}Gestión de Usuarios - Administración{% endblock %}
+
 {% block breadcrumbs %}
     </li>
     <li>
@@ -13,78 +14,96 @@
 
 {% block content %}
 
-    <div class="py-2">
+    <div class="py-2 w-full">
         <h1 class="text-3xl font-extrabold text-black mb-8 text-left">
             Usuarios registrados en el sistema 
         </h1>
-        <hr classs="mb-8"> 
+        <hr class="mb-8"> 
 
-        <div class="space-y-3">
-            
-            <div class="flex items-center gap-4">
-                <div class="w-24 flex-shrink-0"></div> 
-                
-                <div class="flex-1 px-6 py-3"> 
-                    <div class="grid grid-cols-6 font-bold text-black text-sm">
-                        <span>NOMBRE COMPLETO</span>
-                        <span>TELÉFONO</span>
-                        <span>CORREO</span>
-                        <span>DIRECCIÓN ENVÍO</span>
-                        <span>TIPO DE PAGO</span>
-                        <span>TIPO DE ENVÍO</span>
-                    </div>
-                </div>
+        <div class="bg-white sombra-negra rounded-xl overflow-hidden border border-gray-200 w-full">
+            {% if clientes %}
+            <div class="w-full"> <table class="w-full divide-y divide-gray-200 table-fixed"> <thead class="bg-[#a8ae63]">
+                        <tr>
+                            <th scope="col" class="px-4 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-1/6">
+                                Nombre
+                            </th>
+                            <th scope="col" class="px-2 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-[10%]">
+                                Teléfono
+                            </th>
+                            <th scope="col" class="px-2 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-1/6">
+                                Correo
+                            </th>
+                            <th scope="col" class="px-4 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-1/4">
+                                Dirección Envío
+                            </th>
+                            <th scope="col" class="px-2 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-[10%]">
+                                Pago
+                            </th>
+                            <th scope="col" class="px-2 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider w-[10%]">
+                                Envío
+                            </th>
+                            <th scope="col" class="px-4 py-4 text-right text-xs font-extrabold text-black uppercase tracking-wider w-[10%]">
+                                Acciones
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for cliente in clientes %}
+                        <tr class="hover:bg-yellow-50 transition duration-150">
+                            
+                            <td class="px-4 py-4 text-sm font-bold text-gray-900 break-words">
+                                {{ cliente.usuario.nombre }} {{ cliente.usuario.apellidos }}
+                            </td>
+                            
+                            <td class="px-2 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {{ cliente.telefono|default:"-" }}
+                            </td>
+
+                            <td class="px-2 py-4 text-sm text-gray-600 break-all">
+                                {{ cliente.usuario.corre_electronico }}
+                            </td>
+
+                            <td class="px-4 py-4 text-sm text-gray-600 break-words">
+                                {{ cliente.direccion_envio|default:"-" }}
+                            </td>
+
+                            <td class="px-2 py-4 text-sm text-gray-600 break-words">
+                                {{ cliente.tipo_pago|default:"-" }}
+                            </td>
+
+                            <td class="px-2 py-4 text-sm text-gray-600 break-words">
+                                {{ cliente.tipo_envio|default:"-" }}
+                            </td>
+
+                            <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="{% url 'cliente_eliminar_confirmar' cliente.id %}" 
+                                   class="text-red-600 hover:text-red-900 transition font-bold inline-flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    ELIMINAR
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-
-            <div class="relative">
-                <div class="space-y-3 max-h-[60vh] overflow-y-auto pr-4">
-                    
-                    {% for cliente in clientes %}
-                    <div class="flex items-center gap-4">
-                        
-                        <a href="{% url 'cliente_eliminar_confirmar' cliente.id %}"
-                           class="w-24 flex-shrink-0 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-full font-semibold text-sm transition-transform hover:scale-105 text-center flex items-center justify-center">
-                                ELIMINAR
-                        </a>
-
-                        <div class="flex-1 bg-[#fff6e4] border-2 border-black rounded-full px-6 py-4 shadow-sm hover:shadow-md transition">                    
-                            <div class="grid grid-cols-6 items-center text-gray-700 text-sm">
-                                
-                                <span class="pr-2 font-bold whitespace-normal break-words">
-                                    {{ cliente.usuario.nombre }} {{ cliente.usuario.apellidos }}
-                                </span>
-                                
-                                <span class="pr-2 whitespace-normal break-words">
-                                    {{ cliente.telefono|default:"N/A" }}
-                                </span>
-
-                                <span class="pr-2 whitespace-normal break-words truncate" title="{{ cliente.usuario.corre_electronico }}">
-                                    {{ cliente.usuario.corre_electronico }}
-                                </span>
-
-                                <span class="pr-2 whitespace-normal break-words">
-                                    {{ cliente.direccion_envio|default:"N/A" }}
-                                </span>
-
-                                <span class="pr-2 whitespace-normal break-words">
-                                    {{ cliente.tipo_pago|default:"N/A" }}
-                                </span>
-
-                                <span class="pr-2 whitespace-normal break-words">
-                                    {{ cliente.tipo_envio|default:"N/A" }}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {% empty %}
-                    <div class="text-center text-gray-500 py-10 bg-white rounded-xl border border-gray-200">
-                        <p class="text-lg">No hay clientes registrados en el sistema.</p>
-                    </div>
-                    {% endfor %}
-                </div>
+            {% else %}
+            <div class="p-8 text-center">
+                <p class="text-gray-500 text-lg">No hay clientes registrados en el sistema.</p>
             </div>
+            {% endif %}
         </div>
     </div>
 
 {% endblock %}
+
+{% block extra_js %}
+<style>
+    .sombra-negra {
+        box-shadow: 0px 10px 25px -5px rgba(0, 0, 0, 0.7); 
+    }
+</style>
+{% endblock extra_js %}
