@@ -166,7 +166,7 @@ class Producto(models.Model):
     categoria=models.CharField(max_length=50, choices=Categoria.choices)
     precio= models.DecimalField(max_digits=10, decimal_places=2)
     stock=models.IntegerField(default=0)
-    imagen= models.ImageField(upload_to='', blank=True, null=True)
+    imagen = models.ImageField(upload_to='Imgproductos/', null=True, blank=True)
     esta_agotado= models.BooleanField(default=False)
     esta_destacado= models.BooleanField(default=False)
     orden = models.PositiveIntegerField(default=0, blank=False, null=False)
