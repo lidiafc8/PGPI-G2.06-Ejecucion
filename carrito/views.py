@@ -13,6 +13,11 @@ import uuid
 from django.db import transaction
 
 from home.views import obtener_opciones_filtro
+from django.conf import settings
+from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 
@@ -394,6 +399,37 @@ def procesar_pago(request):
         request.session['ultimo_correo_pedido'] = email
         
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
+
+        # Enviar correo de confirmación con el ID de seguimiento.
+        try:
+            subject = f"Confirmación de pedido #{pedido.id} - Seguimiento"
+            # Construir un enlace absoluto a la futura vista de seguimiento.
+            # Referencia de vista esperada: `seguimiento_pedido`.
+            # No hace falta que la vista/URL exista ahora; cuando la crees
+            # debería manejar la ruta `/pedidos/seguimiento/<pedido_id>/` y
+            # poder nombrarse con el `name='seguimiento_pedido'` si lo deseas.
+            tracking_url = request.build_absolute_uri(f"/pedidos/seguimiento/{pedido.id}/")
+            text_body = (
+                f"Gracias por tu compra.\n\n"
+                f"ID de seguimiento: {pedido.tracking_id}\n"
+                f"Total: {total_importe:.2f} €\n\n"
+                f"Puedes consultar el estado de tu pedido en el siguiente enlace:\n{tracking_url}\n\n"
+                "Si no puedes hacer clic en el enlace, cópialo y pégalo en tu navegador."
+            )
+            html_message = (
+                f"<p>Gracias por tu compra.</p>"
+                f"<p><strong>ID de seguimiento:</strong> {pedido.tracking_id}</p>"
+                f"<p><strong>Total:</strong> {total_importe:.2f} €</p>"
+                f"<p><a href=\"{tracking_url}\">Ver seguimiento de mi pedido</a></p>"
+            )
+            from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None) or getattr(settings, 'EMAIL_HOST_USER', 'no-reply@example.com')
+            recipient = [pedido.correo_electronico]
+            # send_mail usará el backend configurado en settings (locmem por defecto en dev/tests)
+            send_mail(subject, text_body, from_email, recipient, html_message=html_message, fail_silently=True)
+        except Exception as e:
+            # No queremos romper el flujo por fallos en el envío de correo; lo registramos.
+            logger.warning('No se pudo enviar el correo de confirmación del pedido %s: %s', getattr(pedido, 'id', '?'), str(e))
+
         return redirect('carrito:fin_compra')
         
     except ValueError:
