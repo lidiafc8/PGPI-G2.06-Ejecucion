@@ -28,7 +28,7 @@ urlpatterns = [
     path('subcategorias/<slug:categoria>/', views.index, name='productos_por_categoria'),    
     path('catalogoAdmin/', include('catalogo_admin.urls')),
     path('producto/<int:pk>/', views.detalle_producto, name='detalle_producto'),
-    path('buscar/', views.buscar_productos, name='buscar'), # Nueva URL de búsqueda
+    path('buscar/', views.buscar_productos, name='buscar'),
     path('adminpanel/', include(('adminpanel.urls', 'adminpanel'), namespace='adminpanel')),
     path('ventas_admin/', include('ventas_admin.urls')),
     path('clientes_admin/', include('clientes_admin.urls')),
@@ -39,5 +39,9 @@ urlpatterns = [
     path('carrito/', include(('carrito.urls','carrito'), namespace='carrito')),
     path('cesta/agregar/<int:producto_id>/', views.agregar_a_cesta, name='agregar_a_cesta'),
     path('cesta/', carrito_views.ver_cesta, name='ver_cesta'),
-    path('pedidos/', include('pedidos_admin.urls'))
+    path('pedidos/', include('pedidos_admin.urls')),
+    path('seguimiento/<int:order_id>/<str:tracking_hash>/', views.seguimiento_pedido, name='seguimiento_pedido')
 ]
+
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
