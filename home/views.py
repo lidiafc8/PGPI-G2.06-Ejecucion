@@ -57,6 +57,7 @@ def index(request, categoria=None):
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
         'seccion_filtro_seleccionada': '',
+        'plantilla_base': 'base.html',
     }
     
     # Si por alguna razón tu archivo se llama home.html en vez de index.html, cambia esto abajo:

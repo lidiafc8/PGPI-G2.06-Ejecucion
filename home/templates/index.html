@@ -1,6 +1,7 @@
-{% extends "base.html" %}
+{% extends plantilla_base|default:"base.html" %}
+{% load static %}
 
-{% block title %}Mundo Jardín - Home{% endblock title %}
+{% block title %}Mundo Jardín - Inicio{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -64,8 +65,16 @@
 </style>
 {% endblock extra_css %}
 
+{% block breadcrumb %}
+    {% if plantilla_base == 'base_admin.html' %}
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <span class="text-gray-800 font-semibold">VISTA TIENDA</span>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-{% load static %}
 
 <main class="py-4 md:py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -147,7 +156,6 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
                     
                     {% for producto in productos_random %} 
-                    
                     <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300">
                         
                         <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
@@ -207,9 +215,7 @@
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        // ----------------------------------------------------
-        // 1. LÓGICA DEL CARRUSEL PRINCIPAL (HERO)
-        // ----------------------------------------------------
+        // CARRUSEL
         const carousel = document.getElementById('product-carousel');
         if(carousel){ 
             const items = carousel.children;
@@ -226,8 +232,6 @@
                 if(nextBtn) nextBtn.style.display = 'none';
                 if(dotNavigation) dotNavigation.style.display = 'none'; 
             } else {
-
-                // Puntos de navegación
                 function createDots() {
                     for (let i = 0; i < totalItems; i++) {
                         const li = document.createElement('li');
@@ -241,7 +245,6 @@
                         dotNavigation.appendChild(li);
                     }
                 }
-
                 function updateDots() {
                     Array.from(dotNavigation.children).forEach((dot, index) => {
                         if (index === currentIndex) {
@@ -251,56 +254,37 @@
                         }
                     });
                 }
-
                 function updateCarousel() {
                     const offset = -currentIndex * 100;
                     carousel.style.transform = `translateX(${offset}%)`;
                     updateDots();
                 }
-
                 function nextSlide() {
                     currentIndex = (currentIndex + 1) % totalItems;
                     updateCarousel();
                 }
-
                 function prevSlide() {
                     currentIndex = (currentIndex - 1 + totalItems) % totalItems;
                     updateCarousel();
                 }
-
                 function startAutoSlide() {
                     clearInterval(autoSlide); 
                     autoSlide = setInterval(nextSlide, intervalTime);
                 }
                 
-                // Event Listeners
-                if(nextBtn) nextBtn.addEventListener('click', () => {
-                    nextSlide();
-                    startAutoSlide();
-                });
+                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
 
-                if(prevBtn) prevBtn.addEventListener('click', () => {
-                    prevSlide();
-                    startAutoSlide();
-                });
-
-                // Iniciar
                 createDots(); 
                 updateCarousel(); 
                 startAutoSlide();
             }
         }
-    });
-    </script>
 
-    <script>
-        // ----------------------------------------------------
-        // 2. LÓGICA DE AÑADIR AL CARRITO (AJAX) - COMÚN
-        // ----------------------------------------------------
+        // CARRITO AJAX
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
-
                 const btn = this.querySelector('button');
                 const originalText = btn.innerText;
                 btn.disabled = true;
@@ -321,7 +305,6 @@
                 .then(data => {
                     if(data.success){
                         showToast("✅ " + data.mensaje);
-                        // Actualizar badge del carrito
                         const badge = document.querySelector('#cesta-badge');
                         if(badge){
                             badge.textContent = data.total_items;
@@ -353,23 +336,17 @@
         function showToast(mensaje){
             const container = document.getElementById('toast-container');
             if(!container) return;
-            
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
             container.appendChild(toast);
-
-            // Forzar reflow
             void toast.offsetWidth;
-
-            // Mostrar suavemente
             toast.classList.add('show');
-
-            // Ocultar después de 3 segundos
             setTimeout(() => {
                 toast.classList.remove('show'); 
                 setTimeout(() => toast.remove(), 500); 
             }, 3000);
         }
+    });
     </script>
 {% endblock extra_js %}
