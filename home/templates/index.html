@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <style>
-    /* --- Estilos clave para el Carrusel Principal (HERO - El tuyo original) --- */
+    /* --- Estilos para el Carrusel Principal (HERO) --- */
     #product-carousel {
         display: flex;
         transition: transform 0.5s ease-in-out;
@@ -22,11 +22,8 @@
     .shadow-hard-halo {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
-    .product-title-link {
-        display: block;
-    }
-
-    /* Navegación de Puntos del Carrusel Principal */
+    
+    /* Navegación de Puntos */
     .dot-nav {
         width: 10px;
         height: 10px;
@@ -40,25 +37,12 @@
         transform: scale(1.2);
     }
 
-    /* --- NUEVOS ESTILOS: PARA EL CARRUSEL DE ABAJO (TARJETAS) --- */
-    #related-carousel {
-        display: flex;
-        overflow-x: auto;      /* Scroll horizontal */
-        scroll-behavior: smooth;
-        gap: 1.5rem;           /* Espacio entre tarjetas */
-        padding-bottom: 1rem;
-        /* Ocultar barra de scroll visualmente */
-        -ms-overflow-style: none;  
-        scrollbar-width: none;     
-    }
-    #related-carousel::-webkit-scrollbar {
-        display: none;
-    }
+    /* Efecto Hover para las tarjetas de abajo */
     .hover\:shadow-card:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
-    /* Estilo Toast */
+    /* Estilo Toast (Mensajes emergentes) */
     .toast {
         position: fixed;
         top: 20px;
@@ -130,7 +114,7 @@
                                         {% if not user.is_authenticated or not user.is_staff %}
                                         <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
                                             {% csrf_token %}
-                                            <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
+                                            <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
                                                 AÑADIR A LA CESTA
                                             </button>
                                         </form>
@@ -160,56 +144,47 @@
                     También te podría interesar
                 </h2>
     
-                <div class="relative group">
-                    <div id="related-carousel" class="flex overflow-x-auto gap-6 py-4 px-2 snap-x snap-mandatory scroll-smooth">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    {% for producto in productos_random %} 
+                    
+                    <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300">
                         
-                        {% for producto in productos_random %} 
-                        
-                        <div class="snap-center shrink-0 w-[260px] bg-white rounded-xl p-4 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300">
+                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                            {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                            {% else %}
+                                <img src="{% static 'imagen1.jpg' %}" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
+                            {% endif %}
+                        </a>
+
+                        <div class="flex-grow flex flex-col">
+                            <h4 class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem]">
+                                {{ producto.nombre|lower|capfirst }}
+                            </h4>
                             
-                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-40 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
-                                {% if producto.imagen %}
-                                    <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
-                                {% else %}
-                                    <img src="{% static 'imagen1.jpg' %}" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
-                                {% endif %}
-                            </a>
-    
-                            <div class="flex-grow flex flex-col">
-                                <h4 class="text-sm font-bold uppercase text-gray-800 leading-tight mb-1 line-clamp-2 h-10 overflow-hidden">
-                                    {{ producto.nombre|lower|capfirst }}
-                                </h4>
-                                
-                                <div class="mt-auto pt-2">
-                                    <div class="text-xl font-bold text-[#A91B0D] mb-3">
-                                        {{ producto.precio|floatformat:2 }} €
-                                    </div>
-                                    
-                                    {% if not user.is_authenticated or not user.is_staff %}
-                                    <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
-                                        {% csrf_token %}
-                                        <button type="submit" class="w-full py-2 bg-white text-[#bf7149] font-semibold rounded border border-[#bf7149] hover:bg-[#bf7149] hover:text-white transition-colors text-sm">
-                                            Añadir
-                                        </button>
-                                    </form>
-                                    {% endif %}
+                            <div class="mt-auto pt-4">
+                                <div class="text-2xl font-bold text-[#A91B0D] mb-4">
+                                    {{ producto.precio|floatformat:2 }} €
                                 </div>
+                                
+                                {% if not user.is_authenticated or not user.is_staff %}
+                                <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
+                                        AÑADIR A LA CESTA
+                                    </button>
+                                </form>
+                                {% endif %}
                             </div>
                         </div>
-                        {% endfor %}
                     </div>
-    
-                    <button id="related-prev-btn" class="absolute top-1/2 -left-4 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-lg border border-gray-100 text-gray-700 hover:text-[#bf7149] z-10 hidden md:flex">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    </button>
-                    <button id="related-next-btn" class="absolute top-1/2 -right-4 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white rounded-full shadow-lg border border-gray-100 text-gray-700 hover:text-[#bf7149] z-10 hidden md:flex">
-                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                    </button>
+                    {% endfor %}
                 </div>
             </div>
         </div>
         {% endif %}
-        </div>
+    </div>
 
    {% if messages %}
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2">
@@ -233,10 +208,10 @@
     document.addEventListener('DOMContentLoaded', function() {
         
         // ----------------------------------------------------
-        // 1. LÓGICA DE TU CARRUSEL PRINCIPAL (ORIGINAL)
+        // 1. LÓGICA DEL CARRUSEL PRINCIPAL (HERO)
         // ----------------------------------------------------
         const carousel = document.getElementById('product-carousel');
-        if(carousel){ // Solo ejecuta si existe
+        if(carousel){ 
             const items = carousel.children;
             const totalItems = items.length; 
             const prevBtn = document.getElementById('prev-btn');
@@ -252,7 +227,7 @@
                 if(dotNavigation) dotNavigation.style.display = 'none'; 
             } else {
 
-                // --- FUNCIONALIDAD DE LOS PUNTOS ---
+                // Puntos de navegación
                 function createDots() {
                     for (let i = 0; i < totalItems; i++) {
                         const li = document.createElement('li');
@@ -298,7 +273,7 @@
                     autoSlide = setInterval(nextSlide, intervalTime);
                 }
                 
-                // --- Event Listeners para botones manuales ---
+                // Event Listeners
                 if(nextBtn) nextBtn.addEventListener('click', () => {
                     nextSlide();
                     startAutoSlide();
@@ -309,37 +284,18 @@
                     startAutoSlide();
                 });
 
-                // --- Inicialización ---
+                // Iniciar
                 createDots(); 
                 updateCarousel(); 
                 startAutoSlide();
             }
-        }
-
-        // ----------------------------------------------------
-        // 2. LÓGICA DEL CARRUSEL NUEVO (DE ABAJO)
-        // ----------------------------------------------------
-        const relatedCarousel = document.getElementById('related-carousel');
-        const relatedPrevBtn = document.getElementById('related-prev-btn');
-        const relatedNextBtn = document.getElementById('related-next-btn');
-
-        if (relatedCarousel && relatedPrevBtn && relatedNextBtn) {
-            const scrollAmount = 300; 
-            
-            relatedPrevBtn.addEventListener('click', () => {
-                relatedCarousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            });
-
-            relatedNextBtn.addEventListener('click', () => {
-                relatedCarousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            });
         }
     });
     </script>
 
     <script>
         // ----------------------------------------------------
-        // 3. LÓGICA DE AÑADIR AL CARRITO (AJAX) - COMÚN
+        // 2. LÓGICA DE AÑADIR AL CARRITO (AJAX) - COMÚN
         // ----------------------------------------------------
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
@@ -365,12 +321,11 @@
                 .then(data => {
                     if(data.success){
                         showToast("✅ " + data.mensaje);
-                        // Actualizar badge del carrito si existe
+                        // Actualizar badge del carrito
                         const badge = document.querySelector('#cesta-badge');
                         if(badge){
                             badge.textContent = data.total_items;
                         } else {
-                            // Si no existe el badge, intentar crearlo (opcional)
                             const cestaLink = document.querySelector('a[href*="carrito"]');
                             if(cestaLink) {
                                 const span = document.createElement('span');
