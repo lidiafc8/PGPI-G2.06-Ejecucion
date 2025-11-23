@@ -247,7 +247,7 @@ class ProcesarPagoTest(CartBaseTest):
         """Verifica la creación del Pedido, ItemPedido y vaciado de la Cesta."""
         response = self.client.post(self.procesar_url, self.valid_post_data)
         
-        self.assertRedirects(response, self.home_url, status_code=302, target_status_code=200)
+        self.assertRedirects(response, reverse('carrito:fin_compra'), status_code=302, target_status_code=200)
 
         # Verificaciones
         self.assertEqual(Pedido.objects.count(), 1)
@@ -297,4 +297,4 @@ class ProcesarPagoTest(CartBaseTest):
         self.assertEqual(tarjeta.usuario_cliente, self.cliente)
         self.assertEqual(tarjeta.ultimos_cuatro, '3456')
         
-        self.assertRedirects(response, self.home_url)
+        self.assertRedirects(response, reverse('carrito:fin_compra'))
