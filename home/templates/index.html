@@ -1,10 +1,11 @@
-{% extends "base.html" %}
+{% extends plantilla_base|default:"base.html" %}
+{% load static %}
 
-{% block title %}Mundo Jardín - Home{% endblock title %}
+{% block title %}Mundo Jardín - Inicio{% endblock %}
 
 {% block extra_css %}
 <style>
-    /* --- Estilos clave para el Carrusel (Movidos desde el Head original) --- */
+    /* --- Estilos para el Carrusel Principal (HERO) --- */
     #product-carousel {
         display: flex;
         transition: transform 0.5s ease-in-out;
@@ -13,7 +14,6 @@
     .slide-item {
         min-width: 100%;
         flex-shrink: 0;
-        /* Clase añadida para asegurar que los elementos absolutos internos se posicionen correctamente */
         position: relative; 
     }
     .carousel-container {
@@ -23,12 +23,8 @@
     .shadow-hard-halo {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
-    /* El enlace del título siempre debe ser clicable */
-    .product-title-link {
-        display: block;
-    }
-
-    /* --- Estilos de Navegación de Puntos del Carrusel --- */
+    
+    /* Navegación de Puntos */
     .dot-nav {
         width: 10px;
         height: 10px;
@@ -41,11 +37,44 @@
         background-color: #6a760c;
         transform: scale(1.2);
     }
+
+    /* Efecto Hover para las tarjetas de abajo */
+    .hover\:shadow-card:hover {
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* Estilo Toast (Mensajes emergentes) */
+    .toast {
+        position: fixed;
+        top: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(-20px);
+        background: #16a34a; 
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        opacity: 0;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        z-index: 9999;
+    }
+    .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 </style>
 {% endblock extra_css %}
 
+{% block breadcrumb %}
+    {% if plantilla_base == 'base_admin.html' %}
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <span class="text-gray-800 font-semibold">VISTA TIENDA</span>
+    {% endif %}
+{% endblock %}
+
 {% block content %}
-{% load static %}
 
 <main class="py-4 md:py-6">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -61,14 +90,10 @@
                             
                             <a href="{% url 'detalle_producto' pk=producto.pk %}" class="md:w-1/3 w-full bg-white p-4 rounded-lg flex items-center justify-center h-80 ">
                                 {% if producto.imagen %}
-                                    <img src="{{ producto.imagen.url }}" 
-                                        alt="Imagen de {{ producto.nombre }}" 
-                                        class="max-h-full max-w-full object-cover rounded-lg ">
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-cover rounded-lg ">
                                 {% else %}
-
-<img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
-                                            class="max-h-full max-w-full object-contain mix-blend-multiply">
-                                    </div>                                {% endif %}
+                                    <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                {% endif %}
                             </a>
 
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
@@ -80,21 +105,16 @@
                                     
                                     <p class="text-xs text-gray-500 mb-3">
                                         Fabricante: {{ producto.fabricante }}
-
                                     </p>
                                     <a  href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text-[#bf7149] text-xs font-medium hover:underline">
                                         <span class="font-medium"></span> {{ producto.get_seccion_display }}
-
                                         /
                                         <span class="font-medium"></span>
                                              {{ producto.get_categoria_display }} 
-                                         
-                                        
                                     </a>
                                 </div>
                                 
                                 <div class="flex-none pt-2 ml-auto"> 
-
                                     <div class="flex items-center space-x-4 mr-12 ">
                                         <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
                                         {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
@@ -103,9 +123,7 @@
                                         {% if not user.is_authenticated or not user.is_staff %}
                                         <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
                                             {% csrf_token %}
-                                            <button type="submit" 
-                                                class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg 
-                                                    hover:bg-yellow-600 transition duration-300">
+                                            <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
                                                 AÑADIR A LA CESTA
                                             </button>
                                         </form>
@@ -119,25 +137,61 @@
                 </div>
             </div>
 
-            <button id="prev-btn" class="absolute top-1/2 left-0 transform -translate-y-1/2 ml-4 
-                            w-10 h-10 flex items-center justify-center 
-                            bg-white rounded-lg shadow-hard-halo 
-                            hover:bg-gray-100 transition z-40">
-                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
+            <button id="prev-btn" class="absolute top-1/2 left-0 transform -translate-y-1/2 ml-4 w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-hard-halo hover:bg-gray-100 transition z-40">
+                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
             </button>
-            <button id="next-btn" class="absolute top-1/2 right-0 transform -translate-y-1/2 mr-4 
-                            w-10 h-10 flex items-center justify-center 
-                            bg-white rounded-lg shadow-hard-halo 
-                            hover:bg-gray-100 transition z-40">
-                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
+            <button id="next-btn" class="absolute top-1/2 right-0 transform -translate-y-1/2 mr-4 w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-hard-halo hover:bg-gray-100 transition z-40">
+                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
             </button>
         </div>
         <ol id="dot-navigation" class="flex justify-center mt-6 space-x-3"></ol>
+        
+        {% if productos_random %}
+        <div class="bg-gray-50 border-t border-gray-200 mt-12 py-12 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 rounded-xl">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">
+                    También te podría interesar
+                </h2>
+    
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                    
+                    {% for producto in productos_random %} 
+                    <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300">
+                        
+                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                            {% if producto.imagen %}
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                            {% else %}
+                                <img src="{% static 'imagen1.jpg' %}" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
+                            {% endif %}
+                        </a>
 
+                        <div class="flex-grow flex flex-col">
+                            <h4 class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem]">
+                                {{ producto.nombre|lower|capfirst }}
+                            </h4>
+                            
+                            <div class="mt-auto pt-4">
+                                <div class="text-2xl font-bold text-[#A91B0D] mb-4">
+                                    {{ producto.precio|floatformat:2 }} €
+                                </div>
+                                
+                                {% if not user.is_authenticated or not user.is_staff %}
+                                <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
+                                        AÑADIR A LA CESTA
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
     </div>
 
    {% if messages %}
@@ -148,30 +202,9 @@
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2"></div>
     {% endif %}
-
-    <style>
-    .toast {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: #16a34a; /* verde éxito */
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        opacity: 0;
-        transition: opacity 0.5s ease, transform 0.5s ease;
-        z-index: 9999;
-    }
-
-    .toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-    </style>
-
 
 </main>
 {% endblock content %}
@@ -181,94 +214,81 @@
     
     <script>
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // CARRUSEL
         const carousel = document.getElementById('product-carousel');
-        const items = carousel.children;
-        const totalItems = items.length; 
-        console.log(`JS detecta ${totalItems} elementos en el carrusel.`);
-        const prevBtn = document.getElementById('prev-btn');
-        const nextBtn = document.getElementById('next-btn');
-        const dotNavigation = document.getElementById('dot-navigation');
-        let currentIndex = 0;
-        const intervalTime = 8000;
-        let autoSlide;
+        if(carousel){ 
+            const items = carousel.children;
+            const totalItems = items.length; 
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const dotNavigation = document.getElementById('dot-navigation');
+            let currentIndex = 0;
+            const intervalTime = 8000;
+            let autoSlide;
 
-        if (totalItems <= 1) {
-            prevBtn.style.display = 'none';
-            nextBtn.style.display = 'none';
-            dotNavigation.style.display = 'none'; 
-            return;
-        }
-
-        // --- FUNCIONALIDAD DE LOS PUNTOS ---
-        function createDots() {
-            for (let i = 0; i < totalItems; i++) {
-                const li = document.createElement('li');
-                li.classList.add('dot-nav'); 
-                
-                li.dataset.index = i;
-                li.addEventListener('click', () => {
-                    currentIndex = i;
+            if (totalItems <= 1) {
+                if(prevBtn) prevBtn.style.display = 'none';
+                if(nextBtn) nextBtn.style.display = 'none';
+                if(dotNavigation) dotNavigation.style.display = 'none'; 
+            } else {
+                function createDots() {
+                    for (let i = 0; i < totalItems; i++) {
+                        const li = document.createElement('li');
+                        li.classList.add('dot-nav'); 
+                        li.dataset.index = i;
+                        li.addEventListener('click', () => {
+                            currentIndex = i;
+                            updateCarousel();
+                            startAutoSlide();
+                        });
+                        dotNavigation.appendChild(li);
+                    }
+                }
+                function updateDots() {
+                    Array.from(dotNavigation.children).forEach((dot, index) => {
+                        if (index === currentIndex) {
+                            dot.classList.add('dot-nav--current'); 
+                        } else {
+                            dot.classList.remove('dot-nav--current');
+                        }
+                    });
+                }
+                function updateCarousel() {
+                    const offset = -currentIndex * 100;
+                    carousel.style.transform = `translateX(${offset}%)`;
+                    updateDots();
+                }
+                function nextSlide() {
+                    currentIndex = (currentIndex + 1) % totalItems;
                     updateCarousel();
-                    startAutoSlide();
-                });
-                dotNavigation.appendChild(li);
+                }
+                function prevSlide() {
+                    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+                    updateCarousel();
+                }
+                function startAutoSlide() {
+                    clearInterval(autoSlide); 
+                    autoSlide = setInterval(nextSlide, intervalTime);
+                }
+                
+                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+
+                createDots(); 
+                updateCarousel(); 
+                startAutoSlide();
             }
         }
 
-        function updateDots() {
-            Array.from(dotNavigation.children).forEach((dot, index) => {
-                if (index === currentIndex) {
-                    dot.classList.add('dot-nav--current'); 
-                } else {
-                    dot.classList.remove('dot-nav--current');
-                }
-            });
-        }
-        // -------------------------------------
-
-        function updateCarousel() {
-            const offset = -currentIndex * 100;
-            carousel.style.transform = `translateX(${offset}%)`;
-            updateDots();
-        }
-
-        function nextSlide() {
-            currentIndex = (currentIndex + 1) % totalItems;
-            updateCarousel();
-        }
-
-        function prevSlide() {
-            currentIndex = (currentIndex - 1 + totalItems) % totalItems;
-            updateCarousel();
-        }
-
-        function startAutoSlide() {
-            clearInterval(autoSlide); 
-            autoSlide = setInterval(nextSlide, intervalTime);
-        }
-        
-        // --- Event Listeners para botones manuales ---
-        nextBtn.addEventListener('click', () => {
-            nextSlide();
-            startAutoSlide();
-        });
-
-        prevBtn.addEventListener('click', () => {
-            prevSlide();
-            startAutoSlide();
-        });
-
-        // --- Inicialización ---
-        createDots(); 
-        updateCarousel(); 
-        startAutoSlide();
-    });
-    </script>
-
-    <script>
+        // CARRITO AJAX
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
+                const btn = this.querySelector('button');
+                const originalText = btn.innerText;
+                btn.disabled = true;
+                btn.innerText = "...";
 
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -284,41 +304,49 @@
                 .then(res => res.json())
                 .then(data => {
                     if(data.success){
-                        showToast(data.mensaje);
-
+                        showToast("✅ " + data.mensaje);
                         const badge = document.querySelector('#cesta-badge');
                         if(badge){
                             badge.textContent = data.total_items;
                         } else {
-                            const cestaLink = document.querySelector('a[href="{% url "carrito:carrito" %}"]');
-                            const span = document.createElement('span');
-                            span.id = "cesta-badge";
-                            span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                            span.textContent = data.total_items;
-                            cestaLink.appendChild(span);
+                            const cestaLink = document.querySelector('a[href*="carrito"]');
+                            if(cestaLink) {
+                                const span = document.createElement('span');
+                                span.id = "cesta-badge";
+                                span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                                span.textContent = data.total_items;
+                                cestaLink.appendChild(span);
+                            }
                         }
+                    } else {
+                        showToast("❌ " + data.mensaje);
                     }
+                    btn.disabled = false;
+                    btn.innerText = originalText;
+                })
+                .catch(err => {
+                    console.error(err);
+                    showToast("❌ Error de conexión");
+                    btn.disabled = false;
+                    btn.innerText = originalText;
                 });
             });
         });
 
         function showToast(mensaje){
+            const container = document.getElementById('toast-container');
+            if(!container) return;
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
-            document.body.appendChild(toast);
-
-            // Forzar reflow para que se active la transición
+            container.appendChild(toast);
             void toast.offsetWidth;
-
-            // Mostrar suavemente
             toast.classList.add('show');
-
-            // Ocultar después de 3 segundos
             setTimeout(() => {
-                toast.classList.remove('show'); // inicia transición de desaparición
-                setTimeout(() => toast.remove(), 500); // eliminar del DOM
+                toast.classList.remove('show'); 
+                setTimeout(() => toast.remove(), 500); 
             }, 3000);
         }
-        </script>
+    });
+    </script>
 {% endblock extra_js %}
