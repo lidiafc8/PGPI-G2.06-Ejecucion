@@ -422,6 +422,8 @@ def procesar_pago(request):
             correo_electronico=email,
             telefono=telefon,
             pago=pago,
+            tracking_id=uuid.uuid4().hex[:10].upper()
+            
         )
 
         for item_cesta in cesta.items.select_related('producto'):
@@ -441,10 +443,17 @@ def procesar_pago(request):
 
         # Enviar correo de confirmación (intentar, pero no romper la transacción si falla)
         try:
-            tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', args=[pedido.id, pedido.tracking_id]))
+            # Asegurar que el pedido tiene el tracking_id más reciente
+            pedido.refresh_from_db()
+            tracking_url = request.build_absolute_uri(
+                reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id})
+            )
             subject = f"Confirmación pedido #{pedido.id}"
             text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
-            html_body = f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p><p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+            html_body = (
+                f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p>"
+                f"<p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+            )
 
             msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
             msg.attach_alternative(html_body, "text/html")
