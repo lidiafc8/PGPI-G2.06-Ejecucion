@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse  # <--- IMPORTANTE: Necesario para la Home
 from home.models import Producto 
 from decimal import Decimal 
 from django.contrib import messages
@@ -12,15 +12,12 @@ from home.models import (
 import uuid 
 from django.db import transaction
 
+# Asegúrate de que esta importación sea correcta según tu estructura
 from home.views import obtener_opciones_filtro
-
-
-
 
 def obtener_cesta_actual(request):
     cesta = None
     if request.user.is_authenticated:
-
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=usuario_cliente)
@@ -38,27 +35,72 @@ def obtener_cesta_actual(request):
 
 @require_POST 
 def update_cart(request, producto_id):
+    """
+    Actualiza el carrito. Detecta si la petición viene por AJAX (Home) o normal (Carrito).
+    """
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request) 
+    
     # Aseguramos que el item exista antes de intentar modificarlo
-    item, created = ItemCestaCompra.objects.get_or_create(cesta_compra=cesta, producto_id=producto_id, defaults={'cantidad': 0, 'precio_unitario': producto.precio})
+    item, created = ItemCestaCompra.objects.get_or_create(
+        cesta_compra=cesta, 
+        producto_id=producto_id, 
+        defaults={'cantidad': 0, 'precio_unitario': producto.precio}
+    )
+    
+    # Detectar si es una petición AJAX (JavaScript desde Home)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     
     action = request.POST.get('action') 
+    
+    # Si viene por AJAX sin acción explícita, asumimos que es 'add'
+    if is_ajax and not action:
+        action = 'add'
+
+    json_response_data = {'success': False, 'mensaje': 'Error desconocido'}
 
     if action == 'add':
-        if item.cantidad + 1 > producto.stock:
-            messages.error(request, f"Lo sentimos, solo quedan {producto.stock} unidades de {producto.nombre}.")
+        # Cantidad a añadir (por defecto 1)
+        try:
+            cantidad_add = int(request.POST.get('cantidad', 1))
+        except ValueError:
+            cantidad_add = 1
+
+        if item.cantidad + cantidad_add > producto.stock:
+            mensaje_error = f"Lo sentimos, solo quedan {producto.stock} unidades de {producto.nombre}."
+            
+            if is_ajax:
+                return JsonResponse({'success': False, 'mensaje': mensaje_error})
+            
+            messages.error(request, mensaje_error)
         else:
-            item.cantidad += 1
+            item.cantidad += cantidad_add
             item.save()
+            
+            # Datos de éxito para JSON
+            json_response_data = {
+                'success': True,
+                'mensaje': f'¡{producto.nombre} añadido!',
+                # Calculamos el total de items para actualizar el icono del carrito
+                'total_items': sum(i.cantidad for i in cesta.items.all())
+            }
+
     elif action == 'remove':
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
         elif item.cantidad == 1:
             item.delete()
+        
+        json_response_data = {'success': True, 'mensaje': 'Producto eliminado'}
     
-    return redirect('carrito:carrito')
+    # === RESPUESTA FINAL ===
+    if is_ajax:
+        # Si vino por JS, devolvemos JSON
+        return JsonResponse(json_response_data)
+    else:
+        # Si vino por formulario normal, recargamos página
+        return redirect('carrito:carrito')
 
 @require_POST 
 def remove_from_cart(request, producto_id):
@@ -73,7 +115,6 @@ def remove_from_cart(request, producto_id):
         pass 
 
     return redirect('carrito:carrito')
-
 
 def ver_cesta(request):
     """
@@ -116,17 +157,23 @@ def ver_cesta(request):
                     'stock': item.producto.stock,
                 })
         total = subtotal 
+    
     opciones_filtro = obtener_opciones_filtro()
 
+    # --- NUEVO: Obtener productos sugeridos para el carrusel de abajo ---
+    # Cogemos 5 productos aleatorios con stock
+    productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
 
     context = {
-    
-    'articulos': articulos_para_plantilla, 
-    'subtotal': f"{subtotal:.2f}",
-    'total': f"{total:.2f}", 
-    'opciones_filtro': opciones_filtro, 
+        'articulos': articulos_para_plantilla, 
+        'subtotal': f"{subtotal:.2f}",
+        'total': f"{total:.2f}", 
+        'opciones_filtro': opciones_filtro, 
         
-        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        # --- NUEVO: Añadimos la variable al contexto ---
+        'productos_destacados': productos_destacados,
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
         'seccion_filtro_seleccionada': '',
@@ -154,7 +201,6 @@ def checkout(request):
  
     total_inicial = subtotal + coste_envio
     tarjetas_guardadas = None
-    tiene_tarjeta_guardada = False
     tarjetas_para_contexto = []
     
 
