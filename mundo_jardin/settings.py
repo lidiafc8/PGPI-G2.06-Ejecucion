@@ -17,9 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY: Intenta leerla de Koyeb, si no existe usa una de prueba (SOLO para local)
 SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-cambiar-en-prod")
 
-# DEBUG: False para producción. 
-# Si quieres probar en local con errores visibles, cambia esto a True manualmente o usa una variable de entorno.
-DEBUG = False
+DEBUG = os.environ.get('DEBUG', 'True') != 'False'
 
 # ALLOWED_HOSTS: "*" permite que Koyeb haga sus chequeos internos sin dar error 500.
 ALLOWED_HOSTS = ["*"]
@@ -93,19 +91,10 @@ WSGI_APPLICATION = 'mundo_jardin.wsgi.application'
 # ==============================================
 # BASE DE DATOS
 # ==============================================
-# Detecta automáticamente si hay una base de datos externa (Postgres en Koyeb)
-if os.environ.get("DATABASE_URL"):
-    DATABASES = {
-        "default": dj_database_url.config(default=os.environ.get("DATABASE_URL"), conn_max_age=600)
-    }
-else:
-    # Fallback a SQLite para desarrollo local
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
+
+DATABASES = {
+    "default": dj_database_url.config(default="postgresql://neondb_owner:npg_6vaikg7lJsBr@ep-sweet-sky-aeyouodp-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require")
+}
 
 # ==============================================
 # AUTENTICACIÓN Y PASSWORD
@@ -149,9 +138,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles_collect'
 MEDIA_ROOT = BASE_DIR / 'Imgproductos'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'djfgts1ii'),
+    'API_KEY':    os.environ.get('CLOUDINARY_API_KEY', '238934691739344'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'rQq0rMASZAao8qWDtoC1KWzbF28'),
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
@@ -162,28 +151,30 @@ MEDIA_URL = '/Imgproductos/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ==============================================
-# SEGURIDAD PRODUCCIÓN (HTTPS & PROXY)
+# SEGURIDAD INTELIGENTE (Local vs Producción)
 # ==============================================
 
-# 1. CRÍTICO: Confiar en el balanceador de carga de Koyeb (evita bucle de redirección)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# 2. Forzar HTTPS
-SECURE_SSL_REDIRECT = True 
-
-# 3. Orígenes de confianza para CSRF (Formularios)
+# Estas configuraciones son seguras y no molestan en local
 CSRF_TRUSTED_ORIGINS = ["https://good-nadiya-pgpi-mundojardin-be6bfb0f.koyeb.app"]
-
-# 4. Cookies Seguras (Solo se envían por HTTPS)
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-
-# 5. Protección contra XSS y Sniffing
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
-
-# 6. HttpOnly (Protege cookies de JS)
 SESSION_COOKIE_HTTPONLY = True
 CSRF_COOKIE_HTTPONLY = True
-
 WHITENOISE_USE_FINDERS = True
+
+# AQUÍ ESTÁ LA MAGIA:
+# Si DEBUG es False (Producción/Koyeb), activamos la seguridad HTTPS fuerte.
+# Si DEBUG es True (Local), la desactivamos para poder trabajar.
+
+if not DEBUG:
+    # --- CONFIGURACIÓN PARA KOYEB (Producción) ---
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    # --- CONFIGURACIÓN PARA TU PC (Local) ---
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
