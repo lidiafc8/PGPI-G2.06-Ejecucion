@@ -5,14 +5,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mundo Jardín S.A - Home</title>
+    <title>Mundo Jardín S.A- Home</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .lm-green { background-color: #6a760c; }
         .lm-text-green { color: #6a760c; }
-        .lm-text-black { color: #000000; } 
+        .lm-text-black { color: #000000; } /* Definición de clase para el ícono del menú */
         .lm-white { background-color: #ffffff; }
 
         /* --- Estilos clave para el Carrusel --- */
@@ -60,72 +60,82 @@
                         class="h-20 w-20 mr-3 rounded-full">
                     Mundo Jardín S.A
                 </a>
-
-                <a class="flex flex-col items-center flex-shrink-0 text-[#6a760c] cursor-default">
+                <a class="flex flex-col items-center flex-shrink-0 text-[#6a760c] ">
                     <img src="{% static 'i1.png' %}" 
                         alt="Logo ubicacion" 
                         class="h-7 w-7 mb-1 rounded-full">
+                    
                     <span class="text-xs">Sevilla</span>
                 </a>
 
                 <div class="hidden lg:block flex-grow mx-5 max-w-2xl">
-                    <form action="{% url 'buscar' %}" method="GET" class="relative">
-                        <input type="search" 
-                               name="q" 
-                               id="q"
-                               placeholder="Buscar productos, fabricantes, secciones, categorías..." 
-                               class="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm">
-                        
-                        <button type="submit" 
-                                class="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-white rounded-r-lg lm-green hover:bg-[#bf7149] transition">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </button>
-                    </form>
-                </div>
+    <form action="{% url 'buscar' %}" method="GET" class="relative">
+        <input type="search" 
+               name="q" 
+               id="q"
+               placeholder="Buscar productos, fabricantes, secciones, categorías..." 
+               class="w-full py-3 pl-4 pr-12 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 shadow-sm">
+        
+        <button type="submit" 
+                class="absolute right-0 top-0 h-full w-12 flex items-center justify-center text-white rounded-r-lg lm-green hover:bg-[#bf7149] transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </button>
+    </form>
+</div>
 
                 <div class="flex items-center space-x-6">
-                    
                     {% if user.is_authenticated %}
-                        <a href="{% url 'perfil:mi_perfil' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                        <a href="{% url 'perfil:mi_perfil' %}"
+                            class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                             <span class="text-xs">Mi Perfil</span>
-                        </a> 
+                        </a>
+                        {% else %}
+                            <a href="{% url 'perfil:mi_perfil' %}"
+                                class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                                <span class="text-xs">Iniciar Sesión</span>
+                            </a>
+                            {% endif %}
 
-                        {% if not user.is_staff %}
-                        <a href="{% url 'perfil:lista_pedidos_cliente' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                            </svg>
-                            <span class="text-xs">Mis Pedidos</span>
-                        </a>
-                        {% endif %} {% if user.is_staff %}
-                        <a href="{% url 'adminpanel:adminpanel_index' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h7v7H3V3zM14 3h7v4h-7V3zM14 9h7v4h-7V9zM3 12h7v9H3v-9zM14 15h7v6h-7v-6z"/>
-                            </svg>
-                            <span class="text-xs">Gestión</span>
-                        </a>
+                    {% if user.is_authenticated and not user.is_staff %}
+                            <a href="{% url 'perfil:lista_pedidos_cliente' %}"
+                                class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                                    stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                </svg>
+                                <span class="text-xs">Mis Pedidos</span>
+                            </a>
+                        
+                    {% endif %}
 
-                        <a href="{% url 'home' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7v12a1 1 0 001 1h12a1 1 0 001-1V7M5 7l1-4h12l1 4M9 12h6v6H9v-6z"/>
-                            </svg>
-                            <span class="text-xs">Tienda</span>
-                        </a>
-                        {% endif %}
+                    {% if user.is_authenticated and user.is_staff %}
+                    <a href="{% url 'adminpanel:adminpanel_index' %}" 
+                    class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                d="M3 3h7v7H3V3zM14 3h7v4h-7V3zM14 9h7v4h-7V9zM3 12h7v9H3v-9zM14 15h7v6h-7v-6z"/>
+                        </svg>
+                        <span class="text-xs">Gestión</span>
+                    </a>
+                    <a href="{% url 'home' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 7v12a1 1 0 001 1h12a1 1 0 001-1V7M5 7l1-4h12l1 4M9 12h6v6H9v-6z"/>
+                        </svg>
+                        <span class="text-xs">Tienda</span>
+                    </a>
+                    {% endif %}
 
-                    {% else %}
-                        <a href="{% url 'perfil:mi_perfil' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition hidden sm:flex">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                            </svg>
-                            <span class="text-xs">Iniciar Sesión</span>
-                        </a>
-                    {% endif %} {% if not user.is_authenticated or not user.is_staff %}
+
+                    {% if not user.is_authenticated or not user.is_staff %}
                     <a href="{% url 'carrito:carrito' %}" class="flex flex-col items-center text-[#6a760c] hover:text-[#bf7149] transition relative">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
@@ -134,313 +144,428 @@
                         {% if total_items_cesta > 0 %}
                         <span id="cesta-badge" class="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center">
                             {{ total_items_cesta }}
+
                         </span>
                         {% endif %}
                     </a>
                     {% endif %}
                 </div>
+            
+                </div>
             </div>
         </div>
-    </header>
 
-    <div class="lm-white hidden lg:block shadow-inner">
-        <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <ul class="flex justify-between w-full"> 
+        <div class="lm-white hidden lg:block shadow-inner">
+            <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <ul class="flex justify-between w-full"> 
+                    
+                    <div class="flex space-x-8"> 
+                        <li class="group relative">
+                            <a href="#" class="flex items-center py-3 px-3 transition border-b-2 border-transparent hover:border-[#6a760c] ">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lm-text-black mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                </svg>
+                                <span class="text-black ">PRODUCTOS</span>
+                            </a>
+                            
+                            <ul class="absolute z-10 hidden group-hover:block w-96 bg-white border border-gray-200 shadow-lg rounded-md mt-0">
+                                
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-herramientas" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span> 🛠️ HERRMIENTAS MANUALES</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-herramientas" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/CORTE_Y_PODA" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>CORTE Y PODA</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/LABRANZA_Y_PLANTACION" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>LABRANZA Y PLANTACIÓN</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/RIEGO_MANUAL" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>RIEGO MANUAL</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-maquinaria" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span>  🚜 MAQUINARIA DE JARDÍN</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-maquinaria" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/CORTACESPEDES_Y_DESTROZADORAS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>CORTACESPEDES Y DESTROZADORAS</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/CORTASETOS_Y_MOTOSIERRAS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>CORTASETOS Y MOTOSIERRAS</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/SOPLADORES_Y_TRITURADORES" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>SOPLADORES Y TRITURADORES</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-RIEGO" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span>  💧 RIEGO</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-RIEGO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/MANGUERAS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>MANGUERAS</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/RIEGO_AUTOMATICO" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>RIEGO AUTOMÁTICO</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-CULTIVO" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span> 🌱 CULTIVO Y HUERTO</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-CULTIVO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/ABONOS_Y_SUBTRATOS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>ABONOS Y SUBTRATOS</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/MACETAS_E_INVERNADEROS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>MACETAS E INVERNADEROS</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-PROTECCION" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span> 🦺 PROTECCIÓN Y SEGURIDAD</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-PROTECCION" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/GAFAS_Y_CASCOS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>GAFAS Y CASCOS</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/GUANTES_Y_ROPA_PROTECCION" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>GUANTES Y ROPA DE PROTECCIÓN</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-ACCESORIOS" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span> ⚙️ ACCESORIOS Y REPUESTOS</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-ACCESORIOS" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            <li>
+                                                <a href="/subcategorias/BATERIAS_Y_CARGADORES" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>BATERÍAS Y CARGADORES</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/CUCHILLAS_Y_CADENAS" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>CUCHILLAS Y CADENAS</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="relative">
+                                        
+                                        <a href="#" id="toggle-JARDIN" 
+                                           class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 
+                                                  border-b border-gray-300 last:border-b-0 relative 
+                                                  hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
+                                            
+                                            <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
+                                            
+                                            <span> 🌻JARDÍN Y EXTERIOR</span>
+                                        </a>
+                                        
+                                        <ul id="submenu-JARDIN" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
+                                            
+                                            <li>
+                                                <a href="/subcategorias/ILUMINACION_EXTERIOR" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>ILUMINACIÓN DE EXTERIORES</span>
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a href="/subcategorias/MUEBLES_Y_DECORACION" 
+                                                   class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
+                                                    <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
+                                                    <span>MUEBLES Y DECORACIÓN</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+
+                            </ul>
+                        </li>
+                    </div>
+                    
+                    
+
+                  <li class="relative group">
+    <a href="{% url 'filtros_globales' %}" 
+        class="flex items-center py-3 px-3 transition border-b-2 border-transparent hover:border-[#6a760c] text-black">
+        <span class="text-black">BÚSQUEDA POR FILTROS</span>
+        <svg class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    </a>
+    
+    <div class="absolute left-0 mt-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
+        
+        <form method="GET" action="{% url 'filtros_globales' %}">
+
+            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
                 
-                <div class="flex space-x-8"> 
-                    <li class="group relative">
-                        <a href="#" class="flex items-center py-3 px-3 transition border-b-2 border-transparent hover:border-[#6a760c] ">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 lm-text-black mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                            <span class="text-black ">PRODUCTOS</span>
-                        </a>
-                        
-                        <ul class="absolute z-10 hidden group-hover:block w-96 bg-white border border-gray-200 shadow-lg rounded-md mt-0">
-                            
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-herramientas" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 🛠️ HERRMIENTAS MANUALES</span>
-                                    </a>
-                                    <ul id="submenu-herramientas" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'CORTE_Y_PODA' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>CORTE Y PODA</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'LABRANZA_Y_PLANTACION' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>LABRANZA Y PLANTACIÓN</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'RIEGO_MANUAL' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>RIEGO MANUAL</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-                            
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-maquinaria" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 🚜 MAQUINARIA DE JARDÍN</span>
-                                    </a>
-                                    <ul id="submenu-maquinaria" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'CORTACESPEDES_Y_DESTROZADORAS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>CORTACESPEDES Y DESTROZADORAS</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'CORTASETOS_Y_MOTOSIERRAS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>CORTASETOS Y MOTOSIERRAS</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'SOPLADORES_Y_TRITURADORES' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>SOPLADORES Y TRITURADORES</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
+                <div class="p-3">
+                    <label for="precio_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Precio</label>
+                    <select id="precio_select" name="precio" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Cualquier Precio</option>
+                        <option value="0-50" {% if precio_seleccionado == '0-50' %}selected{% endif %}>Menos de 50€</option>
+                        <option value="50-100" {% if precio_seleccionado == '50-100' %}selected{% endif %}>50€ - 100€</option>
+                        <option value="100-500" {% if precio_seleccionado == '100-500' %}selected{% endif %}>100€ - 500€</option>
+                        <option value="500-99999" {% if precio_seleccionado == '500-99999' %}selected{% endif %}>Más de 500€</option>
+                    </select>
+                </div>
 
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-RIEGO" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 💧 RIEGO</span>
-                                    </a>
-                                    <ul id="submenu-RIEGO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'MANGUERAS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>MANGUERAS</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'RIEGO_AUTOMATICO' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>RIEGO AUTOMÁTICO</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-CULTIVO" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 🌱 CULTIVO Y HUERTO</span>
-                                    </a>
-                                    <ul id="submenu-CULTIVO" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'ABONOS_Y_SUBTRATOS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>ABONOS Y SUBTRATOS</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'MACETAS_E_INVERNADEROS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>MACETAS E INVERNADEROS</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-PROTECCION" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 🦺 PROTECCIÓN Y SEGURIDAD</span>
-                                    </a>
-                                    <ul id="submenu-PROTECCION" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'GAFAS_Y_CASCOS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>GAFAS Y CASCOS</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'GUANTES_Y_ROPA_PROTECCION' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>GUANTES Y ROPA DE PROTECCIÓN</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-ACCESORIOS" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> ⚙️ ACCESORIOS Y REPUESTOS</span>
-                                    </a>
-                                    <ul id="submenu-ACCESORIOS" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'BATERIAS_Y_CARGADORES' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>BATERÍAS Y CARGADORES</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'CUCHILLAS_Y_CADENAS' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>CUCHILLAS Y CADENAS</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-
-                            <li>
-                                <div class="relative">
-                                    <a href="#" id="toggle-JARDIN" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150 group">
-                                        <span class="absolute left-0 top-0 h-full w-1 bg-transparent group-hover:bg-[#6a760c] transition-colors"></span>
-                                        <span> 🌻JARDÍN Y EXTERIOR</span>
-                                    </a>
-                                    <ul id="submenu-JARDIN" class="absolute z-20 hidden top-0 left-full w-80 bg-white border border-gray-200 shadow-lg rounded-md ml-1">
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'ILUMINACION_EXTERIOR' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>ILUMINACIÓN DE EXTERIORES</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="{% url 'productos_por_categoria' 'MUEBLES_Y_DECORACION' %}" class="flex items-center space-x-4 px-4 py-3 text-base text-gray-800 border-b border-gray-300 last:border-b-0 relative hover:bg-gray-100 hover:text-[#6a760c] transition duration-150">
-                                                <span class="absolute left-0 top-0 h-full w-1 bg-transparent hover:bg-[#6a760c] transition-colors"></span>
-                                                <span>MUEBLES Y DECORACIÓN</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </li>
-
-                        </ul>
-                    </li>
+                <div class="p-3 border-t">
+                    <label for="fabricante_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Fabricante</label>
+                    <select id="fabricante_select" name="fabricante" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Cualquier Fabricante</option>
+                        {% for fabricante in opciones_filtro.fabricantes %}
+                            <option value="{{ fabricante }}" {% if fabricante_seleccionado == fabricante %}selected{% endif %}>
+                                {{ fabricante }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
                 
-                <li class="relative group">
-                    <a href="{% url 'filtros_globales' %}" class="flex items-center py-3 px-3 transition border-b-2 border-transparent hover:border-[#6a760c] text-black">
-                        <span class="text-black">BÚSQUEDA POR FILTROS</span>
-                        <svg class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </a>
+                <div class="p-3 border-t">
+                    <label for="seccion_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Sección</label>
+                    <select id="seccion_select" name="seccion_filtro" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Todas las Secciones</option>
+                        <option value="HERRAMIENTAS_MANUALES" {% if seccion_filtro_seleccionada == 'HERRAMIENTAS_MANUALES' %}selected{% endif %}>Herramientas Manuales</option>
+                        <option value="MAQUINARIA_DE_JARDÍN" {% if seccion_filtro_seleccionada == 'MAQUINARIA_DE_JARDÍN' %}selected{% endif %}>Maquinaria de Jardín</option>
+                        <option value="RIEGO" {% if seccion_filtro_seleccionada == 'RIEGO' %}selected{% endif %}>Riego</option>
+                        <option value="CULTIVO_Y_HUERTO" {% if seccion_filtro_seleccionada == 'CULTIVO_Y_HUERTO' %}selected{% endif %}>Cultivo y Huerto</option>
+                        <option value="PROTECCION_Y_SEGURIDAD" {% if seccion_filtro_seleccionada == 'PROTECCION_Y_SEGURIDAD' %}selected{% endif %}>Protección y Seguridad</option>
+                        <option value="ACCESORIOS_Y_REPUESTOS" {% if seccion_filtro_seleccionada == 'ACCESORIOS_Y_REPUESTOS' %}selected{% endif %}>Accesorios y Repuestos</option>
+                        <option value="JARDÍN_Y_EXTERIOR" {% if seccion_filtro_seleccionada == 'JARDÍN_Y_EXTERIOR' %}selected{% endif %}>Jardín y Exterior</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="p-2 border-t border-gray-200 flex justify-between">
+                
+                <a href="{% url 'filtros_globales' %}" 
+                   class="flex-1 text-center text-sm py-1 mr-1 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md transition duration-150">
+                    Limpiar Filtros
+                </a>
+                
+                <button type="submit" 
+                   class="flex-1 text-center text-sm py-1 ml-1 bg-[#6a760c] text-white rounded-md hover:bg-[#5b640a] transition duration-150">
+                    Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</li>
+                
+            
                     
-                    <div class="absolute left-0 mt-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
-                        <form method="GET" action="{% url 'filtros_globales' %}">
-                            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
-                                <div class="p-3">
-                                    <label for="precio_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Precio</label>
-                                    <select id="precio_select" name="precio" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
-                                        <option value="">Cualquier Precio</option>
-                                        <option value="0-50" {% if precio_seleccionado == '0-50' %}selected{% endif %}>Menos de 50€</option>
-                                        <option value="50-100" {% if precio_seleccionado == '50-100' %}selected{% endif %}>50€ - 100€</option>
-                                        <option value="100-500" {% if precio_seleccionado == '100-500' %}selected{% endif %}>100€ - 500€</option>
-                                        <option value="500-99999" {% if precio_seleccionado == '500-99999' %}selected{% endif %}>Más de 500€</option>
-                                    </select>
-                                </div>
-
-                                <div class="p-3 border-t">
-                                    <label for="fabricante_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Fabricante</label>
-                                    <select id="fabricante_select" name="fabricante" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
-                                        <option value="">Cualquier Fabricante</option>
-                                        {% for fabricante in opciones_filtro.fabricantes %}
-                                            <option value="{{ fabricante }}" {% if fabricante_seleccionado == fabricante %}selected{% endif %}>
-                                                {{ fabricante }}
-                                            </option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                
-                                <div class="p-3 border-t">
-                                    <button type="submit" class="w-full bg-[#6a760c] text-white py-2 rounded-md hover:bg-[#bf7149] transition text-sm font-bold">
-                                        APLICAR FILTROS
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                    <div class="flex">
+                        <li class="group relative">
+                            <a href="{% url 'info_tienda:info_tienda' %}"  class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN S.A</a>
+                        </li>
                     </div>
-                </li>
-
-            </ul>
-        </nav>
+                    
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="bg-gray-100 py-3 border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav class="flex" aria-label="Breadcrumb">
+                <ol class="flex items-center space-x-2">
+                    <li>
+                        <a href="{% url 'home' %}" class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+                            INICIO
+                        </a>
+                    </li>
+                    
+                    {% block breadcrumbs %}
+                        {% endblock breadcrumbs %}
+                </ol>
+            </nav>
+        </div>
     </div>
 
-    {% block content %}
-    {% endblock %}
-
+    <div class="main-content">
+        {% block content %}
+        {% endblock content %}
+    </div>
+    
     <footer class="bg-gray-800 text-white mt-12">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 text-center text-sm">
             © 2025 Mundo Jardín S.A
         </div>
     </footer>
 
+    
+{% block extra_js %}
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const toggles = [
-                { id: "toggle-herramientas", menu: "submenu-herramientas" },
-                { id: "toggle-maquinaria", menu: "submenu-maquinaria" },
-                { id: "toggle-RIEGO", menu: "submenu-RIEGO" },
-                { id: "toggle-CULTIVO", menu: "submenu-CULTIVO" },
-                { id: "toggle-PROTECCION", menu: "submenu-PROTECCION" },
-                { id: "toggle-ACCESORIOS", menu: "submenu-ACCESORIOS" },
-                { id: "toggle-JARDIN", menu: "submenu-JARDIN" }
-            ];
+        document.addEventListener('DOMContentLoaded', function() {
+            // Seleccionamos todos los botones que inician un submenú (toggle-herramientas, toggle-maquinaria)
+            const toggleButtons = document.querySelectorAll('[id^="toggle-"]');
+            
+            toggleButtons.forEach(button => {
+                // Genera el ID del submenú correspondiente (submenu-herramientas, submenu-maquinaria)
+                const submenuId = button.id.replace('toggle-', 'submenu-');
+                const submenu = document.getElementById(submenuId);
 
-            toggles.forEach(item => {
-                const toggle = document.getElementById(item.id);
-                const menu = document.getElementById(item.menu);
-
-                if (toggle && menu) {
-                    toggle.addEventListener("mouseenter", function() {
-                        // Ocultar otros
-                        toggles.forEach(other => {
-                            if (other.menu !== item.menu) {
-                                document.getElementById(other.menu)?.classList.add("hidden");
+                if (button && submenu) {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault(); 
+                        
+                        // Ocultar todos los demás submenús abiertos
+                        document.querySelectorAll('[id^="submenu-"]').forEach(sub => {
+                            if (sub.id !== submenuId) {
+                                sub.classList.add('hidden');
                             }
                         });
-                        menu.classList.remove("hidden");
+                        
+                        // Alternar la visibilidad del submenú actual
+                        submenu.classList.toggle('hidden');
                     });
-
-                    menu.addEventListener("mouseleave", function() {
-                        menu.classList.add("hidden");
-                    });
-                    
-                    // Para que no se cierre si mueves el mouse del link al submenu
-                    menu.addEventListener("mouseenter", function() {
-                        menu.classList.remove("hidden");
-                    });
-                    
-                    toggle.parentElement.addEventListener("mouseleave", function(e) {
-                         // Pequeño timeout o lógica para cerrar si no entra al menú
-                         setTimeout(() => {
-                             if (!menu.matches(':hover')) {
-                                 menu.classList.add("hidden");
-                             }
-                         }, 100);
+                }
+            });
+            
+            // Cierra el submenú si se hace clic en cualquier otro lugar de la página
+            document.addEventListener('click', function(e) {
+                let clickedInsideMenu = false;
+                // Verifica si el clic ocurrió dentro de cualquier botón o submenú
+                document.querySelectorAll('[id^="toggle-"], [id^="submenu-"]').forEach(elem => {
+                    // Usamos .closest() para manejar clics dentro del submenú o botón mismo.
+                    if (e.target.closest('[id^="toggle-"]') || e.target.closest('[id^="submenu-"]')) {
+                        clickedInsideMenu = true;
+                    }
+                });
+                
+                if (!clickedInsideMenu) {
+                    // Oculta todos los submenús
+                    document.querySelectorAll('[id^="submenu-"]').forEach(sub => {
+                        sub.classList.add('hidden');
                     });
                 }
             });
         });
     </script>
-    
-    {% block extra_js %}
     {% endblock extra_js %}
-
 </body>
 </html>
