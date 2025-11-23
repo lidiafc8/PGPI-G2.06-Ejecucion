@@ -290,12 +290,40 @@ def seguimiento_pedido(request, order_id, tracking_hash):
             'fabricante_seleccionado': '',
             'seccion_filtro_seleccionada': '',
         }
-        return render(request, 'home/seguimiento_pedido.html', context)
+        return render(request, 'seguimiento_pedido.html', context)
 
     except Pedido.DoesNotExist:
-        messages.error(request, "El enlace de seguimiento es incorrecto o el pedido no existe. Por favor, verifica el enlace en tu email.")
-        return redirect('home') 
-        
+        # Intentar obtener el pedido solo por ID para informar si hay mismatch de tracking_id
+        try:
+            pedido_por_id = Pedido.objects.get(id=order_id)
+            mensaje = (
+                f"Pedido encontrado (ID={order_id}) pero el código de seguimiento no coincide. "
+                f"Tracking en DB: {pedido_por_id.tracking_id} | Tracking recibido: {tracking_hash}"
+            )
+        except Pedido.DoesNotExist:
+            mensaje = "El pedido no existe con el ID proporcionado. Por favor, verifica el enlace en tu email."
+
+        messages.error(request, mensaje)
+        # Renderizar plantilla de error para mostrar información útil al usuario/desarrollador
+        context_error = {
+            'message': mensaje,
+            'opciones_filtro': obtener_opciones_filtro(),
+            'precio_seleccionado': '',
+            'fabricante_seleccionado': '',
+            'seccion_filtro_seleccionada': '',
+        }
+        return render(request, 'error_seguimiento.html', context_error)
     except Exception as e:
+        # Registrar para depuración y mostrar mensaje de error genérico
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.exception("Error inesperado en seguimiento_pedido: %s", e)
         messages.error(request, f"Error inesperado al acceder al seguimiento. Intente más tarde. ({e})")
-        return redirect('home')
+        context_error = {
+            'message': f"Error inesperado al acceder al seguimiento. ({e})",
+            'opciones_filtro': obtener_opciones_filtro(),
+            'precio_seleccionado': '',
+            'fabricante_seleccionado': '',
+            'seccion_filtro_seleccionada': '',
+        }
+        return render(request, 'error_seguimiento.html', context_error)
