@@ -1,20 +1,77 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
-from home.models import Producto  
-from .forms import ProductoForm    
+from home.models import Producto, Seccion, Categoria
+from .forms import ProductoForm, SECCION_CATEGORIA_MAP
 from django.views.decorators.http import require_POST
 import json
 from django.db import transaction
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from .forms import SECCION_CATEGORIA_MAP
 
+# ... (otras vistas) ...
 
 def lista_productos(request):
     if not request.user.is_authenticated or not request.user.is_staff:
         return redirect('home')
-    productos = Producto.objects.all()
-    context = {'productos': productos}
+    
+    # 1. Obtener los valores de filtro de la URL (GET)
+    seccion_seleccionada = request.GET.get('seccion')
+    categoria_seleccionada = request.GET.get('categoria')
+    fabricante_seleccionado = request.GET.get('fabricante')
+    
+    # 2. Si se seleccionó sólo categoría y no sección, inferimos la sección asociada
+    if categoria_seleccionada and not seccion_seleccionada:
+        for sec, cats in SECCION_CATEGORIA_MAP.items():
+            if categoria_seleccionada in cats:
+                seccion_seleccionada = sec
+                break
+
+    # 3. Inicializar el QuerySet de productos y aplicar filtros
+    productos = Producto.objects.all().order_by('orden')
+
+    if seccion_seleccionada:
+        productos = productos.filter(seccion=seccion_seleccionada)
+
+    if categoria_seleccionada:
+        productos = productos.filter(categoria=categoria_seleccionada)
+
+    if fabricante_seleccionado:
+        productos = productos.filter(fabricante=fabricante_seleccionado)
+
+
+    # 4. Obtener opciones de fabricantes para el formulario
+    # Las opciones de fabricante son (valor, etiqueta)
+    fabricantes_choices = [
+        (f, f) 
+        for f in Producto.objects.values_list('fabricante', flat=True).distinct().order_by('fabricante')
+    ]
+    fabricantes_list = [f for f, _ in fabricantes_choices]
+    
+    # (Nota) No usamos un Form de Django aquí; la plantilla recibe las listas y
+    # el JS hace el filtrado dinámico. Conservamos request.GET valores arriba.
+    
+    # 5. Preparar la lista de categorías para renderizar en la plantilla.
+    # Si hay una sección seleccionada, devolvemos sólo las categorías asociadas a esa sección.
+    categorias_choices = list(Categoria.choices)
+    if seccion_seleccionada:
+        categorias_validas = SECCION_CATEGORIA_MAP.get(seccion_seleccionada, [])
+        categorias_choices = [c for c in categorias_choices if c[0] in categorias_validas]
+
+    context = {
+        'productos': productos,
+        # Pasamos las listas y valores seleccionados al template
+        # Mantenemos los valores seleccionados para JavaScript si es necesario.
+        'seccion_seleccionada': seccion_seleccionada,
+        'categoria_seleccionada': categoria_seleccionada,
+        'fabricante_seleccionado': fabricante_seleccionado,
+        # Pasamos listas completas para que la plantilla pueda renderizarlas y el JS haga el filtrado dinámico
+        'secciones': list(Seccion.choices),
+        'categorias': categorias_choices,
+        'fabricantes': fabricantes_list,
+        # Mapa sección->categorías para uso en cliente (serializado por plantilla)
+        'seccion_categoria_map_json': json.dumps(SECCION_CATEGORIA_MAP),
+    }
+    
     return render(request, 'catalogo_admin/lista_productos.html', context)
 
 
@@ -110,7 +167,10 @@ def cargar_categorias(request):
         return redirect('home')
     seccion_valor = request.GET.get('seccion_valor') 
 
+    # Asume que SECCION_CATEGORIA_MAP está definido en forms.py
     categorias_validas = SECCION_CATEGORIA_MAP.get(seccion_valor, [])
+    # Convertimos los valores internos (ej. "PALAS_Y_AZADAS") a una lista de diccionarios.
+    # El JS aplicará el filtro de formato (reemplazar _ y title)
     categorias_json = [{'nombre': c} for c in categorias_validas]
     
     return JsonResponse({'categorias': categorias_json})

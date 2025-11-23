@@ -62,11 +62,11 @@
             <p style="font-size: 1em; color: {% if producto.stock > 10 %} green {% else %} orang e{% endif %}; margin-bottom: 25px;">
                 {% if producto.esta_agotado or producto.stock == 0 %}
 <span class="text-red-600">
-                            SIN STOCK
+                            SIN PRODUCTO
                         </span>                {% elif producto.stock < 5 %}
-                    ¡Últimas unidades! Stock: {{ producto.stock }}
+                    ¡Últimas unidades! Almacenados: {{ producto.stock }}
                 {% else %}
-                    Stock disponible: {{ producto.stock }} unidades
+                    Productos disponibles: {{ producto.stock }} unidades
                 {% endif %}
             </p>
 
@@ -240,11 +240,11 @@
                     <div class="mb-3">
                         {% if relacionado.stock > 0 %}
                         <span class="text-sm font-semibold text-[#6a760c]">
-                            {{ relacionado.stock }} unidades en stock
+                            {{ relacionado.stock }} unidades en el almacén
                         </span>
                         {% else %}
                         <span class="text-sm font-semibold text-red-600">
-                            Sin stock
+                            Sin productos
                         </span>
                         {% endif %}
                     </div>

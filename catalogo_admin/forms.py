@@ -1,7 +1,7 @@
 
 
 from django import forms
-from home.models import Producto
+from home.models import Producto, Seccion, Categoria
 
 
 
@@ -83,3 +83,6 @@ class ProductoForm(forms.ModelForm):
                 self.add_error('categoria',f"La Categoría '{categoria_valor}' no es válida para la Sección '{seccion_valor}'. Debe ser una de: {', '.join(categorias_permitidas)}")
                     
             return cleaned_data
+        
+
+

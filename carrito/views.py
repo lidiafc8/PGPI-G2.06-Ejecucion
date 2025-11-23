@@ -12,6 +12,8 @@ from home.models import (
 import uuid 
 from django.db import transaction
 
+from home.views import obtener_opciones_filtro
+
 
 
 
@@ -114,12 +116,20 @@ def ver_cesta(request):
                     'stock': item.producto.stock,
                 })
         total = subtotal 
+    opciones_filtro = obtener_opciones_filtro()
+
 
     context = {
     
     'articulos': articulos_para_plantilla, 
     'subtotal': f"{subtotal:.2f}",
     'total': f"{total:.2f}", 
+    'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, "carrito.html", context)
@@ -228,6 +238,8 @@ def checkout(request):
     # Asegurar que el coste de envío sea un Decimal para el total final
     total_inicial = subtotal + coste_envio
     
+    opciones_filtro = obtener_opciones_filtro()
+
     context = {
         'articulos': cesta.items.all(), 
         'subtotal': f"{subtotal:.2f}",
@@ -236,6 +248,13 @@ def checkout(request):
         'datos_cliente': datos_cliente,
         'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), # True si la lista no está vacía
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+        
     }
     
     return render(request, "pago.html", context)
@@ -372,9 +391,10 @@ def procesar_pago(request):
 
         # 5. Vaciar Cesta
         cesta.items.all().delete()
+        request.session['ultimo_correo_pedido'] = email
         
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
-        return redirect('home')
+        return redirect('carrito:fin_compra')
         
     except ValueError:
         # Marcar la transacción para rollback si ocurre un error validado (ej. stock insuficiente)
@@ -383,3 +403,24 @@ def procesar_pago(request):
         except Exception:
             pass
         return redirect('carrito:carrito')
+    
+
+def compra_finalizada(request):
+    """Muestra la página de confirmación después de una compra exitosa."""
+    correo_pedido = request.session.pop('ultimo_correo_pedido', '')
+    # Opcional: Recuperar el ID de pedido de la sesión/URL si lo estás manejando
+    # y borrar la cesta de compra (si no se hizo en procesar_pago)
+    opciones_filtro = obtener_opciones_filtro()
+
+    contexto = {
+        'mensaje_final': '¡Gracias por tu compra! Tu pedido ha sido procesado con éxito.',
+        # Puedes añadir más información del pedido si la pasaste
+        'correo': correo_pedido,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+    }
+    return render(request, 'compra_finalizada.html', contexto)

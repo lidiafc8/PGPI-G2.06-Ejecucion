@@ -392,6 +392,77 @@
                         </li>
                     </div>
                     
+                    
+
+                  <li class="relative group">
+    <a href="{% url 'filtros_globales' %}" 
+        class="flex items-center py-3 px-3 transition border-b-2 border-transparent hover:border-[#6a760c] text-black">
+        <span class="text-black">BÚSQUEDA POR FILTROS</span>
+        <svg class="w-4 h-4 ml-1 transition-transform group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+    </a>
+    
+    <div class="absolute left-0 mt-0 w-64 bg-white border border-gray-200 rounded-md shadow-lg z-50 invisible opacity-0 group-hover:visible group-hover:opacity-100 transition-opacity duration-300">
+        
+        <form method="GET" action="{% url 'filtros_globales' %}">
+
+            <div class="max-h-80 overflow-y-auto divide-y divide-gray-100">
+                
+                <div class="p-3">
+                    <label for="precio_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Precio</label>
+                    <select id="precio_select" name="precio" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Cualquier Precio</option>
+                        <option value="0-50" {% if precio_seleccionado == '0-50' %}selected{% endif %}>Menos de 50€</option>
+                        <option value="50-100" {% if precio_seleccionado == '50-100' %}selected{% endif %}>50€ - 100€</option>
+                        <option value="100-500" {% if precio_seleccionado == '100-500' %}selected{% endif %}>100€ - 500€</option>
+                        <option value="500-99999" {% if precio_seleccionado == '500-99999' %}selected{% endif %}>Más de 500€</option>
+                    </select>
+                </div>
+
+                <div class="p-3 border-t">
+                    <label for="fabricante_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Fabricante</label>
+                    <select id="fabricante_select" name="fabricante" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Cualquier Fabricante</option>
+                        {% for fabricante in opciones_filtro.fabricantes %}
+                            <option value="{{ fabricante }}" {% if fabricante_seleccionado == fabricante %}selected{% endif %}>
+                                {{ fabricante }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="p-3 border-t">
+                    <label for="seccion_select" class="block text-sm font-semibold text-gray-600 mb-2">Filtros por Sección</label>
+                    <select id="seccion_select" name="seccion_filtro" class="w-full border border-gray-300 rounded-md p-1.5 text-sm">
+                        <option value="">Todas las Secciones</option>
+                        <option value="HERRAMIENTAS_MANUALES" {% if seccion_filtro_seleccionada == 'HERRAMIENTAS_MANUALES' %}selected{% endif %}>Herramientas Manuales</option>
+                        <option value="MAQUINARIA_DE_JARDÍN" {% if seccion_filtro_seleccionada == 'MAQUINARIA_DE_JARDÍN' %}selected{% endif %}>Maquinaria de Jardín</option>
+                        <option value="RIEGO" {% if seccion_filtro_seleccionada == 'RIEGO' %}selected{% endif %}>Riego</option>
+                        <option value="CULTIVO_Y_HUERTO" {% if seccion_filtro_seleccionada == 'CULTIVO_Y_HUERTO' %}selected{% endif %}>Cultivo y Huerto</option>
+                        <option value="PROTECCION_Y_SEGURIDAD" {% if seccion_filtro_seleccionada == 'PROTECCION_Y_SEGURIDAD' %}selected{% endif %}>Protección y Seguridad</option>
+                        <option value="ACCESORIOS_Y_REPUESTOS" {% if seccion_filtro_seleccionada == 'ACCESORIOS_Y_REPUESTOS' %}selected{% endif %}>Accesorios y Repuestos</option>
+                        <option value="JARDÍN_Y_EXTERIOR" {% if seccion_filtro_seleccionada == 'JARDÍN_Y_EXTERIOR' %}selected{% endif %}>Jardín y Exterior</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="p-2 border-t border-gray-200 flex justify-between">
+                
+                <a href="{% url 'filtros_globales' %}" 
+                   class="flex-1 text-center text-sm py-1 mr-1 text-gray-600 hover:text-gray-900 border border-gray-300 rounded-md transition duration-150">
+                    Limpiar Filtros
+                </a>
+                
+                <button type="submit" 
+                   class="flex-1 text-center text-sm py-1 ml-1 bg-[#6a760c] text-white rounded-md hover:bg-[#5b640a] transition duration-150">
+                    Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+</li>
+                
+            
+                    
                     <div class="flex">
                         <li class="group relative">
                             <a href="{% url 'info_tienda:info_tienda' %}"  class="block py-3 px-2 text-gray-900 transition border-b-2 border-transparent hover:border-[#6a760c] rounded-sm">SOBRE MUNDO JARDÍN S.A</a>
