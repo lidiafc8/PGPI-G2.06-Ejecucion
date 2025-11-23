@@ -116,19 +116,30 @@
                                 
                                 <div class="flex-none pt-2 ml-auto"> 
                                     <div class="flex items-center space-x-4 mr-12 ">
-                                        <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                        {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
-                                        </span>
-                                        
-                                        {% if not user.is_authenticated or not user.is_staff %}
-                                        <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
-                                            {% csrf_token %}
-                                            <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
-                                                AÑADIR A LA CESTA
-                                            </button>
-                                        </form>
-                                         {% endif %}
-                                    </div>
+                                            <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
+                                                {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
+                                            </span>
+                                            
+                                            {% if not user.is_staff %}
+                                                {% if not producto.esta_agotado %}
+                                                
+                                                    <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
+                                                            AÑADIR A LA CESTA
+                                                        </button>
+                                                    </form>
+                                                    
+                                                {% endif %}
+                                            {% endif %}
+                                            {% if producto.stock <= 0 %}
+                                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap">
+                                                        AGOTADO
+                                                    </span>
+                                                </div>
+                                                {% endif %}
+                                        </div>
                                 </div>
                             </div>
                         </div>
