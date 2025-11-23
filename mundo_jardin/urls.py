@@ -42,6 +42,3 @@ urlpatterns = [
     path('pedidos/', include('pedidos_admin.urls')),
     path('seguimiento/<int:order_id>/<str:tracking_hash>/', views.seguimiento_pedido, name='seguimiento_pedido')
 ]
-
-urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

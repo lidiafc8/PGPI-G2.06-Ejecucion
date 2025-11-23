@@ -76,11 +76,15 @@
                     <label for="cliente-filtro" class="text-gray-700 font-semibold block mb-1">Cliente</label>
                     <select id="cliente-filtro" name="cliente" class="border border-black rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#6a760c]">
                         <option value="">Todos los clientes</option>
+                        <option value="anonimo" {% if cliente_seleccionado == "anonimo" %}selected{% endif %}>
+                            Usuarios anónimos
+                        </option>
                         {% for cliente in clientes %}
-                            <option value="{{ cliente.id }}"{% if cliente_seleccionado == cliente.id %} selected{% endif %}>
+                            <option value="{{ cliente.id }}" {% if cliente_seleccionado == cliente.id %} selected{% endif %}>
                                 {{ cliente.usuario.nombre }} {{ cliente.usuario.apellidos }}
                             </option>
                         {% endfor %}
+
                     </select>
                 </div>
 
@@ -137,7 +141,13 @@
                 data-fecha="{{ p.fecha_creacion|date:'Y-m-d' }}"
                 data-total="{{ p.total_importe }}">
                 <td class="px-6 py-3">{{ p.id }}</td>
-                <td class="px-6 py-3">{{ p.usuario_cliente.usuario.nombre}} {{ p.usuario_cliente.usuario.apellidos }}</td>
+                <td class="px-6 py-3">
+                    {% if p.usuario_cliente and p.usuario_cliente.usuario %}
+                        {{ p.usuario_cliente.usuario.get_full_name }}
+                    {% else %}
+                        {{ p.correo_electronico|default:"Usuario anónimo" }} {{ "(Anónimo)" }}
+                    {% endif %}
+                </td>
                 <td class="px-6 py-3">{{ p.fecha_creacion|date:'Y-m-d' }}</td>
                 <td class="px-6 py-3">{{ p.total_importe }}</td>
             </tr>

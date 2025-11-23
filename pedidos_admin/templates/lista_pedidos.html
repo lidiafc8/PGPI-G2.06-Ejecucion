@@ -39,9 +39,15 @@
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     #{{ pedido.pk }}
                 </td>
-                
+
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
-                    <span class="font-semibold">{{ pedido.usuario.username|default:"N/A" }}</span>
+                    <span class="font-semibold">
+                        {% if pedido.usuario_cliente and pedido.usuario_cliente.usuario %}
+                            {{ pedido.usuario_cliente.usuario.get_full_name }}
+                        {% else %}
+                            {{ pedido.correo_electronico|default:"Usuario anónimo" }} {{ "(Anónimo)" }}
+                        {% endif %}
+                    </span>
                 </td>
 
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
@@ -61,7 +67,7 @@
                 </td>
 
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-gray-900">
-                    {{ pedido.total|default:0.00|floatformat:2 }}€
+                    {{ pedido.total_importe|default:0.00|floatformat:2 }}€
                 </td>
 
                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
