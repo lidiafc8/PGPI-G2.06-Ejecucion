@@ -55,9 +55,11 @@
             <a href="{% url 'home' %}" class="inline-block bg-[#6a760c] hover:bg-[#bf7149] text-white font-bold py-3 px-8 rounded-md transition duration-150 shadow-md">
                 Continuar Comprando
             </a>
-            <p class="text-sm text-gray-500">
-                Puedes revisar el estado de tu pedido en la sección "Mis Pedidos" de tu cuenta.
-            </p>
+            {% if user.is_authenticated %}
+                <p class="text-sm text-gray-500">
+                    Puedes revisar el estado de tu pedido en la sección Mis Pedidos.
+                </p>
+            {% endif %}
         </div>
     </div>
 </div>
