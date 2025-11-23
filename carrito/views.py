@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse  # <--- IMPORTANTE: Necesario para la Home
 from home.models import Producto 
 from decimal import Decimal 
 from django.contrib import messages
@@ -12,13 +12,16 @@ from home.models import (
 import uuid 
 from django.db import transaction
 
-
-
+# Asegúrate de que esta importación sea correcta según tu estructura
+from home.views import obtener_opciones_filtro
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
+from django.urls import reverse
+from django.conf import settings
 
 def obtener_cesta_actual(request):
     cesta = None
     if request.user.is_authenticated:
-
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=usuario_cliente)
@@ -36,27 +39,72 @@ def obtener_cesta_actual(request):
 
 @require_POST 
 def update_cart(request, producto_id):
+    """
+    Actualiza el carrito. Detecta si la petición viene por AJAX (Home) o normal (Carrito).
+    """
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request) 
+    
     # Aseguramos que el item exista antes de intentar modificarlo
-    item, created = ItemCestaCompra.objects.get_or_create(cesta_compra=cesta, producto_id=producto_id, defaults={'cantidad': 0, 'precio_unitario': producto.precio})
+    item, created = ItemCestaCompra.objects.get_or_create(
+        cesta_compra=cesta, 
+        producto_id=producto_id, 
+        defaults={'cantidad': 0, 'precio_unitario': producto.precio}
+    )
+    
+    # Detectar si es una petición AJAX (JavaScript desde Home)
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     
     action = request.POST.get('action') 
+    
+    # Si viene por AJAX sin acción explícita, asumimos que es 'add'
+    if is_ajax and not action:
+        action = 'add'
+
+    json_response_data = {'success': False, 'mensaje': 'Error desconocido'}
 
     if action == 'add':
-        if item.cantidad + 1 > producto.stock:
-            messages.error(request, f"Lo sentimos, solo quedan {producto.stock} unidades de {producto.nombre}.")
+        # Cantidad a añadir (por defecto 1)
+        try:
+            cantidad_add = int(request.POST.get('cantidad', 1))
+        except ValueError:
+            cantidad_add = 1
+
+        if item.cantidad + cantidad_add > producto.stock:
+            mensaje_error = f"Lo sentimos, solo quedan {producto.stock} unidades de {producto.nombre}."
+            
+            if is_ajax:
+                return JsonResponse({'success': False, 'mensaje': mensaje_error})
+            
+            messages.error(request, mensaje_error)
         else:
-            item.cantidad += 1
+            item.cantidad += cantidad_add
             item.save()
+            
+            # Datos de éxito para JSON
+            json_response_data = {
+                'success': True,
+                'mensaje': f'¡{producto.nombre} añadido!',
+                # Calculamos el total de items para actualizar el icono del carrito
+                'total_items': sum(i.cantidad for i in cesta.items.all())
+            }
+
     elif action == 'remove':
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
         elif item.cantidad == 1:
             item.delete()
+        
+        json_response_data = {'success': True, 'mensaje': 'Producto eliminado'}
     
-    return redirect('carrito:carrito')
+    # === RESPUESTA FINAL ===
+    if is_ajax:
+        # Si vino por JS, devolvemos JSON
+        return JsonResponse(json_response_data)
+    else:
+        # Si vino por formulario normal, recargamos página
+        return redirect('carrito:carrito')
 
 @require_POST 
 def remove_from_cart(request, producto_id):
@@ -71,7 +119,6 @@ def remove_from_cart(request, producto_id):
         pass 
 
     return redirect('carrito:carrito')
-
 
 def ver_cesta(request):
     """
@@ -114,12 +161,26 @@ def ver_cesta(request):
                     'stock': item.producto.stock,
                 })
         total = subtotal 
+    
+    opciones_filtro = obtener_opciones_filtro()
+
+    # --- NUEVO: Obtener productos sugeridos para el carrusel de abajo ---
+    # Cogemos 5 productos aleatorios con stock
+    productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
 
     context = {
-    
-    'articulos': articulos_para_plantilla, 
-    'subtotal': f"{subtotal:.2f}",
-    'total': f"{total:.2f}", 
+        'articulos': articulos_para_plantilla, 
+        'subtotal': f"{subtotal:.2f}",
+        'total': f"{total:.2f}", 
+        'opciones_filtro': opciones_filtro, 
+        
+        # --- NUEVO: Añadimos la variable al contexto ---
+        'productos_destacados': productos_destacados,
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, "carrito.html", context)
@@ -144,7 +205,6 @@ def checkout(request):
  
     total_inicial = subtotal + coste_envio
     tarjetas_guardadas = None
-    tiene_tarjeta_guardada = False
     tarjetas_para_contexto = []
     
 
@@ -228,6 +288,8 @@ def checkout(request):
     # Asegurar que el coste de envío sea un Decimal para el total final
     total_inicial = subtotal + coste_envio
     
+    opciones_filtro = obtener_opciones_filtro()
+
     context = {
         'articulos': cesta.items.all(), 
         'subtotal': f"{subtotal:.2f}",
@@ -236,6 +298,13 @@ def checkout(request):
         'datos_cliente': datos_cliente,
         'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), # True si la lista no está vacía
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+        
     }
     
     return render(request, "pago.html", context)
@@ -370,11 +439,28 @@ def procesar_pago(request):
             producto.stock -= item_cesta.cantidad
             producto.save()
 
+        # Enviar correo de confirmación (intentar, pero no romper la transacción si falla)
+        try:
+            tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', args=[pedido.id, pedido.tracking_id]))
+            subject = f"Confirmación pedido #{pedido.id}"
+            text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
+            html_body = f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p><p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+
+            msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error enviando email de confirmación: %s", e)
+            messages.warning(request, "No se pudo enviar el email de confirmación. Igualmente, su pedido se ha procesado.")
+
         # 5. Vaciar Cesta
         cesta.items.all().delete()
-        
+        request.session['ultimo_correo_pedido'] = email
+
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
-        return redirect('home')
+        return redirect('carrito:fin_compra')
         
     except ValueError:
         # Marcar la transacción para rollback si ocurre un error validado (ej. stock insuficiente)
@@ -383,3 +469,24 @@ def procesar_pago(request):
         except Exception:
             pass
         return redirect('carrito:carrito')
+    
+
+def compra_finalizada(request):
+    """Muestra la página de confirmación después de una compra exitosa."""
+    correo_pedido = request.session.pop('ultimo_correo_pedido', '')
+    # Opcional: Recuperar el ID de pedido de la sesión/URL si lo estás manejando
+    # y borrar la cesta de compra (si no se hizo en procesar_pago)
+    opciones_filtro = obtener_opciones_filtro()
+
+    contexto = {
+        'mensaje_final': '¡Gracias por tu compra! Tu pedido ha sido procesado con éxito.',
+        # Puedes añadir más información del pedido si la pasaste
+        'correo': correo_pedido,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+    }
+    return render(request, 'compra_finalizada.html', contexto)

@@ -178,3 +178,21 @@ else:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 
+
+# ------------------ Email configuration ------------------
+# By default tests and local development use the in-memory backend.
+# To enable sending via Gmail set the environment variable USE_GMAIL=1
+# and provide the following env vars: GMAIL_HOST_USER and GMAIL_HOST_PASSWORD.
+USE_GMAIL = os.environ.get('USE_GMAIL', '0') == '1'
+if USE_GMAIL:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+    EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+    EMAIL_HOST_USER = os.environ.get('GMAIL_HOST_USER', '')
+    EMAIL_HOST_PASSWORD = os.environ.get('GMAIL_HOST_PASSWORD', '')
+    EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', '1') == '1'
+    DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+else:
+    # Use locmem in development/tests by default to avoid real SMTP traffic
+    EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'no-reply@example.com'
