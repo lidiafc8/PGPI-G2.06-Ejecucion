@@ -1,0 +1,24 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block title %}Error de Seguimiento{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto my-20 px-4 sm:px-6 lg:px-8 text-center">
+    
+    <div class="bg-red-50 border border-red-400 text-red-700 p-8 rounded-xl shadow-xl">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-red-500 mb-4" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+        </svg>
+        <h1 class="text-3xl font-bold mb-3">Enlace Inválido o Pedido No Encontrado</h1>
+        <p class="text-lg mb-6">{{ message|default:"El enlace de seguimiento que has utilizado no es correcto o el pedido ya no está disponible." }}</p>
+        
+        <a href="{% url 'home' %}" 
+            class="lm-green text-white px-6 py-3 rounded-lg hover:bg-[#bf7149] transition font-semibold inline-flex items-center space-x-2">
+            Volver a la Página Principal
+        </a>
+    </div>
+
+    
+</div>
+{% endblock %}

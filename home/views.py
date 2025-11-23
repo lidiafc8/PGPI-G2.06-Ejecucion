@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 import uuid
-from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra
+from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra, Pedido, EstadoPedido, TipoEnvio
 from django.contrib import messages
 from django.http import JsonResponse
 
@@ -20,7 +20,7 @@ def obtener_opciones_filtro():
     # Obtener valores únicos de Fabricante del modelo Producto
     fabricantes = Producto.objects.values_list('fabricante', flat=True).distinct().order_by('fabricante')
     
-    # ⚠️ Nota: Ya no se obtiene la lista de categorías/secciones aquí porque es estática en el template.
+    #Nota: Ya no se obtiene la lista de categorías/secciones aquí porque es estática en el template.
 
     return {
         'precios': rangos_precio,
@@ -250,5 +250,52 @@ def agregar_a_cesta(request, producto_id):
         
     })
 
+def _obtener_historial_del_pedido(pedido):
+    """
+    Define el estado del seguimiento basado en el campo 'estado' del pedido.
+    """
+    estados_mapeados = [
+        {'nombre': 'Pedido Recibido', 'completado': True, 'fecha': pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M')},
+        {'nombre': 'En Preparación', 'completado': pedido.estado in [EstadoPedido.ENVIADO, EstadoPedido.ENTREGADO]},
+        {'nombre': 'Enviado', 'completado': pedido.estado == EstadoPedido.ENVIADO or pedido.estado == EstadoPedido.ENTREGADO},
+        {'nombre': 'Entregado', 'completado': pedido.estado == EstadoPedido.ENTREGADO},
+    ]
+    for paso in estados_mapeados:
+        if paso['completado'] and paso['nombre'] != 'Pedido Recibido':
+            paso['fecha'] = "Completado" 
 
+    return estados_mapeados
 
+def seguimiento_pedido(request, order_id, tracking_hash):
+    """
+    Muestra el estado actual del pedido usando ID y el tracking_id como hash de seguridad.
+    """
+    try:
+        pedido = Pedido.objects.get( 
+            id=order_id, 
+            tracking_id=tracking_hash
+        )
+        total = pedido.total_importe
+        total_euros = int(total)
+        total_centavos = int((total - total_euros) * 100)
+        
+        context = {
+            'pedido': pedido,
+            'total_euros': total_euros,
+            'total_centavos': total_centavos,
+            'estado_actual_display': pedido.get_estado_display(), 
+            'historial_estados': _obtener_historial_del_pedido(pedido),
+            'opciones_filtro': obtener_opciones_filtro(),
+            'precio_seleccionado': '',
+            'fabricante_seleccionado': '',
+            'seccion_filtro_seleccionada': '',
+        }
+        return render(request, 'home/seguimiento_pedido.html', context)
+
+    except Pedido.DoesNotExist:
+        messages.error(request, "El enlace de seguimiento es incorrecto o el pedido no existe. Por favor, verifica el enlace en tu email.")
+        return redirect('home') 
+        
+    except Exception as e:
+        messages.error(request, f"Error inesperado al acceder al seguimiento. Intente más tarde. ({e})")
+        return redirect('home')
