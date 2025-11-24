@@ -257,6 +257,7 @@
 
                 <!-- BOTÓN AÑADIR -->
                  {% if not user.is_authenticated or not user.is_staff %}
+                 {% if producto.stock > 0 or  not producto.esta_agotado}
                 <button onclick="event.stopPropagation();"
                     class="add-related w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
                         border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
@@ -264,6 +265,7 @@
                     data-product-id="{{ relacionado.pk }}">
                 Añadir a la Cesta
                 </button>
+                {% endif %}
                 {% endif %}
 
 
