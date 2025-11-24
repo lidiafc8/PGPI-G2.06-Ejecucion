@@ -147,19 +147,26 @@ def ver_cesta(request):
     if cesta:
         items = cesta.items.all()
         for item in items:
+            # Asegurarnos de que precio_linea siempre esté definido (evita errores cuando stock == 0)
+            precio_linea = Decimal('0.00')
             if item.producto.stock > 0:
                 precio_linea = item.producto.precio * item.cantidad
                 subtotal += precio_linea
                 
+            if item.producto.imagen and item.producto.imagen.name:
+                imagen_url = item.producto.imagen.url
+            else:
+                imagen_url = "https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg"
+                
             articulos_para_plantilla.append({
-                    'id': item.producto.id, 
-                    'nombre': item.producto.nombre,
-                    'imagen_url': item.producto.imagen.url,
-                    'precio_unidad': item.producto.precio,
-                    'cantidad': item.cantidad,
-                    'precio_total': precio_linea,
-                    'stock': item.producto.stock,
-                })
+                'id': item.producto.id, 
+                'nombre': item.producto.nombre,
+                'imagen_url': imagen_url,
+                'precio_unidad': item.producto.precio,
+                'cantidad': item.cantidad,
+                'precio_total': precio_linea,
+                'stock': item.producto.stock,
+        })
         total = subtotal 
     
     opciones_filtro = obtener_opciones_filtro()
@@ -184,6 +191,30 @@ def ver_cesta(request):
     }
 
     return render(request, "carrito.html", context)
+
+
+def vaciar_cesta(request):
+    """
+    Vacía los items de la cesta actual (para sesión o usuario autenticado)
+    y limpia la sesión `cesta_id` para forzar la creación de una nueva cesta.
+    """
+    cesta = obtener_cesta_actual(request)
+    if not cesta:
+        messages.info(request, "No hay una cesta activa para vaciar.")
+        return redirect('carrito:carrito')
+
+    # Borrar los items asociados a la cesta pero conservar la fila de la cesta
+    cesta.items.all().delete()
+
+    # Limpiar identificador de sesión para evitar reaparecer la misma cesta
+    try:
+        if 'cesta_id' in request.session:
+            del request.session['cesta_id']
+    except Exception:
+        pass
+
+    messages.success(request, "La cesta ha sido vaciada correctamente.")
+    return redirect('carrito:carrito')
 
 def checkout(request):
     """
@@ -325,17 +356,30 @@ def procesar_pago(request):
     telefon = request.POST.get('contact_phone') 
     
     # 📌 Capturar los cuatro campos de dirección separados del formulario POST
-    calle = request.POST.get('direccion_calle') # Coincidir con el nombre del campo HTML de checkout
-    ciudad = request.POST.get('direccion_ciudad') # Coincidir con el nombre del campo HTML de checkout
-    cpi = request.POST.get('direccion_cp')       # Coincidir con el nombre del campo HTML de checkout
-    pais = request.POST.get('direccion_pais')    # Coincidir con el nombre del campo HTML de checkout
+    # Compatibilidad: la plantilla `pago.html` usa `address_street`, `address_city`,
+    # `address_zip`, `address_country`. Intentamos leer primero los nombres nuevos,
+    # si no existen leemos los nombres antiguos.
+    calle = (request.POST.get('address_street') or request.POST.get('direccion_calle') or '').strip()
+    ciudad = (request.POST.get('address_city') or request.POST.get('direccion_ciudad') or '').strip()
+    cpi = (request.POST.get('address_zip') or request.POST.get('direccion_cp') or '').strip()
+    pais = (request.POST.get('address_country') or request.POST.get('direccion_pais') or '').strip()
     card_number = request.POST.get('card_number')
     expiry_date = request.POST.get('expiry_date') # MM/AA
     card_cvv = request.POST.get('cvv') #  CV
     # Flag para guardar tarjeta (solo presente si el usuario está autenticado)
     save_card_flag = request.POST.get('save_card') == 'on'
     # 📌 Volver a combinar la dirección para guardarla en el campo único del Pedido
-    direccion = f"{calle}, {cpi} {ciudad}, {pais}"
+    # Construimos la dirección de forma segura, omitiendo partes vacías
+    partes = []
+    if calle.strip():
+        partes.append(calle.strip())
+    cp_ciudad = ' '.join(p for p in (cpi.strip(), ciudad.strip()) if p)
+    if cp_ciudad:
+        partes.append(cp_ciudad)
+    if pais.strip():
+        partes.append(pais.strip())
+
+    direccion = ', '.join(partes)
 
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
@@ -351,7 +395,8 @@ def procesar_pago(request):
             coste_entrega = Decimal('0.00')
             
         # 📌 Usar la dirección combinada de los 4 campos si es Domicilio
-        direccion_final = direccion
+        # Si no hay partes, mantener cadena vacía (no guardar 'None')
+        direccion_final = direccion or ''
             
     elif entrega_value == 'express':
         metodo_envio = TipoEnvio.RECOGIDA_TIENDA
@@ -361,6 +406,11 @@ def procesar_pago(request):
 
     else:
         messages.error(request, "Opción de envío no válida.")
+        return redirect('carrito:checkout')
+
+    # Validación: si se selecciona Domicilio, la dirección no puede quedar vacía
+    if metodo_envio == TipoEnvio.DOMICILIO and not direccion_final:
+        messages.error(request, "Debe proporcionar una dirección válida para el envío a domicilio.")
         return redirect('carrito:checkout')
 
     if payment_method_value == 'cash': 
