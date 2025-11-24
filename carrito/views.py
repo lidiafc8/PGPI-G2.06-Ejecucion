@@ -173,9 +173,8 @@ def ver_cesta(request):
         for item in items:
             # Asegurarnos de que precio_linea siempre esté definido (evita errores cuando stock == 0)
             precio_linea = Decimal('0.00')
-            if item.producto.stock > 0:
-                precio_linea = item.producto.precio * item.cantidad
-                subtotal += precio_linea
+            precio_linea = item.producto.precio * item.cantidad
+            subtotal += precio_linea
                 
             if item.producto.imagen and item.producto.imagen.name:
                 imagen_url = item.producto.imagen.url
