@@ -33,40 +33,109 @@ def obtener_cesta_actual(request):
         cesta, _ = CestaCompra.objects.get_or_create(session_id=session_id)
         
     return cesta
-
-@require_POST 
+@require_POST
+@transaction.atomic  # Esto asegura que la base de datos no falle a medias
 def update_cart(request, producto_id):
+    """
+    Gestiona los botones (+) y (-) del carrito.
+    Resta stock al añadir y devuelve stock al quitar.
+    """
     producto = get_object_or_404(Producto, id=producto_id)
-    cesta = obtener_cesta_actual(request) 
-    # Aseguramos que el item exista antes de intentar modificarlo
-    item, created = ItemCestaCompra.objects.get_or_create(cesta_compra=cesta, producto_id=producto_id, defaults={'cantidad': 0, 'precio_unitario': producto.precio})
+    cesta = obtener_cesta_actual(request)
     
-    action = request.POST.get('action') 
+    # Obtenemos o creamos el item
+    item, created = ItemCestaCompra.objects.get_or_create(
+        cesta_compra=cesta, 
+        producto_id=producto_id, 
+        defaults={'cantidad': 0, 'precio_unitario': producto.precio}
+    )
+    
+    # Detectar AJAX
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    action = request.POST.get('action')
+    
+    # Si viene por AJAX sin acción, asumimos añadir 1
+    if is_ajax and not action:
+        action = 'add'
 
+    json_response_data = {'success': False, 'mensaje': 'Error'}
+
+    # =========================================================
+    # ACCIÓN: AÑADIR (Botón + o "Añadir a Cesta")
+    # =========================================================
     if action == 'add':
-        if item.cantidad + 1 > producto.stock:
-            messages.error(request, f"Lo sentimos, solo quedan {producto.stock} unidades de {producto.nombre}.")
+        try:
+            cantidad_add = int(request.POST.get('cantidad', 1))
+        except ValueError:
+            cantidad_add = 1
+
+        # 1. Comprobamos si hay stock real suficiente
+        if cantidad_add > producto.stock:
+            mensaje = f"Solo quedan {producto.stock} unidades disponibles."
+            if is_ajax:
+                return JsonResponse({'success': False, 'mensaje': mensaje})
+            messages.error(request, mensaje)
+            
         else:
-            item.cantidad += 1
-            item.save()
+            # 2. RESTAMOS el stock y AUMENTAMOS el carrito
+            producto.stock -= cantidad_add
+            producto.save()  # <--- Guardamos el cambio de stock
+            
+            item.cantidad += cantidad_add
+            item.save()      # <--- Guardamos el cambio en el carrito
+            
+            json_response_data = {
+                'success': True, 
+                'mensaje': 'Producto añadido',
+                'total_items': sum(i.cantidad for i in cesta.items.all())
+            }
+
+    # =========================================================
+    # ACCIÓN: QUITAR (Botón -)
+    # =========================================================
     elif action == 'remove':
+        # Al pulsar el botón menos (-), SIEMPRE devolvemos 1 al stock
+        producto.stock += 1
+        producto.save()  # <--- El stock vuelve a la tienda
+
+        # Ahora gestionamos el carrito
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
-        elif item.cantidad == 1:
+            json_response_data = {'success': True, 'mensaje': 'Cantidad reducida'}
+        else:
+            # Si la cantidad era 1 y restamos 1, se borra el item
             item.delete()
-    
-    return redirect('carrito:carrito')
+            json_response_data = {'success': True, 'mensaje': 'Producto eliminado del carrito'}
 
-@require_POST 
+    if is_ajax:
+        return JsonResponse(json_response_data)
+    else:
+        return redirect('carrito:carrito')
+
+@require_POST
+@transaction.atomic
 def remove_from_cart(request, producto_id):
     cesta = obtener_cesta_actual(request)
     if not cesta:
         return redirect('carrito:carrito') 
 
     try:
+        # Buscamos el producto en el carrito
         item = ItemCestaCompra.objects.get(cesta_compra=cesta, producto_id=producto_id)
+        
+        # ===========================================================
+        # 🔴 PASO CLAVE: ANTES DE BORRAR, DEVOLVEMOS EL STOCK 🔴
+        # ===========================================================
+        producto = item.producto
+        producto.stock += item.cantidad  # <--- Devuelve TODAS las unidades a la tienda
+        producto.save()                  # <--- Guarda el cambio en la base de datos
+        
+        # Ahora sí, borramos el item del carrito
         item.delete()
+        
+        messages.success(request, "Producto eliminado y stock restaurado.")
+        
     except ItemCestaCompra.DoesNotExist:
         pass 
 
