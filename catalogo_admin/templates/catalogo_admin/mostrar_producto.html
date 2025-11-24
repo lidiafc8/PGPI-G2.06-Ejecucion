@@ -1,7 +1,27 @@
-{% extends 'catalogo_admin/base_admin.html' %}
+{% extends 'base_admin.html' %} 
 {% load static %}
 
 {% block title %}Detalles: {{ producto.nombre }}{% endblock %}
+
+{% block breadcrumbs %}
+    
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    
+    <a href="{% url 'lista_productos' %}" class="hover:text-[#6a760c] font-medium text-gray-500 hover:underline">
+        PRODUCTOS
+    </a>
+
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    
+    <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+        MOSTRAR PRODUCTO #{{ producto.id }}
+    </span>
+
+{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-xl border border-gray-100">
@@ -17,7 +37,7 @@
                      alt="{{ producto.nombre }}" 
                      class="w-full h-auto max-h-80 object-cover rounded-xl shadow-md border-2 lm-border-green">
             {% else %}
-                <img src="{% static 'imagen1.jpg' %}" 
+                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" 
                      alt="Imagen por defecto"
                      class="w-full h-auto max-h-80 object-cover rounded-xl shadow-md border-2 lm-border-green">
             {% endif %}
@@ -30,7 +50,7 @@
             <div class="flex space-x-6 items-center border-b pb-4">
                 <span class="text-3xl font-bold text-red-600">{{ producto.precio }}€</span>
                 <span class="text-lg font-medium {% if producto.stock <= 5 %}text-red-500{% else %}lm-text-green{% endif %}">
-                    Stock: {{ producto.stock }} unidades
+                    Almacenados: {{ producto.stock }} unidades
                 </span>
             </div>
             

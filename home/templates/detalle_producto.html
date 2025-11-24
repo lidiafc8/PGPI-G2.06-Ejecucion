@@ -36,7 +36,7 @@
                 {% else %}
                         <div class="product-image-area" style="flex: 1; max-width: 50%;">
 
-                                <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto" style="width: 100%; height: auto; border: 1px solid #ccc; border-radius: 8px;">
+                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" style="width: 100%; height: auto; border: 1px solid #ccc; border-radius: 8px;">
 {% if producto.stock <= 0 %}
         <div class="absolute inset-1 flex items-center justify-left pointer-events-none mb-10 mt-40  mr-10">
             <span class="bg-red-500 text-white text-2xl font-bold text-center uppercase tracking-wider py-3 px-10 transform -rotate-45 whitespace-nowrap">
@@ -62,11 +62,11 @@
             <p style="font-size: 1em; color: {% if producto.stock > 10 %} green {% else %} orang e{% endif %}; margin-bottom: 25px;">
                 {% if producto.esta_agotado or producto.stock == 0 %}
 <span class="text-red-600">
-                            SIN STOCK
+                            SIN PRODUCTO
                         </span>                {% elif producto.stock < 5 %}
-                    ¡Últimas unidades! Stock: {{ producto.stock }}
+                    ¡Últimas unidades! Almacenados: {{ producto.stock }}
                 {% else %}
-                    Stock disponible: {{ producto.stock }} unidades
+                    Productos disponibles: {{ producto.stock }} unidades
                 {% endif %}
             </p>
 
@@ -212,7 +212,7 @@
                     </div>
                     {% else %}
                     <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-                        <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                        <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
                              class="max-h-full max-w-full object-contain mix-blend-multiply">
                     </div>
                     {% endif %}
@@ -240,11 +240,11 @@
                     <div class="mb-3">
                         {% if relacionado.stock > 0 %}
                         <span class="text-sm font-semibold text-[#6a760c]">
-                            {{ relacionado.stock }} unidades en stock
+                            {{ relacionado.stock }} unidades en el almacén
                         </span>
                         {% else %}
                         <span class="text-sm font-semibold text-red-600">
-                            Sin stock
+                            Sin productos
                         </span>
                         {% endif %}
                     </div>

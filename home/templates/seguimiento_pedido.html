@@ -1,0 +1,136 @@
+{% extends "base.html" %} 
+{% load static %}
+
+{% block title %}Seguimiento del Pedido #{{ pedido.id }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto my-12 px-4 sm:px-6 lg:px-8">
+    
+    <div class="flex justify-between items-center mb-6 border-b pb-4">
+        <h1 class="text-3xl font-bold text-gray-900 lm-text-green">
+            Estado de tu Pedido <span class="text-black">#{{ pedido.id }}</span>
+        </h1>
+        <a href="{% url 'home' %}" 
+            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H16a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            <span>Volver a Inicio</span>
+        </a>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6">
+
+        <div class="md:col-span-1">
+            <div class="bg-white shadow-xl rounded-xl p-6 h-fit sticky top-6 border-l-4 lm-border-green">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">Progreso del Envío</h2>
+                
+                <div class="mb-4 p-3 rounded-lg text-center font-bold text-white 
+                    {% if pedido.estado == 'PEDIDO' %}bg-yellow-500
+                    {% elif pedido.estado == 'ENVIADO' %}bg-blue-500
+                    {% elif pedido.estado == 'ENTREGADO' %}bg-green-600
+                    {% else %}bg-red-500{% endif %}">
+                    Estado: {{ estado_actual_display }}
+                </div>
+
+                <div class="tracking-timeline mt-4 space-y-4">
+                    {% for paso in historial_estados %}
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 pt-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 
+                                    {% if paso.completado %}lm-text-green{% else %}text-gray-400{% endif %}" viewBox="0 0 20 20" fill="currentColor">
+                                    {% if paso.completado %}
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                    {% else %}
+                                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.894.553L7.382 9H4a1 1 0 000 2h3.382l-.553 1.118A1 1 0 008 13h4a1 1 0 00.894-.553l.553-1.118H16a1 1 0 000-2h-3.382l.553-1.118A1 1 0 0012 7H8z" clip-rule="evenodd" />
+                                    {% endif %}
+                                </svg>
+                            </div>
+                            <div>
+                                <h5 class="font-semibold text-gray-900">{{ paso.nombre }}</h5>
+                                <p class="text-sm text-gray-500">{{ paso.fecha|default:"Pendiente" }}</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                
+                {% if pedido.tracking_id %}
+                    <div class="mt-6 pt-4 border-t border-gray-100">
+                        <p class="text-sm font-medium text-gray-500">ID de Seguimiento (Interno)</p>
+                        <p class="text-lg font-bold text-gray-800">{{ pedido.tracking_id }}</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="md:col-span-2 space-y-6">
+            
+            <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Información de Envío</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Email de Contacto</p>
+                        <p class="text-lg font-semibold text-gray-900">{{ pedido.correo_electronico }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Teléfono</p>
+                        <p class="text-lg text-gray-700">{{ pedido.telefono|default:"N/A" }}</p>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                        <p class="text-sm font-medium text-gray-500 mt-3">Dirección de Entrega</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio|default:"Recogida en Tienda" }}</p>
+                        <p class="text-sm text-gray-500 mt-1">Tipo: {{ pedido.get_tipo_envio_display }}</p>
+                    </div>
+
+                    <div class="sm:col-span-2 pt-4 border-t mt-4">
+                        <p class="text-sm font-medium text-gray-500">Método de Pago</p>
+                        <p class="text-lg text-gray-700">{{ pedido.get_metodo_pago_display }} (Pagado: {% if pedido.pago %}Sí ✅{% else %}No ❌{% endif %})</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Artículos del Pedido</h2>
+                
+                {% if pedido.items.all %}
+                    <div class="space-y-4">
+                        {% for item in pedido.items.all %}
+                        <div class="flex justify-between items-center py-2 border-b last:border-b-0">
+                            <div class="flex items-center space-x-4">
+                                <p class="text-base font-semibold text-gray-800">{{ item.producto.nombre|default:"Producto Eliminado" }}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">x{{ item.cantidad }}</p>
+                                <p class="font-bold text-gray-900">{{ item.total|floatformat:2 }}€</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">Este pedido no contiene artículos visibles.</p>
+                {% endif %}
+
+                <div class="pt-4 mt-4 border-t flex justify-end">
+                    <div class="text-right w-full sm:w-1/2">
+                        <div class="flex justify-between font-semibold text-gray-800 mb-2">
+                            <span>Subtotal:</span>
+                            <span>{{ pedido.subtotal_importe|floatformat:2 }}€</span>
+                        </div>
+                        <div class="flex justify-between font-semibold text-gray-800 mb-2">
+                            <span>Envío:</span>
+                            <span>{{ pedido.coste_entrega|floatformat:2 }}€</span>
+                        </div>
+                        <div class="flex justify-between text-xl font-bold lm-text-green pt-2 border-t border-gray-200">
+                            <span>Total Final:</span>
+                            <span>{{ pedido.total_importe|floatformat:2 }}€</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}

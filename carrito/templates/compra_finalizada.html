@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+
+{% block breadcrumbs %}
+<li>
+        <span class="text-lg text-gray-500">></span>
+
+        <a href="{% url 'carrito:carrito' %}" class="text-sm font-medium text-gray-500 hover:text-[#bf7149]">CARRITO</a>
+    </li>
+    <li>
+        <span class="text-lg text-gray-500">></span>
+        <span class="text-sm font-medium text-gray-500 hover:text-[#bf7149]">
+            PAGO
+        </span>
+    </li>
+    <li>
+        <span class="text-lg text-gray-500">></span>
+        <span class="text-sm font-medium text-gray-500 hover:text-[#bf7149]">
+            COMPRA FINALIZADA
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
+{% block content %}
+
+<style>
+        
+        .shadow-hard-halo {
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        
+    </style>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
+    
+    <div class="bg-[#f9fdf2] p-8 rounded-lg shadow-hard-halo ">
+        <svg class="w-20 h-20 text-green-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <h1 class="text-4xl font-extrabold text-green-700 mb-4">¡Pedido Confirmado!</h1>
+        <p class="text-xl text-gray-700 mb-6">
+            {{ mensaje_final|default:'Tu pedido se ha realizado con éxito. Recibirás un correo electrónico de confirmación con los detalles en breve.' }}
+        </p>
+        {# 📌 CORRECCIÓN: Usar {% if correo %} para mostrar la dirección de email solo si se recibió #}
+        {% if correo %}
+        <p class="text-xl text-gray-700 mb-6 font-semibold">
+            Los datos de tu pedido se han enviado a: 
+            <span class="text-green-800 break-words">{{ correo }}</span>
+        </p>
+        {% else %}
+        <p class="text-xl text-gray-700 mb-6">
+            Los datos de tu pedido se han enviado al correo que proporcionaste durante el pago.
+        </p>
+        {% endif %}
+        
+        <div class="mt-8 space-y-4">
+            <a href="{% url 'home' %}" class="inline-block bg-[#6a760c] hover:bg-[#bf7149] text-white font-bold py-3 px-8 rounded-md transition duration-150 shadow-md">
+                Continuar Comprando
+            </a>
+            {% if user.is_authenticated %}
+                <p class="text-sm text-gray-500">
+                    Puedes revisar el estado de tu pedido en la sección Mis Pedidos.
+                </p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock content %}

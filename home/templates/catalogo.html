@@ -45,7 +45,7 @@
     </div>
 {% else %}
 <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-        <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+        <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
              class="max-h-full max-w-full object-contain mix-blend-multiply">
                                     
         
@@ -73,11 +73,11 @@
                             <div class="mb-3">
                                 {% if producto.stock > 0 %}
                                     <span class="text-sm font-semibold text-[#6a760c]">
-                                        {{ producto.stock }} unidades en stock
+                                        {{ producto.stock }} unidades de inventario
                                     </span>
                                 {% else %}
                                     <span class="text-sm font-semibold text-red-600">
-                                        Sin stock
+                                        Sin productos
                                     </span>
                                 {% endif %}
                             </div>
@@ -106,7 +106,7 @@
         {% else %}
             <div class="p-6 bg-[#f9fdf2] border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
                 <p class="font-semibold">¡Lo sentimos!</p>
-                <p>Actualmente no hay productos disponibles en esta subcategoría.</p>
+                <p>Actualmente no hay productos disponibles.</p>
             </div>
         {% endif %}
 

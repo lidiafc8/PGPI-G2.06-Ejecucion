@@ -1,1 +1,0 @@
-web: gunicorn mundo_jardin.wsgi:application

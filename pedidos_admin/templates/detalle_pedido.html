@@ -1,7 +1,25 @@
-{% extends 'catalogo_admin/base_admin.html' %}
+{% extends 'base_admin.html' %} 
 {% load static %}
 
 {% block title %}Detalle del Pedido #{{ pedido.pk }}{% endblock %}
+
+{% block breadcrumbs %}
+    
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+    <a href="{% url 'lista_pedidos' %}" class="hover:text-[#6a760c] font-medium text-gray-500 hover:underline">
+        PEDIDOS
+    </a>
+
+    <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+    </svg>
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            DETALLE #{{ pedido.pk }}
+        </span>
+
+{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
@@ -10,6 +28,7 @@
         <h1 class="text-3xl font-bold text-gray-900 lm-text-green">
             Detalle del Pedido <span class="text-black">#{{ pedido.pk }}</span>
         </h1>
+        <hr classs="mb-8"> 
         <a href="{% url 'lista_pedidos' %}" 
            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
@@ -38,22 +57,43 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Detalles del Cliente y Envío</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     
+                    <!-- CLIENTE -->
                     <div>
                         <p class="text-sm font-medium text-gray-500">Cliente</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ pedido.usuario_cliente.usuario.get_full_name|default:pedido.usuario_cliente.usuario.corre_electronico }}</p>
+
+                        {% if pedido.usuario_cliente and pedido.usuario_cliente.usuario %}
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ pedido.usuario_cliente.usuario.get_full_name|default:pedido.correo_electronico }}
+                            </p>
+                        {% else %}
+                            <p class="text-lg font-semibold text-gray-900">
+                                {{ "Usuario anónimo" }}
+                            </p>
+                        {% endif %}
                     </div>
+
+                    <!-- EMAIL -->
                     <div>
                         <p class="text-sm font-medium text-gray-500">Email</p>
-                        <p class="text-lg text-gray-700">{{ pedido.usuario_cliente.usuario.corre_electronico|default:"N/A" }}</p>
+
+                        {% if pedido.usuario_cliente and pedido.usuario_cliente.usuario %}
+                            <p class="text-lg text-gray-700">
+                                {{ pedido.correo_electronico|default:"N/A" }}
+                            </p>
+                        {% else %}
+                            <p class="text-lg text-gray-700">
+                                {{ pedido.correo_electronico|default:"N/A" }}
+                            </p>
+                        {% endif %}
                     </div>
 
+                    <!-- DIRECCIÓN (como cadena) -->
                     <div class="sm:col-span-2">
                         <p class="text-sm font-medium text-gray-500 mt-3">Dirección de Envío</p>
-                        <p class="text-gray-700">{{ pedido.direccion_envio.calle|default:"[Dirección no proporcionada]" }}</p>
-                        <p class="text-gray-700">{{ pedido.direccion_envio.ciudad|default:"" }}{% if pedido.direccion_envio.ciudad and pedido.direccion_envio.codigo_postal %}, {% endif %}{{ pedido.direccion_envio.codigo_postal|default:"" }}</p>
-                        <p class="text-gray-700">{{ pedido.direccion_envio.pais|default:"" }}</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio|default:"[Dirección no proporcionada]" }}</p>
                     </div>
 
+                    <!-- FECHA -->
                     <div class="sm:col-span-2 pt-4 border-t mt-4">
                         <p class="text-sm font-medium text-gray-500">Fecha del Pedido</p>
                         <p class="text-lg text-gray-700">{{ pedido.fecha_creacion|date:"d M Y - H:i" }}</p>
@@ -61,6 +101,7 @@
                 </div>
             </div>
 
+            <!-- ARTÍCULOS -->
             <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Artículos</h2>
                 
@@ -102,6 +143,7 @@
 
         </div>
 
+        <!-- ESTADO -->
         <div class="md:col-span-1">
             <div class="bg-white shadow-xl rounded-xl p-6 h-fit sticky top-6 border-l-4 lm-border-green">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Actualizar Estado</h2>

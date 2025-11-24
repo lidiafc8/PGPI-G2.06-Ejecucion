@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
-from django.http import JsonResponse
+from django.http import JsonResponse  # <--- IMPORTANTE: Necesario para la Home
 from home.models import Producto 
 from decimal import Decimal 
 from django.contrib import messages
@@ -12,13 +12,16 @@ from home.models import (
 import uuid 
 from django.db import transaction
 
-
-
+# Asegúrate de que esta importación sea correcta según tu estructura
+from home.views import obtener_opciones_filtro
+from django.core.mail import EmailMultiAlternatives
+from django.template import loader
+from django.urls import reverse
+from django.conf import settings
 
 def obtener_cesta_actual(request):
     cesta = None
     if request.user.is_authenticated:
-
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=usuario_cliente)
@@ -141,7 +144,6 @@ def remove_from_cart(request, producto_id):
 
     return redirect('carrito:carrito')
 
-
 def ver_cesta(request):
     """
     Muestra la cesta unificada para todos los usuarios.
@@ -169,29 +171,74 @@ def ver_cesta(request):
     if cesta:
         items = cesta.items.all()
         for item in items:
+            # Asegurarnos de que precio_linea siempre esté definido (evita errores cuando stock == 0)
+            precio_linea = Decimal('0.00')
             if item.producto.stock > 0:
                 precio_linea = item.producto.precio * item.cantidad
                 subtotal += precio_linea
                 
+            if item.producto.imagen and item.producto.imagen.name:
+                imagen_url = item.producto.imagen.url
+            else:
+                imagen_url = "https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg"
+                
             articulos_para_plantilla.append({
-                    'id': item.producto.id, 
-                    'nombre': item.producto.nombre,
-                    'imagen_url': item.producto.imagen.url,
-                    'precio_unidad': item.producto.precio,
-                    'cantidad': item.cantidad,
-                    'precio_total': precio_linea,
-                    'stock': item.producto.stock,
-                })
+                'id': item.producto.id, 
+                'nombre': item.producto.nombre,
+                'imagen_url': imagen_url,
+                'precio_unidad': item.producto.precio,
+                'cantidad': item.cantidad,
+                'precio_total': precio_linea,
+                'stock': item.producto.stock,
+        })
         total = subtotal 
+    
+    opciones_filtro = obtener_opciones_filtro()
+
+    # --- NUEVO: Obtener productos sugeridos para el carrusel de abajo ---
+    # Cogemos 5 productos aleatorios con stock
+    productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
 
     context = {
-    
-    'articulos': articulos_para_plantilla, 
-    'subtotal': f"{subtotal:.2f}",
-    'total': f"{total:.2f}", 
+        'articulos': articulos_para_plantilla, 
+        'subtotal': f"{subtotal:.2f}",
+        'total': f"{total:.2f}", 
+        'opciones_filtro': opciones_filtro, 
+        
+        # --- NUEVO: Añadimos la variable al contexto ---
+        'productos_destacados': productos_destacados,
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
     }
 
     return render(request, "carrito.html", context)
+
+
+def vaciar_cesta(request):
+    """
+    Vacía los items de la cesta actual (para sesión o usuario autenticado)
+    y limpia la sesión `cesta_id` para forzar la creación de una nueva cesta.
+    """
+    cesta = obtener_cesta_actual(request)
+    if not cesta:
+        messages.info(request, "No hay una cesta activa para vaciar.")
+        return redirect('carrito:carrito')
+
+    # Borrar los items asociados a la cesta pero conservar la fila de la cesta
+    cesta.items.all().delete()
+
+    # Limpiar identificador de sesión para evitar reaparecer la misma cesta
+    try:
+        if 'cesta_id' in request.session:
+            del request.session['cesta_id']
+    except Exception:
+        pass
+
+    messages.success(request, "La cesta ha sido vaciada correctamente.")
+    return redirect('carrito:carrito')
 
 def checkout(request):
     """
@@ -213,7 +260,6 @@ def checkout(request):
  
     total_inicial = subtotal + coste_envio
     tarjetas_guardadas = None
-    tiene_tarjeta_guardada = False
     tarjetas_para_contexto = []
     
 
@@ -297,6 +343,8 @@ def checkout(request):
     # Asegurar que el coste de envío sea un Decimal para el total final
     total_inicial = subtotal + coste_envio
     
+    opciones_filtro = obtener_opciones_filtro()
+
     context = {
         'articulos': cesta.items.all(), 
         'subtotal': f"{subtotal:.2f}",
@@ -305,6 +353,13 @@ def checkout(request):
         'datos_cliente': datos_cliente,
         'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), # True si la lista no está vacía
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+        
     }
     
     return render(request, "pago.html", context)
@@ -325,17 +380,30 @@ def procesar_pago(request):
     telefon = request.POST.get('contact_phone') 
     
     # 📌 Capturar los cuatro campos de dirección separados del formulario POST
-    calle = request.POST.get('direccion_calle') # Coincidir con el nombre del campo HTML de checkout
-    ciudad = request.POST.get('direccion_ciudad') # Coincidir con el nombre del campo HTML de checkout
-    cpi = request.POST.get('direccion_cp')       # Coincidir con el nombre del campo HTML de checkout
-    pais = request.POST.get('direccion_pais')    # Coincidir con el nombre del campo HTML de checkout
+    # Compatibilidad: la plantilla `pago.html` usa `address_street`, `address_city`,
+    # `address_zip`, `address_country`. Intentamos leer primero los nombres nuevos,
+    # si no existen leemos los nombres antiguos.
+    calle = (request.POST.get('address_street') or request.POST.get('direccion_calle') or '').strip()
+    ciudad = (request.POST.get('address_city') or request.POST.get('direccion_ciudad') or '').strip()
+    cpi = (request.POST.get('address_zip') or request.POST.get('direccion_cp') or '').strip()
+    pais = (request.POST.get('address_country') or request.POST.get('direccion_pais') or '').strip()
     card_number = request.POST.get('card_number')
     expiry_date = request.POST.get('expiry_date') # MM/AA
     card_cvv = request.POST.get('cvv') #  CV
     # Flag para guardar tarjeta (solo presente si el usuario está autenticado)
     save_card_flag = request.POST.get('save_card') == 'on'
     # 📌 Volver a combinar la dirección para guardarla en el campo único del Pedido
-    direccion = f"{calle}, {cpi} {ciudad}, {pais}"
+    # Construimos la dirección de forma segura, omitiendo partes vacías
+    partes = []
+    if calle.strip():
+        partes.append(calle.strip())
+    cp_ciudad = ' '.join(p for p in (cpi.strip(), ciudad.strip()) if p)
+    if cp_ciudad:
+        partes.append(cp_ciudad)
+    if pais.strip():
+        partes.append(pais.strip())
+
+    direccion = ', '.join(partes)
 
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
@@ -351,7 +419,8 @@ def procesar_pago(request):
             coste_entrega = Decimal('0.00')
             
         # 📌 Usar la dirección combinada de los 4 campos si es Domicilio
-        direccion_final = direccion
+        # Si no hay partes, mantener cadena vacía (no guardar 'None')
+        direccion_final = direccion or ''
             
     elif entrega_value == 'express':
         metodo_envio = TipoEnvio.RECOGIDA_TIENDA
@@ -361,6 +430,11 @@ def procesar_pago(request):
 
     else:
         messages.error(request, "Opción de envío no válida.")
+        return redirect('carrito:checkout')
+
+    # Validación: si se selecciona Domicilio, la dirección no puede quedar vacía
+    if metodo_envio == TipoEnvio.DOMICILIO and not direccion_final:
+        messages.error(request, "Debe proporcionar una dirección válida para el envío a domicilio.")
         return redirect('carrito:checkout')
 
     if payment_method_value == 'cash': 
@@ -422,6 +496,8 @@ def procesar_pago(request):
             correo_electronico=email,
             telefono=telefon,
             pago=pago,
+            tracking_id=uuid.uuid4().hex[:10].upper()
+            
         )
 
         for item_cesta in cesta.items.select_related('producto'):
@@ -439,11 +515,35 @@ def procesar_pago(request):
             producto.stock -= item_cesta.cantidad
             producto.save()
 
+        # Enviar correo de confirmación (intentar, pero no romper la transacción si falla)
+        try:
+            # Asegurar que el pedido tiene el tracking_id más reciente
+            pedido.refresh_from_db()
+            tracking_url = request.build_absolute_uri(
+                reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id})
+            )
+            subject = f"Confirmación pedido #{pedido.id}"
+            text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
+            html_body = (
+                f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p>"
+                f"<p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+            )
+
+            msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
+            msg.attach_alternative(html_body, "text/html")
+            msg.send(fail_silently=False)
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.exception("Error enviando email de confirmación: %s", e)
+            messages.warning(request, "No se pudo enviar el email de confirmación. Igualmente, su pedido se ha procesado.")
+
         # 5. Vaciar Cesta
         cesta.items.all().delete()
-        
+        request.session['ultimo_correo_pedido'] = email
+
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito! Total a pagar: {total_importe:.2f} €")
-        return redirect('home')
+        return redirect('carrito:fin_compra')
         
     except ValueError:
         # Marcar la transacción para rollback si ocurre un error validado (ej. stock insuficiente)
@@ -452,3 +552,24 @@ def procesar_pago(request):
         except Exception:
             pass
         return redirect('carrito:carrito')
+    
+
+def compra_finalizada(request):
+    """Muestra la página de confirmación después de una compra exitosa."""
+    correo_pedido = request.session.pop('ultimo_correo_pedido', '')
+    # Opcional: Recuperar el ID de pedido de la sesión/URL si lo estás manejando
+    # y borrar la cesta de compra (si no se hizo en procesar_pago)
+    opciones_filtro = obtener_opciones_filtro()
+
+    contexto = {
+        'mensaje_final': '¡Gracias por tu compra! Tu pedido ha sido procesado con éxito.',
+        # Puedes añadir más información del pedido si la pasaste
+        'correo': correo_pedido,
+        'opciones_filtro': opciones_filtro, 
+        
+        # Estos valores se deben pasar vacíos para que el filtro no aparezca seleccionado por defecto en home
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
+        'seccion_filtro_seleccionada': '',
+    }
+    return render(request, 'compra_finalizada.html', contexto)
