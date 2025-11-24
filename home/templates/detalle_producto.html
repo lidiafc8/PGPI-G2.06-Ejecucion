@@ -4,7 +4,7 @@
     <li>
     <span class="text-lg text-gray-500">></span>
         <a href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text- font-medium text-gray-500 hover:text-[#bf7149]">
-                            {{ producto.get_categoria_display|upper }} 
+                                    {{ producto.get_categoria_display|upper }} 
                         </a>
 </li>
     <li>
@@ -33,21 +33,23 @@
             </span>
         </div>
          {% endif %}
-                {% else %}
-                        <div class="product-image-area" style="flex: 1; max-width: 50%;">
-
-                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" style="width: 100%; height: auto; border: 1px solid #ccc; border-radius: 8px;">
-{% if producto.stock <= 0 %}
-        <div class="absolute inset-1 flex items-center justify-left pointer-events-none mb-10 mt-40  mr-10">
-            <span class="bg-red-500 text-white text-2xl font-bold text-center uppercase tracking-wider py-3 px-10 transform -rotate-45 whitespace-nowrap">
-                AGOTADO
-            </span>
         </div>
+        {% else %}
+            <div class="product-image-area" style="flex: 1; max-width: 50%;">
+
+                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" style="width: 100%; height: auto; border: 1px solid #ccc; border-radius: 8px;">
+                {% if producto.stock <= 0 %}
+                <div class="absolute inset-1 flex items-center justify-left pointer-events-none mb-10 mt-40  mr-10">
+                    <span class="bg-red-500 text-white text-2xl font-bold text-center uppercase tracking-wider py-3 px-10 transform -rotate-45 whitespace-nowrap">
+                        AGOTADO
+                    </span>
+                </div>
+                {% endif %}
+            </div>
         {% endif %}
-            {% endif %}
 
             
-        </div>
+        
 
         <div class="product-info-area" style="flex: 1; max-width: 50%;">
             
@@ -59,14 +61,15 @@
                 {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
             </span>
             
-            <p style="font-size: 1em; color: {% if producto.stock > 10 %} green {% else %} orang e{% endif %}; margin-bottom: 25px;">
+            <p style="font-size: 1em; color: {% if producto.stock > 10 %} green {% else %} orange {% endif %}; margin-bottom: 25px;">
                 {% if producto.esta_agotado or producto.stock == 0 %}
-<span class="text-red-600">
+                    <span class="text-red-600 font-bold" id="stock-container-{{ producto.id }}">
                             SIN PRODUCTO
-                        </span>                {% elif producto.stock < 5 %}
-                    ¡Últimas unidades! Almacenados: {{ producto.stock }}
+                    </span>
                 {% else %}
-                    Productos disponibles: {{ producto.stock }} unidades
+                    <span id="stock-container-{{ producto.id }}">
+                        Productos disponibles: <span id="stock-display-{{ producto.id }}" class="font-bold">{{ producto.stock }}</span> unidades
+                    </span>
                 {% endif %}
             </p>
 
@@ -90,7 +93,8 @@
                                     value="1" 
                                     min="1" 
                                     max="{{ producto.stock }}"
-                                    readonly> <button type="button" 
+                                    readonly> 
+                                <button type="button" 
                                         onclick="changeQuantity(this, 1)" 
                                         class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition-colors text-gray-600">
                                     +
@@ -222,7 +226,6 @@
                class="block bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02]"
                style="flex: 0 0 calc(20% - 16px);">
 
-                <!-- CONTENEDOR DE IMAGEN -->
                 <div>
                     {% if relacionado.imagen %}
                     <div class="relative w-full h-32 mb-4 flex justify-center items-center">
@@ -245,7 +248,6 @@
                     {% endif %}
                 </div>
 
-                <!-- DETALLES DEL PRODUCTO -->
                 <div class="w-full text-center flex-grow flex flex-col justify-end">
 
                     <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2">
@@ -274,8 +276,7 @@
 
                 </div>
 
-                <!-- BOTÓN AÑADIR -->
-                 {% if not user.is_authenticated or not user.is_staff %}
+                {% if not user.is_authenticated or not user.is_staff %}
                         {% if producto.stock > 0 %}
                         <button onclick="event.preventDefault();" 
                             class="add-related w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
@@ -293,7 +294,6 @@
 
         </div>
 
-        <!-- BOTÓN PREV -->
         <button id="prev-btn"
                 class="absolute top-1/2 left-0 transform -translate-y-1/2 ml-4
                        w-10 h-10 flex items-center justify-center
@@ -304,7 +304,6 @@
             </svg>
         </button>
 
-        <!-- BOTÓN NEXT -->
         <button id="next-btn"
                 class="absolute top-1/2 right-0 transform -translate-y-1/2 mr-4
                        w-10 h-10 flex items-center justify-center
@@ -360,11 +359,12 @@
 
 
 <script>
-function changeQuantity(button, amount) {
+    // ===== Función auxiliar para cambiar número en input (UI solo) =====
+    function changeQuantity(button, amount) {
         const quantityControl = button.parentElement;
         const input = quantityControl.querySelector('.quantity-input');
         const min = parseInt(input.min) || 1;
-        const max = parseInt(input.max); // Stock
+        const max = parseInt(input.max); // Stock disponible
         
         let newValue = (parseInt(input.value) || 1) + amount;
 
@@ -382,132 +382,182 @@ function changeQuantity(button, amount) {
     }
 
 
-    // ===============================================
-    // SCRIPT PRINCIPAL DE LA PÁGINA
-    // ===============================================
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function() {
 
-        // ----- Lógica del Carrusel -----
-        const carousel = document.getElementById('product-carousel');
-        const prevButton = document.getElementById('prev-btn');
-        const nextButton = document.getElementById('next-btn');
-        
-        const cardsToScroll = 3; 
-        const gapSize = 20;
-        
-        let CARD_WIDTH_PLUS_GAP = 0;
+        // ------------------------------------------------
+        // 1. LOGICA DEL CARRUSEL
+        // ------------------------------------------------
+        const carousel = document.getElementById('product-carousel');
+        const prevButton = document.getElementById('prev-btn');
+        const nextButton = document.getElementById('next-btn');
+        
+        const cardsToScroll = 3; 
+        const gapSize = 20;
+        let CARD_WIDTH_PLUS_GAP = 0;
 
-        if (carousel && carousel.children.length > 0) {
-            const firstCard = carousel.children[0];
-            CARD_WIDTH_PLUS_GAP = firstCard.offsetWidth + gapSize;
-        } else {
-             CARD_WIDTH_PLUS_GAP = 260; // Fallback
-        }
-        
-        const scrollAmount = CARD_WIDTH_PLUS_GAP * cardsToScroll; 
+        if (carousel && carousel.children.length > 0) {
+            const firstCard = carousel.children[0];
+            CARD_WIDTH_PLUS_GAP = firstCard.offsetWidth + gapSize;
+        } else {
+             CARD_WIDTH_PLUS_GAP = 260; 
+        }
+        const scrollAmount = CARD_WIDTH_PLUS_GAP * cardsToScroll; 
 
-        if (carousel && prevButton && nextButton) {
-            prevButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            });
-
-            nextButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            });
-        }
-
-        // ----- Lógica del Carrito (Unificada) -----
-
-        // ===== Función para mostrar toast =====
-        function showToast(mensaje){
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = mensaje;
-            document.body.appendChild(toast);
-
-            void toast.offsetWidth; // Forzar reflow
-            toast.classList.add('show');
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        // ===== Función para actualizar badge =====
-        function actualizarBadge(totalItems){
-            const badge = document.querySelector('#cesta-badge');
-            if(badge){
-                badge.textContent = totalItems;
-            } else {
-                const cestaLink = document.querySelector('a[href="{% url "carrito:carrito" %}"]');
-                if(cestaLink){
-                    const span = document.createElement('span');
-                    span.id = "cesta-badge";
-                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                    span.textContent = totalItems;
-                    cestaLink.appendChild(span);
-                }
-            }
-        }
-
-        // ===== Función genérica para agregar al carrito =====
-        function agregarAlCarrito(productId, cantidad, csrfToken){
-            fetch(`/cesta/agregar/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/x-www-form-urlencoded' // Asegura el formato correcto
-                },
-                body: new URLSearchParams({ 'cantidad': cantidad })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success){
-                    showToast(data.mensaje || 'Producto añadido');
-                    actualizarBadge(data.total_items);
-                } else {
-                    showToast(data.mensaje || 'Error al añadir el producto');
-                }
-            })
-            .catch(error => {
-                console.error('Error en fetch:', error);
-                showToast('Error de conexión');
+        if (carousel && prevButton && nextButton) {
+            prevButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
             });
-        }
+            nextButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+        }
 
-        // ===== Formulario del detalle del producto =====
-        document.querySelectorAll('.add-to-cart-form').forEach(form => {
-            form.addEventListener('submit', function(e){
-                e.preventDefault();
-                const productId = this.dataset.productId;
-                const cantidad = parseInt(this.querySelector('.quantity-input').value) || 1;
-                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-                agregarAlCarrito(productId, cantidad, csrfToken);
-            });
-        });
+        // ------------------------------------------------
+        // 2. FUNCIONES AUXILIARES (Toast y Badge)
+        // ------------------------------------------------
+        function showToast(mensaje){
+            const container = document.getElementById('toast-container') || document.body;
+            // Si no existe el container, crear uno rápido o usar body, 
+            // aunque el HTML ya tiene un toast-container.
+            
+            let toastContainer = document.getElementById('toast-container');
+            if(!toastContainer){
+                toastContainer = document.createElement('div');
+                toastContainer.id = 'toast-container';
+                toastContainer.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
+                document.body.appendChild(toastContainer);
+            }
 
-        // ===== Botones de productos relacionados =====
-        document.querySelectorAll('.add-related').forEach(btn => {
-            btn.addEventListener('click', function(e){
-                e.preventDefault(); // Evita navegar a la página del producto
-                const productId = this.dataset.productId;
-                const cantidad = 1; // siempre 1
-                
-                // ### CORRECCIÓN 2: Buscar CUALQUIER token en la página ###
-                const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
-                
-                if (csrfTokenInput) {
-                    agregarAlCarrito(productId, cantidad, csrfTokenInput.value);
-                } else {
-                    console.error('No se pudo encontrar el CSRF token');
-                    showToast('Error de seguridad. Recargue la página.');
+            const toast = document.createElement('div');
+            toast.className = 'toast show'; 
+            toast.style.pointerEvents = "auto";
+            toast.textContent = mensaje;
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        }
+
+        function actualizarBadge(totalItems){
+            const badge = document.querySelector('#cesta-badge');
+            if(badge){
+                badge.textContent = totalItems;
+                badge.style.display = totalItems > 0 ? 'flex' : 'none';
+            } else {
+                const cestaLink = document.querySelector('a[href*="/carrito/"]');
+                if(cestaLink && totalItems > 0){
+                    cestaLink.classList.add('relative');
+                    const span = document.createElement('span');
+                    span.id = "cesta-badge";
+                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                    span.textContent = totalItems;
+                    cestaLink.appendChild(span);
                 }
-            });
-        });
+            }
+        }
+
+        // ------------------------------------------------
+        // 3. FUNCIÓN INTELIGENTE PARA AGREGAR AL CARRITO
+        // ------------------------------------------------
+        function agregarAlCarrito(productId, cantidad, csrfToken, formElement = null){
+            // URL correcta que coincide con el backend
+            const url = `/carrito/update/${productId}/`; 
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ 
+                    'action': 'add', 
+                    'cantidad': cantidad 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success){
+                    showToast("✅ " + data.mensaje);
+                    if(data.total_items !== undefined){
+                        actualizarBadge(data.total_items);
+                    }
+                    
+                    // --- ACTUALIZACIÓN VISUAL DEL STOCK ---
+                    if(data.nuevo_stock !== undefined){
+                        // 1. Buscamos el texto del stock por su ID
+                        const stockDisplay = document.getElementById(`stock-display-${productId}`);
+                        
+                        if(stockDisplay){
+                            stockDisplay.textContent = data.nuevo_stock;
+                            
+                            // Si se agota, cambiamos el texto entero
+                            if(data.nuevo_stock === 0){
+                                const container = document.getElementById(`stock-container-${productId}`);
+                                if(container) {
+                                    container.innerHTML = '<span class="text-red-600 font-bold">¡AGOTADO!</span>';
+                                }
+                            }
+                        }
+
+                        // 2. Actualizamos el input para que no deje subir más del stock real
+                        if(formElement){
+                            const input = formElement.querySelector('.quantity-input');
+                            if(input){
+                                input.max = data.nuevo_stock;
+                                input.value = 1; // Reseteamos a 1
+                            }
+                        }
+                    }
+                } else {
+                    showToast("❌ " + (data.mensaje || 'Error al añadir'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('❌ Error de conexión');
+            });
+        }
+
+        // ------------------------------------------------
+        // 4. EVENT LISTENERS
+        // ------------------------------------------------
+
+        // A) Formulario Principal del Producto
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                const productId = this.dataset.productId;
+                const cantidad = parseInt(this.querySelector('.quantity-input').value) || 1;
+                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // Pasamos 'this' para que pueda actualizar el input MAX
+                agregarAlCarrito(productId, cantidad, csrfToken, this);
+            });
+        });
+
+        // B) Botones de Productos Relacionados (Carrusel)
+        document.querySelectorAll('.add-related').forEach(btn => {
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation(); // Evitar click en el enlace <a>
+                
+                const productId = this.dataset.productId;
+                
+                // Buscar token en la página (usando un selector genérico o el del formulario principal)
+                const mainToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                
+                if (mainToken && productId) {
+                    agregarAlCarrito(productId, 1, mainToken.value, null);
+                } else {
+                    console.error("Token no encontrado");
+                }
+            });
+        });
 
     });
 </script>

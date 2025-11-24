@@ -90,7 +90,8 @@ def update_cart(request, producto_id):
             json_response_data = {
                 'success': True, 
                 'mensaje': 'Producto añadido',
-                'total_items': sum(i.cantidad for i in cesta.items.all())
+                'total_items': sum(i.cantidad for i in cesta.items.all()),
+                'nuevo_stock': producto.stock
             }
 
     # =========================================================

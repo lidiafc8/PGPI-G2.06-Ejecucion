@@ -53,18 +53,7 @@
                                     </form>
                                 </div>
                             {% else %}
-                                <div class="flex items-center space-x-2 sm:w-3/12 justify-center mt-2 sm:mt-0">
-                                    <form action="{% url 'carrito:update_cart' producto_id=articulo.id %}?" method="POST" class="inline-block">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="action" value="remove">
-                                        <button type="submit" class="text-gray-500 hover:bg-gray-100 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-l">-</button>
-                                    </form>
-
-                                    <span class="border border-gray-300 px-1 py-1 text-center text-sm font-medium w-12">
-                                        {{ articulo.cantidad }}
-                                    </span>
-                                    
-                                </div>
+                                <p class="text-sm font-bold text-red-600">¡AGOTADO!</p>
                             {% endif %}
                         </div>
                         
@@ -75,7 +64,9 @@
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 100 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6h6v10H7V6z" clip-rule="evenodd" /></svg>
                                 </button>
                             </form>
+                            {% if articulo.stock > 0 %}
                             <p class="text-xl font-bold text-gray-800">{{ articulo.precio_total|floatformat:2 }} €</p>
+                            {% endif %}
                         </div>
                         
                     </div>
@@ -272,151 +263,60 @@
     }
 </style>
 {% endblock extra_css %}
+
 {% block extra_js %}
     {{ block.super }} 
-    
-<script>
+
+    <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // ------------------------------------------------
-        // 1. CARRUSEL (Se mantiene igual)
-        // ------------------------------------------------
+
         const carousel = document.getElementById('product-carousel');
-        if(carousel){ 
-            const items = carousel.children;
-            const totalItems = items.length; 
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
-            const dotNavigation = document.getElementById('dot-navigation');
-            let currentIndex = 0;
-            const intervalTime = 8000;
-            let autoSlide;
+        const prevButton = document.getElementById('prev-btn');
+        const nextButton = document.getElementById('next-btn');
+        
+        const scrollAmount = 280 * 2; 
 
-            if (totalItems <= 1) {
-                if(prevBtn) prevBtn.style.display = 'none';
-                if(nextBtn) nextBtn.style.display = 'none';
-                if(dotNavigation) dotNavigation.style.display = 'none'; 
-            } else {
-                function createDots() {
-                    for (let i = 0; i < totalItems; i++) {
-                        const li = document.createElement('li');
-                        li.classList.add('dot-nav'); 
-                        li.dataset.index = i;
-                        li.addEventListener('click', () => {
-                            currentIndex = i;
-                            updateCarousel();
-                            startAutoSlide();
-                        });
-                        dotNavigation.appendChild(li);
-                    }
-                }
-                function updateDots() {
-                    Array.from(dotNavigation.children).forEach((dot, index) => {
-                        if (index === currentIndex) {
-                            dot.classList.add('dot-nav--current'); 
-                        } else {
-                            dot.classList.remove('dot-nav--current');
-                        }
-                    });
-                }
-                function updateCarousel() {
-                    const offset = -currentIndex * 100;
-                    carousel.style.transform = `translateX(${offset}%)`;
-                    updateDots();
-                }
-                function nextSlide() {
-                    currentIndex = (currentIndex + 1) % totalItems;
-                    updateCarousel();
-                }
-                function prevSlide() {
-                    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
-                    updateCarousel();
-                }
-                function startAutoSlide() {
-                    clearInterval(autoSlide); 
-                    autoSlide = setInterval(nextSlide, intervalTime);
-                }
-                
-                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
-                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+        if (carousel && prevButton && nextButton) {
+            prevButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
 
-                createDots(); 
-                updateCarousel(); 
-                startAutoSlide();
-            }
+            nextButton.addEventListener('click', (e) => {
+                e.preventDefault();
+                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
         }
 
-        // ------------------------------------------------
-        // 2. FUNCIONES AUXILIARES (Toast y Badge)
-        // ------------------------------------------------
+
         function showToast(mensaje){
             const container = document.getElementById('toast-container');
-            if (!container) return; 
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
             container.appendChild(toast);
-            
             requestAnimationFrame(() => { toast.classList.add('show'); });
-            
-            setTimeout(() => {
-                toast.classList.remove('show'); 
-                setTimeout(() => toast.remove(), 500); 
-            }, 3000);
         }
 
-        function actualizarBadge(totalItems){
-            const badge = document.querySelector('#cesta-badge');
-            if(badge){
-                badge.textContent = totalItems;
-                badge.style.display = totalItems > 0 ? 'flex' : 'none';
-            } else {
-                const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
-                if(cestaLink && totalItems > 0){
-                    cestaLink.classList.add('relative'); 
-                    const span = document.createElement('span');
-                    span.id = "cesta-badge";
-                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                    span.textContent = totalItems;
-                    cestaLink.appendChild(span);
-                }
-            }
-        }
-
-        // ------------------------------------------------
-        // 3. FUNCIÓN CENTRALIZADA DE AÑADIR AL CARRITO
-        // ------------------------------------------------
         function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
             const originalText = btnElement.innerText;
             btnElement.innerText = "Añadiendo...";
             btnElement.disabled = true;
 
-            // ✅ CORRECCIÓN: La URL debe coincidir con urls.py (/carrito/update/...)
-            const url = `/carrito/update/${productId}/`; 
-
-            fetch(url, {
+            fetch(`/cesta/agregar/${productId}/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': csrfToken,
                     'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
-                // ✅ CORRECCIÓN: Enviamos 'action': 'add' para que el stock se reste
-                body: new URLSearchParams({ 
-                    'action': 'add', 
-                    'cantidad': cantidad 
-                })
+                body: new URLSearchParams({ 'cantidad': cantidad })
             })
             .then(res => res.json())
             .then(data => {
                 if(data.success){
-                    showToast("✅ " + data.mensaje);
+                    showToast("¡Añadido! Actualizando carrito...");
                     
-                    if(data.total_items !== undefined){
-                        actualizarBadge(data.total_items);
-                    }
-                    
-                    // Recargamos para ver el stock bajar
                     setTimeout(() => {
                         window.location.reload(); 
                     }, 500);
@@ -424,59 +324,30 @@
                 } else {
                     btnElement.innerText = originalText;
                     btnElement.disabled = false;
-                    showToast("❌ " + (data.mensaje || 'Error al añadir'));
+                    showToast(data.mensaje || 'Error al añadir');
                 }
             })
             .catch(error => {
                 console.error(error);
                 btnElement.innerText = originalText;
                 btnElement.disabled = false;
-                showToast('❌ Error de conexión');
+                showToast('Error de conexión');
             });
         }
 
-        // ------------------------------------------------
-        // 4. EVENT LISTENERS (Botones y Formularios)
-        // ------------------------------------------------
-
-        // A) Botones sueltos (Carrusel, relacionados) con clase .add-related
         document.querySelectorAll('.add-related').forEach(btn => {
             btn.addEventListener('click', function(e){
                 e.preventDefault();
                 e.stopPropagation(); 
 
-                let productId = this.dataset.productId;
+                const productId = this.dataset.productId;
                 const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
                 
-                if (productId && csrfTokenInput) {
+                if (csrfTokenInput) {
                     realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
                 }
             });
         });
-
-        // B) Formularios de añadir (Ficha de producto principal)
-        document.querySelectorAll('.add-to-cart-form').forEach(form => {
-            form.addEventListener('submit', function(e){
-                e.preventDefault();
-                
-                // Buscar datos dentro del formulario o del botón
-                const btn = this.querySelector('button');
-                let productId = this.dataset.productId || btn.dataset.productId; // Busca en form o en btn
-                
-                // Si usamos data-url en el form, extraemos el ID de ahí si no está explícito
-                if(!productId && this.dataset.url){
-                    // Intento rudimentario de sacar ID de la URL si faltase data-product-id
-                    // Mejor asegurar que el HTML tenga data-product-id="{{ producto.id }}"
-                }
-
-                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-
-                if (productId && csrfToken) {
-                    realizarPeticionCarrito(productId, 1, csrfToken, btn);
-                }
-            });
-        });
-
     });
-</script>
+    </script>
 {% endblock extra_js %}
