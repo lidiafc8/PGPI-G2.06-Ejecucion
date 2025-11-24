@@ -1,3 +1,6 @@
+{% block extra_js %}
+    {{ block.super }} 
+    
 {% extends "base.html" %}
 {% block breadcrumbs %}
 
@@ -339,161 +342,207 @@
 
 
 <script>
-function changeQuantity(button, amount) {
-        const quantityControl = button.parentElement;
-        const input = quantityControl.querySelector('.quantity-input');
-        const min = parseInt(input.min) || 1;
-        const max = parseInt(input.max); // Stock
+    document.addEventListener('DOMContentLoaded', function() {
         
-        let newValue = (parseInt(input.value) || 1) + amount;
+        // ------------------------------------------------
+        // 1. CARRUSEL (Se mantiene igual)
+        // ------------------------------------------------
+        const carousel = document.getElementById('product-carousel');
+        if(carousel){ 
+            const items = carousel.children;
+            const totalItems = items.length; 
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            const dotNavigation = document.getElementById('dot-navigation');
+            let currentIndex = 0;
+            const intervalTime = 8000;
+            let autoSlide;
 
-        // Asegurarse de que el valor no sea menor que el mínimo
-        if (newValue < min) {
-            newValue = min;
-        }
-        
-        // Asegurarse de que el valor no excede el stock (max)
-        if (!isNaN(max) && newValue > max) {
-            newValue = max;
-        }
-        
-        input.value = newValue;
-    }
-
-
-    // ===============================================
-    // SCRIPT PRINCIPAL DE LA PÁGINA
-    // ===============================================
-    document.addEventListener('DOMContentLoaded', function() {
-
-        // ----- Lógica del Carrusel -----
-        const carousel = document.getElementById('product-carousel');
-        const prevButton = document.getElementById('prev-btn');
-        const nextButton = document.getElementById('next-btn');
-        
-        const cardsToScroll = 3; 
-        const gapSize = 20;
-        
-        let CARD_WIDTH_PLUS_GAP = 0;
-
-        if (carousel && carousel.children.length > 0) {
-            const firstCard = carousel.children[0];
-            CARD_WIDTH_PLUS_GAP = firstCard.offsetWidth + gapSize;
-        } else {
-             CARD_WIDTH_PLUS_GAP = 260; // Fallback
-        }
-        
-        const scrollAmount = CARD_WIDTH_PLUS_GAP * cardsToScroll; 
-
-        if (carousel && prevButton && nextButton) {
-            prevButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            });
-
-            nextButton.addEventListener('click', (e) => {
-                e.preventDefault();
-                carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            });
-        }
-
-        // ----- Lógica del Carrito (Unificada) -----
-
-        // ===== Función para mostrar toast =====
-        function showToast(mensaje){
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = mensaje;
-            document.body.appendChild(toast);
-
-            void toast.offsetWidth; // Forzar reflow
-            toast.classList.add('show');
-
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
-
-        // ===== Función para actualizar badge =====
-        function actualizarBadge(totalItems){
-            const badge = document.querySelector('#cesta-badge');
-            if(badge){
-                badge.textContent = totalItems;
-            } else {
-                const cestaLink = document.querySelector('a[href="{% url "carrito:carrito" %}"]');
-                if(cestaLink){
-                    const span = document.createElement('span');
-                    span.id = "cesta-badge";
-                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                    span.textContent = totalItems;
-                    cestaLink.appendChild(span);
-                }
-            }
-        }
-
-        // ===== Función genérica para agregar al carrito =====
-        function agregarAlCarrito(productId, cantidad, csrfToken){
-            fetch(`/cesta/agregar/${productId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/x-www-form-urlencoded' // Asegura el formato correcto
-                },
-                body: new URLSearchParams({ 'cantidad': cantidad })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success){
-                    showToast(data.mensaje || 'Producto añadido');
-                    actualizarBadge(data.total_items);
-                } else {
-                    showToast(data.mensaje || 'Error al añadir el producto');
+            if (totalItems <= 1) {
+                if(prevBtn) prevBtn.style.display = 'none';
+                if(nextBtn) nextBtn.style.display = 'none';
+                if(dotNavigation) dotNavigation.style.display = 'none'; 
+            } else {
+                function createDots() {
+                    for (let i = 0; i < totalItems; i++) {
+                        const li = document.createElement('li');
+                        li.classList.add('dot-nav'); 
+                        li.dataset.index = i;
+                        li.addEventListener('click', () => {
+                            currentIndex = i;
+                            updateCarousel();
+                            startAutoSlide();
+                        });
+                        dotNavigation.appendChild(li);
+                    }
                 }
-            })
-            .catch(error => {
-                console.error('Error en fetch:', error);
-                showToast('Error de conexión');
-            });
-        }
-
-        // ===== Formulario del detalle del producto =====
-        document.querySelectorAll('.add-to-cart-form').forEach(form => {
-            form.addEventListener('submit', function(e){
-                e.preventDefault();
-                const productId = this.dataset.productId;
-                const cantidad = parseInt(this.querySelector('.quantity-input').value) || 1;
-                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-                agregarAlCarrito(productId, cantidad, csrfToken);
-            });
-        });
-
-        // ===== Botones de productos relacionados =====
-        document.querySelectorAll('.add-related').forEach(btn => {
-            btn.addEventListener('click', function(e){
-                e.preventDefault(); // Evita navegar a la página del producto
-                const productId = this.dataset.productId;
-                const cantidad = 1; // siempre 1
+                function updateDots() {
+                    Array.from(dotNavigation.children).forEach((dot, index) => {
+                        if (index === currentIndex) {
+                            dot.classList.add('dot-nav--current'); 
+                        } else {
+                            dot.classList.remove('dot-nav--current');
+                        }
+                    });
+                }
+                function updateCarousel() {
+                    const offset = -currentIndex * 100;
+                    carousel.style.transform = `translateX(${offset}%)`;
+                    updateDots();
+                }
+                function nextSlide() {
+                    currentIndex = (currentIndex + 1) % totalItems;
+                    updateCarousel();
+                }
+                function prevSlide() {
+                    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+                    updateCarousel();
+                }
+                function startAutoSlide() {
+                    clearInterval(autoSlide); 
+                    autoSlide = setInterval(nextSlide, intervalTime);
+                }
                 
-                // ### CORRECCIÓN 2: Buscar CUALQUIER token en la página ###
-                const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
-                
-                if (csrfTokenInput) {
-                    agregarAlCarrito(productId, cantidad, csrfTokenInput.value);
+                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+
+                createDots(); 
+                updateCarousel(); 
+                startAutoSlide();
+            }
+        }
+
+        // ------------------------------------------------
+        // 2. FUNCIONES AUXILIARES (Toast y Badge)
+        // ------------------------------------------------
+        function showToast(mensaje){
+            const container = document.getElementById('toast-container');
+            if (!container) return; 
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = mensaje;
+            container.appendChild(toast);
+            
+            requestAnimationFrame(() => { toast.classList.add('show'); });
+            
+            setTimeout(() => {
+                toast.classList.remove('show'); 
+                setTimeout(() => toast.remove(), 500); 
+            }, 3000);
+        }
+
+        function actualizarBadge(totalItems){
+            const badge = document.querySelector('#cesta-badge');
+            if(badge){
+                badge.textContent = totalItems;
+                badge.style.display = totalItems > 0 ? 'flex' : 'none';
+            } else {
+                const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
+                if(cestaLink && totalItems > 0){
+                    cestaLink.classList.add('relative'); 
+                    const span = document.createElement('span');
+                    span.id = "cesta-badge";
+                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                    span.textContent = totalItems;
+                    cestaLink.appendChild(span);
+                }
+            }
+        }
+
+        // ------------------------------------------------
+        // 3. FUNCIÓN CENTRALIZADA DE AÑADIR AL CARRITO
+        // ------------------------------------------------
+        function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
+            const originalText = btnElement.innerText;
+            btnElement.innerText = "Añadiendo...";
+            btnElement.disabled = true;
+
+            // ✅ CORRECCIÓN: La URL debe coincidir con urls.py (/carrito/update/...)
+            const url = `/carrito/update/${productId}/`; 
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                // ✅ CORRECCIÓN: Enviamos 'action': 'add' para que el stock se reste
+                body: new URLSearchParams({ 
+                    'action': 'add', 
+                    'cantidad': cantidad 
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success){
+                    showToast("✅ " + data.mensaje);
+                    
+                    if(data.total_items !== undefined){
+                        actualizarBadge(data.total_items);
+                    }
+                    
+                    // Recargamos para ver el stock bajar
+                    setTimeout(() => {
+                        window.location.reload(); 
+                    }, 500);
+
                 } else {
-                    console.error('No se pudo encontrar el CSRF token');
-                    showToast('Error de seguridad. Recargue la página.');
+                    btnElement.innerText = originalText;
+                    btnElement.disabled = false;
+                    showToast("❌ " + (data.mensaje || 'Error al añadir'));
                 }
-            });
-        });
+            })
+            .catch(error => {
+                console.error(error);
+                btnElement.innerText = originalText;
+                btnElement.disabled = false;
+                showToast('❌ Error de conexión');
+            });
+        }
+
+        // ------------------------------------------------
+        // 4. EVENT LISTENERS (Botones y Formularios)
+        // ------------------------------------------------
+
+        // A) Botones sueltos (Carrusel, relacionados) con clase .add-related
+        document.querySelectorAll('.add-related').forEach(btn => {
+            btn.addEventListener('click', function(e){
+                e.preventDefault();
+                e.stopPropagation(); 
+
+                let productId = this.dataset.productId;
+                const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                
+                if (productId && csrfTokenInput) {
+                    realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
+                }
+            });
+        });
+
+        // B) Formularios de añadir (Ficha de producto principal)
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                
+                // Buscar datos dentro del formulario o del botón
+                const btn = this.querySelector('button');
+                let productId = this.dataset.productId || btn.dataset.productId; // Busca en form o en btn
+                
+                // Si usamos data-url en el form, extraemos el ID de ahí si no está explícito
+                if(!productId && this.dataset.url){
+                    // Intento rudimentario de sacar ID de la URL si faltase data-product-id
+                    // Mejor asegurar que el HTML tenga data-product-id="{{ producto.id }}"
+                }
+
+                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                if (productId && csrfToken) {
+                    realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                }
+            });
+        });
 
     });
 </script>
-
-
-</main>
-{% endblock content %}
-
-{% block extra_css %}
-{% endblock extra_css %}
+{% endblock extra_js %}
