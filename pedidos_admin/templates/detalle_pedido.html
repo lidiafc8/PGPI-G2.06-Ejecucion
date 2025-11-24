@@ -87,16 +87,10 @@
                         {% endif %}
                     </div>
 
-                    <!-- DIRECCIÓN -->
+                    <!-- DIRECCIÓN (como cadena) -->
                     <div class="sm:col-span-2">
                         <p class="text-sm font-medium text-gray-500 mt-3">Dirección de Envío</p>
-                        <p class="text-gray-700">{{ pedido.direccion_envio.calle|default:"[Dirección no proporcionada]" }}</p>
-                        <p class="text-gray-700">
-                            {{ pedido.direccion_envio.ciudad|default:"" }}
-                            {% if pedido.direccion_envio.ciudad and pedido.direccion_envio.codigo_postal %}, {% endif %}
-                            {{ pedido.direccion_envio.codigo_postal|default:"" }}
-                        </p>
-                        <p class="text-gray-700">{{ pedido.direccion_envio.pais|default:"" }}</p>
+                        <p class="text-gray-700">{{ pedido.direccion_envio|default:"[Dirección no proporcionada]" }}</p>
                     </div>
 
                     <!-- FECHA -->

@@ -146,14 +146,14 @@
                 <a href="{% url 'detalle_producto' pk=producto.pk %}"
                    class="block bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] border border-gray-200"
                    style="flex: 0 0 260px; min-width: 260px;"> <div>
-                        {% if producto.imagen %}
+                        {% if producto.imagen and producto.imagen.name %}
                         <div class="relative w-full h-32 mb-4 flex justify-center items-center">
                             <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}"
                                  class="max-h-full max-w-full object-contain mix-blend-multiply">
                         </div>
                         {% else %}
                         <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-                            <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                            <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
                                  class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
                         </div>
                         {% endif %}

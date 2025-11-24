@@ -92,7 +92,7 @@
                                 {% if producto.imagen %}
                                     <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-cover rounded-lg">
                                 {% else %}
-                                    <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                    <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply">
                                 {% endif %}
 
                                 {% if producto.stock <= 0 %}
@@ -176,7 +176,7 @@
                             {% if producto.imagen %}
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                             {% else %}
-                                <img src="{% static 'imagen1.jpg' %}" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
+                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
                             {% endif %}
 
                             {% if producto.stock <= 0 %}
