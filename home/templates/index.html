@@ -5,7 +5,7 @@
 
 {% block extra_css %}
 <style>
-    /* --- Estilos para el Carrusel Principal (HERO) --- */
+    /* --- Estilos ORIGINALES (NO TOCADOS) --- */
     #product-carousel {
         display: flex;
         transition: transform 0.5s ease-in-out;
@@ -88,58 +88,61 @@
                     <div class="slide-item h-80">
                         <div class="flex flex-col md:flex-row items-stretch w-full h-full"> 
                             
-                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="md:w-1/3 w-full bg-white p-4 rounded-lg flex items-center justify-center h-80 ">
+                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="md:w-1/3 w-full bg-white p-4 rounded-lg flex items-center justify-center h-80 relative">
                                 {% if producto.imagen %}
-                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-cover rounded-lg ">
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-cover rounded-lg">
                                 {% else %}
                                     <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                {% endif %}
+
+                                {% if producto.stock <= 0 %}
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <span class="bg-red-500 text-white text-lg font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-lg">
+                                        AGOTADO
+                                    </span>
+                                </div>
                                 {% endif %}
                             </a>
 
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
                                 <div class="flex-auto overflow-y-auto overflow-x-auto mt-12 pr-20" style="max-height: calc(300px - 5rem);">
                                     
-                                    <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-4xl font-extrabold text-gray-900 mb-2 ">
-                                        <h4 class="text-4xl font-extrabold text-gray-900 mb-2 transition">{{ producto.nombre|upper }}</h4>
+                                    <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block text-4xl font-extrabold text-gray-900 mb-2 transition hover:text-[#bf7149]">
+                                        {{ producto.nombre|upper }}
                                     </a>
                                     
                                     <p class="text-xs text-gray-500 mb-3">
                                         Fabricante: {{ producto.fabricante }}
                                     </p>
-                                    <a  href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text-[#bf7149] text-xs font-medium hover:underline">
-                                        <span class="font-medium"></span> {{ producto.get_seccion_display }}
-                                        /
-                                        <span class="font-medium"></span>
-                                             {{ producto.get_categoria_display }} 
+                                    
+                                    <a href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text-[#bf7149] text-xs font-medium hover:underline">
+                                        {{ producto.get_seccion_display }} / {{ producto.get_categoria_display }} 
                                     </a>
                                 </div>
                                 
                                 <div class="flex-none pt-2 ml-auto"> 
-                                    <div class="flex items-center space-x-4 mr-12 ">
-                                            <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                                {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
-                                            </span>
+                                    <div class="flex items-center space-x-4 mr-12">
+                                        <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
+                                            {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
+                                        </span>
+                                        
+                                        {% if not user.is_staff %}
                                             
-                                            {% if not user.is_staff %}
-                                                {% if not producto.esta_agotado %}
-                                                
-                                                    <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
-                                                        {% csrf_token %}
-                                                        <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
-                                                            AÑADIR A LA CESTA
-                                                        </button>
-                                                    </form>
-                                                    
-                                                {% endif %}
+                                            {% if producto.stock > 0 %}
+                                                <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
+                                                        AÑADIR A LA CESTA
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <button disabled class="px-4 mb-4 py-1 bg-gray-300 text-gray-500 font-semibold rounded-lg cursor-not-allowed uppercase border border-gray-300">
+                                                    AGOTADO
+                                                </button>
                                             {% endif %}
-                                            {% if producto.stock <= 0 %}
-                                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                    <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap">
-                                                        AGOTADO
-                                                    </span>
-                                                </div>
-                                                {% endif %}
-                                        </div>
+
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -175,25 +178,37 @@
                             {% else %}
                                 <img src="{% static 'imagen1.jpg' %}" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
                             {% endif %}
+
+                            {% if producto.stock <= 0 %}
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap">AGOTADO</span>
+                            </div>
+                            {% endif %}
                         </a>
 
                         <div class="flex-grow flex flex-col">
-                            <h4 class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem]">
+                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem] hover:text-[#bf7149]">
                                 {{ producto.nombre|lower|capfirst }}
-                            </h4>
+                            </a>
                             
                             <div class="mt-auto pt-4">
                                 <div class="text-2xl font-bold text-[#A91B0D] mb-4">
                                     {{ producto.precio|floatformat:2 }} €
                                 </div>
                                 
-                                {% if not user.is_authenticated or not user.is_staff %}
-                                <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
-                                        AÑADIR A LA CESTA
-                                    </button>
-                                </form>
+                                {% if not user.is_staff %}
+                                    {% if producto.stock > 0 %}
+                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
+                                                AÑADIR A LA CESTA
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button disabled class="w-full py-3 bg-gray-300 text-gray-500 font-bold rounded-lg cursor-not-allowed text-sm uppercase shadow-inner">
+                                            AGOTADO
+                                        </button>
+                                    {% endif %}
                                 {% endif %}
                             </div>
                         </div>
@@ -214,7 +229,7 @@
         {% endfor %}
     </div>
     {% else %}
-    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2"></div>
+    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none"></div>
     {% endif %}
 
 </main>
@@ -223,24 +238,27 @@
 {% block extra_js %}
     {{ block.super }} 
     
-    <script>
+<script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        // CARRUSEL
+        // ------------------------------------------------
+        // 1. CARRUSEL (TU CÓDIGO ORIGINAL)
+        // ------------------------------------------------
         const carousel = document.getElementById('product-carousel');
+        const prevButton = document.getElementById('prev-btn');
+        const nextButton = document.getElementById('next-btn');
+        
         if(carousel){ 
             const items = carousel.children;
             const totalItems = items.length; 
-            const prevBtn = document.getElementById('prev-btn');
-            const nextBtn = document.getElementById('next-btn');
             const dotNavigation = document.getElementById('dot-navigation');
             let currentIndex = 0;
             const intervalTime = 8000;
             let autoSlide;
 
             if (totalItems <= 1) {
-                if(prevBtn) prevBtn.style.display = 'none';
-                if(nextBtn) nextBtn.style.display = 'none';
+                if(prevButton) prevButton.style.display = 'none';
+                if(nextButton) nextButton.style.display = 'none';
                 if(dotNavigation) dotNavigation.style.display = 'none'; 
             } else {
                 function createDots() {
@@ -283,8 +301,8 @@
                     autoSlide = setInterval(nextSlide, intervalTime);
                 }
                 
-                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
-                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+                if(nextButton) nextButton.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevButton) prevButton.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
 
                 createDots(); 
                 updateCarousel(); 
@@ -292,48 +310,97 @@
             }
         }
 
-        // CARRITO AJAX
+        // ------------------------------------------------
+        // 2. FUNCIONES AUXILIARES (TOAST & BADGE)
+        // ------------------------------------------------
+        function showToast(mensaje){
+            const container = document.getElementById('toast-container');
+            if(!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = mensaje;
+            container.appendChild(toast);
+            
+            void toast.offsetWidth; // Reflow
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show'); 
+                setTimeout(() => toast.remove(), 500); 
+            }, 3000);
+        }
+
+        function actualizarBadge(totalItems){
+            const badge = document.querySelector('#cesta-badge');
+            if(badge){
+                badge.textContent = totalItems;
+                badge.style.display = totalItems > 0 ? 'flex' : 'none';
+            } else {
+                // Intento de encontrar el enlace del carrito
+                const cestaLink = document.querySelector('a[href*="carrito"]'); 
+                if(cestaLink && totalItems > 0){
+                    cestaLink.classList.add('relative'); 
+                    const span = document.createElement('span');
+                    span.id = "cesta-badge";
+                    span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                    span.textContent = totalItems;
+                    cestaLink.appendChild(span);
+                }
+            }
+        }
+
+        // ------------------------------------------------
+        // 3. CARRITO AJAX (LÓGICA CORREGIDA)
+        // ------------------------------------------------
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
                 const btn = this.querySelector('button');
                 const originalText = btn.innerText;
+                
+                // Feedback visual
                 btn.disabled = true;
-                btn.innerText = "...";
+                btn.innerText = "Añadiendo...";
 
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
-                fetch(`/cesta/agregar/${productId}/`, {
+                // 1. URL Correcta: /carrito/update/...
+                const url = `/carrito/update/${productId}/`;
+
+                fetch(url, {
                     method: 'POST',
                     headers: {
                         'X-CSRFToken': csrfToken,
-                        'X-Requested-With': 'XMLHttpRequest'
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    body: new URLSearchParams({cantidad: 1})
+                    // 2. Acción Correcta: 'add' para restar stock
+                    body: new URLSearchParams({
+                        'action': 'add',   
+                        'cantidad': 1
+                    })
                 })
                 .then(res => res.json())
                 .then(data => {
                     if(data.success){
                         showToast("✅ " + data.mensaje);
-                        const badge = document.querySelector('#cesta-badge');
-                        if(badge){
-                            badge.textContent = data.total_items;
-                        } else {
-                            const cestaLink = document.querySelector('a[href*="carrito"]');
-                            if(cestaLink) {
-                                const span = document.createElement('span');
-                                span.id = "cesta-badge";
-                                span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                                span.textContent = data.total_items;
-                                cestaLink.appendChild(span);
-                            }
+                        
+                        if(data.total_items !== undefined){
+                            actualizarBadge(data.total_items);
                         }
+                        
+                        // 3. Recarga para actualizar stock visualmente
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 500);
+
                     } else {
                         showToast("❌ " + data.mensaje);
+                        btn.disabled = false;
+                        btn.innerText = originalText;
                     }
-                    btn.disabled = false;
-                    btn.innerText = originalText;
                 })
                 .catch(err => {
                     console.error(err);
@@ -343,21 +410,6 @@
                 });
             });
         });
-
-        function showToast(mensaje){
-            const container = document.getElementById('toast-container');
-            if(!container) return;
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = mensaje;
-            container.appendChild(toast);
-            void toast.offsetWidth;
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show'); 
-                setTimeout(() => toast.remove(), 500); 
-            }, 3000);
-        }
     });
     </script>
 {% endblock extra_js %}
