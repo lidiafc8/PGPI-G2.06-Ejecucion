@@ -520,6 +520,23 @@
     
 {% block extra_js %}
     <script>
+        // Función global para cambiar cantidad (disponible en todas las páginas)
+        function changeQuantity(button, amount) {
+            try {
+                const quantityControl = button.closest('div') || button.parentElement;
+                const input = quantityControl.querySelector ? quantityControl.querySelector('.quantity-input') : null;
+                if (!input) return;
+                const min = parseInt(input.min) || 1;
+                const max = parseInt(input.max);
+                let newValue = (parseInt(input.value) || 1) + amount;
+                if (newValue < min) newValue = min;
+                if (!isNaN(max) && newValue > max) newValue = max;
+                input.value = newValue;
+            } catch (e) {
+                console.error('changeQuantity error', e);
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Seleccionamos todos los botones que inician un submenú (toggle-herramientas, toggle-maquinaria)
             const toggleButtons = document.querySelectorAll('[id^="toggle-"]');

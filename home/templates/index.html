@@ -118,10 +118,23 @@
                                     <a href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text-[#bf7149] text-xs font-medium hover:underline">
                                         {{ producto.get_seccion_display }} / {{ producto.get_categoria_display }} 
                                     </a>
+
+                                    <div class="mb-3">
+                                            {% if producto.stock > 0 %}
+                                                <span class="text-xs font-semibold text-[#6a760c]">
+                                                    {{ producto.stock }} unidades disponibles
+                                                </span>
+                                            {% else %}
+                                                <span class="text-xs font-semibold text-red-600">
+                                                    Sin stock
+                                                </span>
+                                            {% endif %}
+                                        </div>
                                 </div>
                                 
                                 <div class="flex-none pt-2 ml-auto"> 
-                                    <div class="flex items-center space-x-4 mr-12">
+                                    <div class="flex items-end gap-4 mr-12">
+
                                         <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
                                             {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
                                         </span>
@@ -131,6 +144,30 @@
                                             {% if producto.stock > 0 %}
                                                 <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
                                                     {% csrf_token %}
+
+                                                    <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                                        <button type="button"
+                                                                onclick="changeQuantity(this, -1)"
+                                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 text-sm">
+                                                            -
+                                                        </button>
+
+                                                        <input type="number"
+                                                            name="cantidad"
+                                                            class="quantity-input w-10 text-center border-none focus:ring-0 focus:outline-none text-gray-700 text-sm"
+                                                            value="1"
+                                                            min="1"
+                                                            max="{{ producto.stock }}"
+                                                            readonly>
+
+                                                        <button type="button"
+                                                                onclick="changeQuantity(this, 1)"
+                                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 text-sm">
+                                                            +
+                                                        </button>
+                                                    </div>
+
+                                                
                                                     <button type="submit" class="px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 uppercase">
                                                         AÑADIR A LA CESTA
                                                     </button>
@@ -192,16 +229,55 @@
                             </a>
                             
                             <div class="mt-auto pt-4">
+
+                                <div class="mb-3">
+                                    {% if producto.stock > 0 %}
+                                        <span class="text-xs font-semibold text-[#6a760c]">
+                                            {{ producto.stock }} unidades disponibles
+                                        </span>
+                                    {% else %}
+                                        <span class="text-xs font-semibold text-red-600">
+                                            Sin stock
+                                        </span>
+                                    {% endif %}
+                                </div>
                                 <div class="text-2xl font-bold text-[#A91B0D] mb-4">
                                     {{ producto.precio|floatformat:2 }} €
                                 </div>
                                 
                                 {% if not user.is_staff %}
                                     {% if producto.stock > 0 %}
-                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
+                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
                                             {% csrf_token %}
-                                            <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
-                                                AÑADIR A LA CESTA
+
+                                            <!-- SELECTOR DE CANTIDAD -->
+                                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                                <button type="button"
+                                                        onclick="changeQuantity(this, -1)"
+                                                        class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 text-sm">
+                                                    -
+                                                </button>
+
+                                                <input type="number"
+                                                    name="cantidad"
+                                                    class="quantity-input w-10 text-center border-none focus:ring-0 focus:outline-none text-gray-700 text-sm"
+                                                    value="1"
+                                                    min="1"
+                                                    max="{{ producto.stock }}"
+                                                    readonly>
+
+                                                <button type="button"
+                                                        onclick="changeQuantity(this, 1)"
+                                                        class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 text-sm">
+                                                    +
+                                                </button>
+                                            </div>
+
+
+                                            <!-- BOTÓN -->
+                                            <button type="submit" 
+                                                    class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-sm">
+                                                Añadir a la Cesta
                                             </button>
                                         </form>
                                     {% else %}
@@ -365,6 +441,7 @@
 
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+                const cantidad = this.querySelector('.quantity-input').value;
 
                 // 1. URL Correcta: /carrito/update/...
                 const url = `/carrito/update/${productId}/`;
@@ -376,10 +453,10 @@
                         'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    // 2. Acción Correcta: 'add' para restar stock
+                    // 2. Acción Correcta: 'add' con la cantidad seleccionada
                     body: new URLSearchParams({
                         'action': 'add',   
-                        'cantidad': 1
+                        'cantidad': cantidad
                     })
                 })
                 .then(res => res.json())

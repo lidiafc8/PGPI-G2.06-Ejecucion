@@ -165,7 +165,7 @@
                             <div class="mb-3">
                                 {% if producto.stock > 0 %}
                                 <span class="text-xs font-semibold text-[#6a760c]">
-                                    {{ producto.stock }} disponibles
+                                    {{ producto.stock }} unidades disponibles
                                 </span>
                                 {% else %}
                                 <span class="text-xs font-semibold text-red-600">
@@ -181,19 +181,45 @@
                     </a>
 
                     {% if not user.is_authenticated or not user.is_staff %}
-                        {% if producto.stock > 0 %}
-                        <div class="w-full mt-2 relative z-20">
-                            <button type="button" 
+                    {% if producto.stock > 0 %}
+                        <div class="w-full">
+                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                <button type="button"
+                                        onclick="changeQuantity(this, -1)"
+                                        class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 text-sm">
+                                    -
+                                </button>
+
+                                <input type="number"
+                                    name="cantidad"
+                                    class="quantity-input w-10 text-center border-none focus:ring-0 focus:outline-none text-gray-700 text-sm"
+                                    value="1"
+                                    min="1"
+                                    max="{{ producto.stock }}"
+                                    readonly>
+
+                                <button type="button"
+                                        onclick="changeQuantity(this, 1)"
+                                        class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 text-sm">
+                                    +
+                                </button>
+                            </div>
+                            
+                            <button onclick="event.preventDefault();" 
                                 class="add-related w-full py-2 bg-white text-[#bf7149] font-semibold rounded-md 
-                                       border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
-                                       transition duration-150"
+                                        border-2 border-[#bf7149] hover:bg-[#bf7149] hover:text-white 
+                                        transition duration-150 relative z-10 mt-2"
                                 data-product-id="{{ producto.pk }}">
-                                Añadir a la Cesta
+                            Añadir a la Cesta
                             </button>
                             {% csrf_token %}
                         </div>
-                        {% endif %}
+                    {% else %}
+                        <button disabled class="w-full py-2 bg-gray-200 text-gray-400 font-semibold rounded-lg cursor-not-allowed">
+                            Agotado
+                        </button>
                     {% endif %}
+                {% endif %}
                 </div>
                 {% endfor %}
 
@@ -374,13 +400,17 @@
 
                 let productId = this.dataset.productId;
                 
+                // Buscar la cantidad en el input más cercano (en el mismo contenedor)
+                const cantidadInput = this.closest('div').querySelector('.quantity-input');
+                const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
+                
                 // CORRECCIÓN CLAVE: Buscar el token hermano (en el mismo div)
                 // Esto es crucial cuando el carrito está vacío y no hay otros forms
                 const parentDiv = this.parentElement; 
                 const csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
                 
                 if (productId && csrfTokenInput) {
-                    realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
+                    realizarPeticionCarrito(productId, cantidad, csrfTokenInput.value, this);
                 } else {
                     console.error("Error: Token CSRF no encontrado para el producto " + productId);
                     showToast("❌ Error técnico, recarga la página");
