@@ -512,8 +512,6 @@ def procesar_pago(request):
                 cantidad=item_cesta.cantidad,
                 precio_unitario=item_cesta.producto.precio,
             )
-            producto.stock -= item_cesta.cantidad
-            producto.save()
 
         # Enviar correo de confirmación (intentar, pero no romper la transacción si falla)
         try:
