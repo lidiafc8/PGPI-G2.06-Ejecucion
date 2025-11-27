@@ -503,9 +503,6 @@ def procesar_pago(request):
 
         for item_cesta in cesta.items.select_related('producto'):
             producto = item_cesta.producto
-            if item_cesta.cantidad > producto.stock:
-                 messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
-                 raise ValueError("Stock insuficiente.") 
             
             ItemPedido.objects.create(
                 pedido=pedido,
