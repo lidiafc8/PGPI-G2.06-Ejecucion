@@ -3,6 +3,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse  # <--- IMPORTANTE: Necesario para la Home
 from home.models import Producto 
 from decimal import Decimal 
+from django.template.loader import render_to_string
 from django.contrib import messages
 from home.models import (
     Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
@@ -520,12 +521,15 @@ def procesar_pago(request):
             tracking_url = request.build_absolute_uri(
                 reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id})
             )
+            items_para_email = pedido.items.select_related('producto').all()
+            contexto = {
+        'pedido': pedido,
+        'items': items_para_email,
+        'tracking_url': tracking_url,
+    }
             subject = f"Confirmación pedido #{pedido.id}"
             text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
-            html_body = (
-                f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p>"
-                f"<p>Puedes seguirlo aquí: <a href=\"{tracking_url}\">Ver seguimiento</a></p>"
-            )
+            html_body = render_to_string('correo.html', contexto)
 
             msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
             msg.attach_alternative(html_body, "text/html")
