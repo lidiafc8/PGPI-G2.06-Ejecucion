@@ -1,14 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.http import JsonResponse
+from decimal import Decimal
 from django.contrib import messages
+import uuid
 from django.db import transaction
 from django.core.mail import EmailMultiAlternatives
 from django.template import loader
 from django.urls import reverse
 from django.conf import settings
-from decimal import Decimal
-import uuid
 
 # Importaciones de modelos unificadas
 from home.models import (
@@ -39,16 +39,15 @@ def obtener_cesta_actual(request):
     return cesta
 
 @require_POST
-@transaction.atomic  # Esto asegura que la base de datos no falle a medias
+@transaction.atomic 
 def update_cart(request, producto_id):
     """
     Gestiona los botones (+) y (-) del carrito.
-    Resta stock al añadir y devuelve stock al quitar.
+    SOLO VALIDA disponibilidad. NO RESTA STOCK de la base de datos hasta el pago.
     """
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request)
     
-    # Obtenemos o creamos el item
     item, created = ItemCestaCompra.objects.get_or_create(
         cesta_compra=cesta, 
         producto_id=producto_id, 
@@ -59,7 +58,6 @@ def update_cart(request, producto_id):
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     action = request.POST.get('action')
     
-    # Si viene por AJAX sin acción, asumimos añadir 1
     if is_ajax and not action:
         action = 'add'
 
@@ -74,36 +72,49 @@ def update_cart(request, producto_id):
         except ValueError:
             cantidad_add = 1
 
-        # 1. Comprobamos si hay stock real suficiente
+        # 1. Validación: Cantidad mínima
+        if cantidad_add < 1:
+            mensaje = "Debes seleccionar al menos 1 unidad."
+            if is_ajax:
+                return JsonResponse({'success': False, 'mensaje': mensaje})
+            messages.error(request, mensaje)
+            return redirect('carrito:carrito')
+
+        # 2. Validación: Stock suficiente GLOBAL (sin decir el número exacto)
         if cantidad_add > producto.stock:
-            mensaje = f"Solo quedan {producto.stock} unidades disponibles."
+            mensaje = "Stock insuficiente para la cantidad solicitada."
+            
             if is_ajax:
                 return JsonResponse({'success': False, 'mensaje': mensaje})
             messages.error(request, mensaje)
             
         else:
-            # 2. RESTAMOS el stock y AUMENTAMOS el carrito
-            producto.stock -= cantidad_add
-            producto.save()  # <--- Guardamos el cambio de stock
-            
-            item.cantidad += cantidad_add
-            item.save()      # <--- Guardamos el cambio en el carrito
-            
-            json_response_data = {
-                'success': True, 
-                'mensaje': 'Producto añadido',
-                'total_items': sum(i.cantidad for i in cesta.items.all())
-            }
+            # 3. Validación: Stock suficiente sumando lo que ya tienes en el carrito
+            if item.cantidad + cantidad_add <= producto.stock:
+                item.cantidad += cantidad_add
+                item.save()      
+                # NOTA: No hacemos producto.save() aquí. El stock se mantiene reservado visualmente pero no en BD.
+                
+                json_response_data = {
+                    'success': True, 
+                    'mensaje': 'Producto añadido',
+                    'total_items': sum(i.cantidad for i in cesta.items.all()),
+                    'nuevo_stock': producto.stock
+                }
+            else: 
+                # Mensaje genérico
+                mensaje = "No puedes añadir más unidades; has alcanzado el límite de stock disponible."
+                
+                if is_ajax:
+                    return JsonResponse({'success': False, 'mensaje': mensaje})
 
     # =========================================================
     # ACCIÓN: QUITAR (Botón -)
     # =========================================================
     elif action == 'remove':
-        # Al pulsar el botón menos (-), SIEMPRE devolvemos 1 al stock
-        producto.stock += 1
-        producto.save()  # <--- El stock vuelve a la tienda
-
-        # Ahora gestionamos el carrito
+        
+        # Como no restamos stock al añadir, no hace falta devolverlo al quitar.
+        # Solo gestionamos la línea del carrito.
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
@@ -129,17 +140,10 @@ def remove_from_cart(request, producto_id):
         # Buscamos el producto en el carrito
         item = ItemCestaCompra.objects.get(cesta_compra=cesta, producto_id=producto_id)
         
-        # ===========================================================
-        # 🔴 PASO CLAVE: ANTES DE BORRAR, DEVOLVEMOS EL STOCK 🔴
-        # ===========================================================
-        producto = item.producto
-        producto.stock += item.cantidad  # <--- Devuelve TODAS las unidades a la tienda
-        producto.save()                  # <--- Guarda el cambio en la base de datos
-        
-        # Ahora sí, borramos el item del carrito
+        # Borramos el item del carrito (El stock no se toca porque nunca se restó)
         item.delete()
         
-        messages.success(request, "Producto eliminado y stock restaurado.")
+        messages.success(request, "Producto eliminado del carrito.")
         
     except ItemCestaCompra.DoesNotExist:
         pass 
@@ -148,8 +152,7 @@ def remove_from_cart(request, producto_id):
 
 def ver_cesta(request):
     """
-    Muestra la cesta.
-    CORREGIDO: Calcula 'precio_linea' siempre para evitar UnboundLocalError.
+    Muestra la cesta unificada para todos los usuarios.
     """
     items = []
     articulos_para_plantilla = []
@@ -181,17 +184,9 @@ def ver_cesta(request):
             else:
                 precio_unitario = item.producto.precio
 
-            # 2. Calculamos precio de línea SIEMPRE (Corrigiendo el error anterior)
+            # 2. Calculamos precio de línea
             precio_linea = precio_unitario * item.cantidad
-            
-            # 3. Sumamos al subtotal
-            # (Opcional: puedes poner 'if item.producto.stock > 0' si no quieres sumar productos sin stock)
             subtotal += precio_linea
-            # Asegurarnos de que precio_linea siempre esté definido (evita errores cuando stock == 0)
-            precio_linea = Decimal('0.00')
-            if item.producto.stock > 0:
-                precio_linea = item.producto.precio * item.cantidad
-                subtotal += precio_linea
                 
             if item.producto.imagen and item.producto.imagen.name:
                 imagen_url = item.producto.imagen.url
@@ -201,12 +196,12 @@ def ver_cesta(request):
             articulos_para_plantilla.append({
                     'id': item.producto.id, 
                     'nombre': item.producto.nombre,
-                    'imagen_url': item.producto.imagen.url if item.producto.imagen else '',
+                    'imagen_url': imagen_url,
                     'precio_unidad': precio_unitario,
                     'cantidad': item.cantidad,
-                    'precio_total': precio_linea, # Variable garantizada
+                    'precio_total': precio_linea,
                     'stock': item.producto.stock,
-                })
+            })
         total = subtotal 
     
     opciones_filtro = obtener_opciones_filtro()
@@ -230,18 +225,17 @@ def ver_cesta(request):
 
 def vaciar_cesta(request):
     """
-    Vacía los items de la cesta actual (para sesión o usuario autenticado)
-    y limpia la sesión `cesta_id` para forzar la creación de una nueva cesta.
+    Vacía los items de la cesta actual.
     """
     cesta = obtener_cesta_actual(request)
     if not cesta:
         messages.info(request, "No hay una cesta activa para vaciar.")
         return redirect('carrito:carrito')
 
-    # Borrar los items asociados a la cesta pero conservar la fila de la cesta
+    # Borrar los items asociados a la cesta
     cesta.items.all().delete()
 
-    # Limpiar identificador de sesión para evitar reaparecer la misma cesta
+    # Limpiar identificador de sesión
     try:
         if 'cesta_id' in request.session:
             del request.session['cesta_id']
@@ -253,14 +247,42 @@ def vaciar_cesta(request):
 
 def checkout(request):
     """
-    Vista de la página de pago (GET). Pre-rellena datos del usuario.
+    Vista que muestra la página de pago (GET).
+    INCLUYE BLOQUEO DE SEGURIDAD: Si no hay stock, te devuelve al carrito.
     """
     cesta = obtener_cesta_actual(request)
     
     if not cesta or not cesta.items.exists():
-        messages.error(request, "Tu carrito está vacío. Añade productos antes de pagar.")
+        messages.error(request, "Tu carrito está vacío.")
         return redirect('carrito:carrito')
+
+    # ==============================================================================
+    # 🛡️ EL PORTERO: Validar stock ANTES de dejar entrar al pago
+    # ==============================================================================
+    problema_detectado = False
+
+    for item in cesta.items.select_related('producto'):
+        stock_real = item.producto.stock
         
+        # 1. Si el producto se ha quedado a 0 (Agotado total)
+        if stock_real <= 0:
+            messages.error(request, f"❌ ¡Lo sentimos! El producto '{item.producto.nombre}' se acaba de agotar y ha sido eliminado de tu cesta.")
+            item.delete()
+            problema_detectado = True
+            
+        # 2. Si pides más de lo que queda (ej: pides 5, quedan 2)
+        elif item.cantidad > stock_real:
+            messages.warning(request, f"⚠️ Solo quedan {stock_real} unidades de '{item.producto.nombre}'. Hemos ajustado tu cesta.")
+            item.cantidad = stock_real
+            item.save()
+            problema_detectado = True
+
+    # Si el portero encontró problemas, TE DEVUELVE AL CARRITO. No entras al pago.
+    if problema_detectado:
+        return redirect('carrito:carrito')
+    # ==============================================================================
+
+    # --- SI LLEGAMOS AQUÍ, TODO ESTÁ CORRECTO ---
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
         if hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado:
@@ -306,7 +328,6 @@ def checkout(request):
             direccion_completa = usuario_cliente.direccion_envio
             if direccion_completa and str(direccion_completa) != 'None':
                 partes = [p.strip() for p in direccion_completa.split(',')]
-                
                 if len(partes) >= 4:
                     datos_cliente['direccion_calle'] = f"{partes[0]}, {partes[1]}"
                     datos_cliente['direccion_pais'] = partes[-1]
@@ -359,14 +380,45 @@ def checkout(request):
 @transaction.atomic 
 def procesar_pago(request):
     """
-    Procesa el pago, crea el pedido y RESTA EL STOCK.
+    1. Verifica stock y CORRIGE la cesta si falta algo (elimina o ajusta cantidad).
+    2. Si todo está bien, procesa el pago y crea el pedido.
     """
     cesta = obtener_cesta_actual(request)
     
     if not cesta or not cesta.items.exists():
         messages.error(request, "El carrito está vacío.")
         return redirect('carrito:carrito')
+
+    # ==============================================================================
+    # 1. FASE DE LIMPIEZA: Verificar Stock antes de procesar nada
+    # ==============================================================================
+    cesta_modificada = False
+
+    for item in cesta.items.select_related('producto'):
+        producto = item.producto
+        stock_real = producto.stock
         
+        # CASO A: El producto se ha quedado a 0 (Alguien compró el último)
+        if stock_real <= 0:
+            messages.error(request, f"❌ El producto '{producto.nombre}' se ha agotado y se ha retirado de tu cesta.")
+            item.delete()
+            cesta_modificada = True
+            
+        # CASO B: Hay stock, pero menos del que el usuario pide
+        elif item.cantidad > stock_real:
+            messages.warning(request, f"⚠️ El stock de '{producto.nombre}' ha cambiado. Hemos ajustado la cantidad a {stock_real} unidades.")
+            item.cantidad = stock_real
+            item.save()
+            cesta_modificada = True
+
+    # Si hubo algún cambio (borrado o ajuste), devolvemos al usuario al carrito para que lo vea
+    if cesta_modificada:
+        return redirect('carrito:carrito')
+
+    # ==============================================================================
+    # 2. FASE DE PROCESAMIENTO (Si llegamos aquí, el stock es correcto)
+    # ==============================================================================
+    
     # Recoger datos del formulario
     entrega_value = request.POST.get('shipping_option') 
     payment_method_value = request.POST.get('payment_method') 
@@ -379,31 +431,22 @@ def procesar_pago(request):
     pais = request.POST.get('direccion_pais')    
     
     # Datos Tarjeta
-    # 📌 Capturar los cuatro campos de dirección separados del formulario POST
-    # Compatibilidad: la plantilla `pago.html` usa `address_street`, `address_city`,
-    # `address_zip`, `address_country`. Intentamos leer primero los nombres nuevos,
-    # si no existen leemos los nombres antiguos.
     calle = (request.POST.get('address_street') or request.POST.get('direccion_calle') or '').strip()
     ciudad = (request.POST.get('address_city') or request.POST.get('direccion_ciudad') or '').strip()
     cpi = (request.POST.get('address_zip') or request.POST.get('direccion_cp') or '').strip()
     pais = (request.POST.get('address_country') or request.POST.get('direccion_pais') or '').strip()
+    
     card_number = request.POST.get('card_number')
     expiry_date = request.POST.get('expiry_date') 
     card_cvv = request.POST.get('cvv') 
     save_card_flag = request.POST.get('save_card') == 'on'
     
     direccion = f"{calle}, {cpi} {ciudad}, {pais}"
-    # 📌 Volver a combinar la dirección para guardarla en el campo único del Pedido
-    # Construimos la dirección de forma segura, omitiendo partes vacías
     partes = []
-    if calle.strip():
-        partes.append(calle.strip())
+    if calle.strip(): partes.append(calle.strip())
     cp_ciudad = ' '.join(p for p in (cpi.strip(), ciudad.strip()) if p)
-    if cp_ciudad:
-        partes.append(cp_ciudad)
-    if pais.strip():
-        partes.append(pais.strip())
-
+    if cp_ciudad: partes.append(cp_ciudad)
+    if pais.strip(): partes.append(pais.strip())
     direccion = ', '.join(partes)
 
     # Calcular Subtotal
@@ -425,9 +468,6 @@ def procesar_pago(request):
         else:
             coste_entrega = Decimal('0.00')
         direccion_final = direccion
-            
-        # 📌 Usar la dirección combinada de los 4 campos si es Domicilio
-        # Si no hay partes, mantener cadena vacía (no guardar 'None')
         direccion_final = direccion or ''
             
     elif entrega_value == 'express':
@@ -439,7 +479,6 @@ def procesar_pago(request):
         return redirect('carrito:checkout')
 
     # Lógica de Pago
-    # Validación: si se selecciona Domicilio, la dirección no puede quedar vacía
     if metodo_envio == TipoEnvio.DOMICILIO and not direccion_final:
         messages.error(request, "Debe proporcionar una dirección válida para el envío a domicilio.")
         return redirect('carrito:checkout')
@@ -500,9 +539,9 @@ def procesar_pago(request):
         for item_cesta in cesta.items.select_related('producto'):
             producto = item_cesta.producto
             
-            # 1. Comprobación final de stock antes de confirmar
+            # 1. Comprobación final de stock antes de confirmar (por si acaso)
             if item_cesta.cantidad > producto.stock:
-                 messages.error(request, f"Lo sentimos, el stock de {producto.nombre} ha cambiado. Solo quedan {producto.stock} unidades.")
+                 messages.error(request, f"Stock insuficiente en '{producto.nombre}' durante el procesamiento. Inténtalo de nuevo.")
                  raise ValueError("Stock insuficiente.") 
             
             # Precio final para el historial
@@ -547,7 +586,6 @@ def procesar_pago(request):
         transaction.set_rollback(True)
         return redirect('carrito:carrito')
     
-
 def compra_finalizada(request):
     """Muestra confirmación post-compra."""
     correo_pedido = request.session.pop('ultimo_correo_pedido', '')
@@ -562,3 +600,27 @@ def compra_finalizada(request):
         'seccion_filtro_seleccionada': '',
     }
     return render(request, 'compra_finalizada.html', contexto)
+
+# --- API DE STOCK (PARA JAVASCRIPT) ---
+
+def verificar_stock_api(request):
+    """
+    Recibe una lista de IDs (ej: ?ids=1,5,8) y devuelve su stock actual en JSON.
+    """
+    ids_param = request.GET.get('ids', '')
+    if not ids_param:
+        return JsonResponse({})
+    
+    # Convertimos "1,5,8" en una lista de enteros [1, 5, 8]
+    try:
+        product_ids = [int(id_str) for id_str in ids_param.split(',') if id_str.isdigit()]
+    except ValueError:
+        return JsonResponse({})
+
+    # Consultamos la base de datos
+    productos = Producto.objects.filter(id__in=product_ids)
+    
+    # Creamos un diccionario: { "1": 10, "5": 0, "8": 3 }
+    data = {str(p.id): p.stock for p in productos}
+    
+    return JsonResponse(data)

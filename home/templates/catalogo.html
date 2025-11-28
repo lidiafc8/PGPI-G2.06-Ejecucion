@@ -1,7 +1,6 @@
 {% extends "base.html" %}
+
 {% block breadcrumbs %}
-    </li>
-    
     <li>
         <span class="text-lg text-gray-500">></span>
         <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
@@ -30,53 +29,23 @@
                         
                         <a href="{% url 'detalle_producto' pk=producto.pk %}" class="w-full flex flex-col flex-grow text-gray-900 no-underline">
                             
-                            <div class="relative w-full h-32 mb-4 flex justify-center items-center">
+                            <div class="relative w-full h-40 mb-4 flex justify-center items-center bg-gray-50 rounded overflow-hidden">
                                 {% if producto.imagen %}
                                     <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" 
                                          class="max-h-full max-w-full object-contain mix-blend-multiply">
                                 {% else %}
-                                    <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                                    <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
                                          class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
                                 {% endif %}
                                 
                                 {% if producto.stock <= 0 %}
-                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                    <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-md">
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                    <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 shadow-md tracking-wider">
                                         AGOTADO
                                     </span>
                                 </div>
                                 {% endif %}
                             </div>
-                        <div>
-                           {% if producto.imagen %}
-    <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-        <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" 
-             class="max-h-full max-w-full object-contain mix-blend-multiply">
-        
-        {% if producto.stock <= 0 %}
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap">
-                AGOTADO
-            </span>
-        </div>
-        {% endif %}
-    </div>
-{% else %}
-<div class="relative w-full h-32 mb-4 flex justify-center items-center">
-        <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
-             class="max-h-full max-w-full object-contain mix-blend-multiply">
-                                    
-        
-        {% if producto.stock <= 0 %}
-        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap">
-                AGOTADO
-            </span>
-        </div>
-        {% endif %}
-    </div>
-{% endif %}
-                        </div>
 
                             <div class="w-full text-center flex-grow flex flex-col justify-end">
                                 <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
@@ -89,7 +58,7 @@
                                 
                                 <div class="mb-3">
                                     {% if producto.stock > 0 %}
-                                        <span class="text-xs font-semibold text-[#6a760c]">
+                                        <span id="stock-display-{{ producto.pk }}" class="text-xs font-semibold text-[#6a760c]">
                                             {{ producto.stock }} unidades disponibles
                                         </span>
                                     {% else %}
@@ -105,9 +74,8 @@
                             </div>
                         </a>
 
-                        <div class="w-full mt-auto relative z-20">
+                        <div class="w-full mt-2 relative z-20">
                             {% if not user.is_authenticated or not user.is_staff %}
-                                
                                 {% if producto.stock > 0 %}
                                     <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
                                         {% csrf_token %}
@@ -117,11 +85,10 @@
                                         </button>
                                     </form>
                                 {% else %}
-                                    <button disabled class="w-full py-2 bg-gray-200 text-gray-400 font-semibold rounded-lg cursor-not-allowed">
+                                    <button disabled class="w-full py-2 bg-gray-200 text-gray-400 font-semibold rounded-lg cursor-not-allowed border border-gray-300">
                                         Agotado
                                     </button>
                                 {% endif %}
-
                             {% endif %}
                         </div>
 
@@ -132,7 +99,7 @@
         {% else %}
             <div class="p-6 bg-[#f9fdf2] border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
                 <p class="font-semibold">¡Lo sentimos!</p>
-                <p>Actualmente no hay productos disponibles.</p>
+                <p>Actualmente no hay productos disponibles en esta categoría.</p>
             </div>
         {% endif %}
 
@@ -155,15 +122,15 @@
                      style="flex: 0 0 260px; min-width: 260px;">
                      
                     <a href="{% url 'detalle_producto' pk=producto.pk %}" class="w-full flex flex-col flex-grow text-gray-900 no-underline">
-                        <div class="relative w-full h-32 mb-4 flex justify-center items-center">
+                        <div class="relative w-full h-32 mb-4 flex justify-center items-center bg-gray-50 rounded overflow-hidden">
                             {% if producto.imagen %}
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                             {% else %}
-                                <img src="{% static 'imagen1.jpg' %}" alt="Default" class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
+                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Default" class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
                             {% endif %}
 
                             {% if producto.stock <= 0 %}
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                                 <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 shadow-md">AGOTADO</span>
                             </div>
                             {% endif %}
@@ -239,8 +206,15 @@
     .hover\:shadow-hard-halo:hover { box-shadow: 0 0 15px rgba(39, 43, 4, 0.2); }
     .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .toast {
-        background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600;
-        opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); pointer-events: auto;
+        background: #16a34a; 
+        color: white; 
+        padding: 12px 24px; 
+        border-radius: 8px; 
+        font-weight: 600;
+        opacity: 0; 
+        transition: opacity 0.5s ease, transform 0.5s ease; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        pointer-events: auto;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 </style>
@@ -252,32 +226,51 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // --- 1. CARRUSEL ---
+            // ------------------------------------------------
+            // 1. CARRUSEL
+            // ------------------------------------------------
             const carousel = document.getElementById('product-carousel');
-            const prevButton = document.getElementById('prev-btn');
-            const nextButton = document.getElementById('next-btn');
-            
-            if (carousel && prevButton && nextButton) {
-                const scrollAmount = 280 * 2; 
-                prevButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-                });
-                nextButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                });
+            if(carousel){ 
+                const items = carousel.children;
+                const totalItems = items.length; 
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                const cardWidth = 280; 
+
+                // Si hay items, activamos el scroll
+                if (carousel && prevBtn && nextButton) {
+                    const scrollAmount = cardWidth * 2; 
+                    prevBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                    });
+                    nextBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    });
+                }
             }
 
-            // --- 2. AUXILIARES ---
+            // ------------------------------------------------
+            // 2. UTILIDADES (Toast & Badge)
+            // ------------------------------------------------
             function showToast(mensaje){
-                const container = document.getElementById('toast-container');
-                if (!container) return; 
+                let container = document.getElementById('toast-container');
+                if (!container) {
+                    container = document.createElement('div');
+                    container.id = 'toast-container';
+                    container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
+                    document.body.appendChild(container);
+                }
                 const toast = document.createElement('div');
                 toast.className = 'toast';
+                
+                // Mensaje limpio (sin icono rojo)
                 toast.textContent = mensaje;
                 container.appendChild(toast);
-                void toast.offsetWidth;
+                
+                void toast.offsetWidth; // Forzar reflow para animación
+                
                 toast.classList.add('show');
                 setTimeout(() => {
                     toast.classList.remove('show'); 
@@ -286,74 +279,185 @@
             }
 
             function actualizarBadge(totalItems){
-                const badge = document.querySelector('#cesta-badge');
-                if(badge){
-                    badge.textContent = totalItems;
-                    badge.style.display = totalItems > 0 ? 'flex' : 'none';
-                } else {
+                let badge = document.querySelector('#cesta-badge');
+                if(!badge){
                     const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
                     if(cestaLink && totalItems > 0){
                         cestaLink.classList.add('relative'); 
-                        const span = document.createElement('span');
-                        span.id = "cesta-badge";
-                        span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                        span.textContent = totalItems;
-                        cestaLink.appendChild(span);
+                        badge = document.createElement('span');
+                        badge.id = "cesta-badge";
+                        badge.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                        cestaLink.appendChild(badge);
                     }
+                }
+                if(badge){
+                    badge.textContent = totalItems;
+                    badge.style.display = totalItems > 0 ? 'flex' : 'none';
                 }
             }
 
-            // --- 3. LÓGICA AJAX (ADD TO CART) ---
+            // ------------------------------------------------
+            // 3. PETICIÓN AJAX UNIFICADA (Añadir al carrito)
+            // ------------------------------------------------
+            function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "Añadiendo...";
+                btnElement.disabled = true;
+
+                const url = `/carrito/update/${productId}/`; 
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ 
+                        'action': 'add', 
+                        'cantidad': cantidad 
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        showToast("✅ " + data.mensaje);
+                        if(data.total_items !== undefined){
+                            actualizarBadge(data.total_items);
+                        }
+                        // Recargar página para actualizar stocks visualmente
+                        setTimeout(() => { window.location.reload(); }, 500);
+                    } else {
+                        // Mensaje limpio en caso de error (ej: stock insuficiente)
+                        btnElement.innerText = originalText;
+                        btnElement.disabled = false;
+                        showToast(data.mensaje || 'Error al añadir');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    btnElement.innerText = originalText;
+                    btnElement.disabled = false;
+                    showToast('Error de conexión');
+                });
+            }
+
+            // ------------------------------------------------
+            // 4. EVENT LISTENERS (Formularios y Botones)
+            // ------------------------------------------------
+            
+            // A) Listener para botones .add-to-cart-form (Grid principal y carrusel)
             document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
-
+                    
                     const btn = this.querySelector('button');
-                    const originalText = btn.innerText;
-                    btn.disabled = true;
-                    btn.innerText = "...";
-
-                    const productId = this.dataset.productId;
+                    let productId = this.dataset.productId;
                     const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
-                    // ✅ URL CORRECTA
-                    const url = `/carrito/update/${productId}/`; 
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        // ✅ ACTION: 'add'
-                        body: new URLSearchParams({ 
-                            'action': 'add', 
-                            'cantidad': 1 
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.success){
-                            showToast("✅ " + data.mensaje);
-                            if(data.total_items !== undefined) actualizarBadge(data.total_items);
-                            
-                            // ✅ RECARGA para actualizar stock
-                            setTimeout(() => { window.location.reload(); }, 500);
-                        } else {
-                            showToast("❌ " + (data.mensaje || 'Error'));
-                            btn.innerText = originalText;
-                            btn.disabled = false;
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        showToast("❌ Error de conexión");
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                    });
+                    if (productId && csrfToken) {
+                        realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                    }
                 });
             });
+
+            // B) Listener de respaldo para botones sueltos (por si acaso)
+            document.querySelectorAll('.add-related').forEach(btn => {
+                btn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    e.stopPropagation(); 
+
+                    let productId = this.dataset.productId;
+                    const parentDiv = this.parentElement; 
+                    
+                    // Buscamos token cerca o globalmente
+                    let csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                    if (!csrfTokenInput) {
+                        csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                    }
+                    
+                    if (productId && csrfTokenInput) {
+                        realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
+                    } else {
+                        showToast("Error técnico");
+                    }
+                });
+            });
+
+            // ------------------------------------------------
+            // 5. POLLING / VERIFICACIÓN DE STOCK EN TIEMPO REAL
+            // ------------------------------------------------
+            function iniciarRevisionStock() {
+                setInterval(() => {
+                    actualizarStocksEnTiempoReal();
+                }, 5000); // 5 segundos
+            }
+
+            function actualizarStocksEnTiempoReal() {
+                // Recolectar IDs de productos visibles
+                let ids = new Set();
+                
+                // De los formularios
+                document.querySelectorAll('.add-to-cart-form').forEach(form => {
+                    if(form.dataset.productId) ids.add(form.dataset.productId);
+                });
+                
+                // De los botones sueltos
+                document.querySelectorAll('.add-related').forEach(btn => {
+                    if(btn.dataset.productId) ids.add(btn.dataset.productId);
+                });
+
+                if (ids.size === 0) return;
+
+                const idsString = Array.from(ids).join(',');
+
+                fetch(`/api/verificar-stock/?ids=${idsString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Recorremos los datos recibidos { "id": stock, ... }
+                        for (const [productId, stockReal] of Object.entries(data)) {
+                            
+                            // 1. Actualizar texto de disponibilidad
+                            const stockSpan = document.getElementById(`stock-display-${productId}`);
+                            if(stockSpan) {
+                                if (stockReal > 0) {
+                                    stockSpan.textContent = `${stockReal} unidades disponibles`;
+                                    stockSpan.className = "text-xs font-semibold text-[#6a760c]";
+                                } else {
+                                    stockSpan.textContent = "Sin stock";
+                                    stockSpan.className = "text-xs font-semibold text-red-600";
+                                }
+                            }
+
+                            // 2. Deshabilitar botones si se agota
+                            const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
+                            forms.forEach(form => {
+                                const btn = form.querySelector('button');
+                                if (stockReal <= 0) {
+                                    if(btn && !btn.disabled) {
+                                        btn.disabled = true;
+                                        btn.innerText = "Agotado";
+                                        btn.classList.remove('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.add('bg-gray-200', 'text-gray-400', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    }
+                                } else {
+                                    // Si vuelve a haber stock (reposición)
+                                    if(btn && btn.disabled) {
+                                        btn.disabled = false;
+                                        btn.innerText = "Añadir a la Cesta";
+                                        btn.classList.add('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    }
+                                }
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error verificando stock:", err));
+            }
+
+            // Arrancar el sistema de sondeo
+            iniciarRevisionStock();
+
         });
     </script>
 {% endblock extra_js %}
