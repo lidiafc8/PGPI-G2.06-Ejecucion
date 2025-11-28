@@ -5,7 +5,6 @@
 
 {% block extra_css %}
 <style>
-    /* --- Estilos ORIGINALES (NO TOCADOS) --- */
     #product-carousel {
         display: flex;
         transition: transform 0.5s ease-in-out;
@@ -23,8 +22,6 @@
     .shadow-hard-halo {
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
     }
-    
-    /* Navegación de Puntos */
     .dot-nav {
         width: 10px;
         height: 10px;
@@ -37,13 +34,9 @@
         background-color: #6a760c;
         transform: scale(1.2);
     }
-
-    /* Efecto Hover para las tarjetas de abajo */
     .hover\:shadow-card:hover {
         box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
-
-    /* Estilo Toast (Mensajes emergentes) */
     .toast {
         position: fixed;
         top: 20px;
@@ -57,6 +50,7 @@
         opacity: 0;
         transition: opacity 0.5s ease, transform 0.5s ease;
         z-index: 9999;
+        pointer-events: auto;
     }
     .toast.show {
         opacity: 1;
@@ -80,23 +74,20 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div class="bg-white p-6 md:p-10 rounded-xl shadow-hard-halo relative">
-            
             <div class="carousel-container">
                 <div id="product-carousel">
-                    
                     {% for producto in productos_destacados %}
                     <div class="slide-item h-80">
                         <div class="flex flex-col md:flex-row items-stretch w-full h-full"> 
-                            
-                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="md:w-1/3 w-full bg-white p-4 rounded-lg flex items-center justify-center h-80 relative">
+                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="md:w-1/3 w-full bg-gray-50 rounded-lg flex items-center justify-center h-80 relative overflow-hidden border border-gray-100">
                                 {% if producto.imagen %}
-                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-cover rounded-lg">
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                                 {% else %}
-                                    <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                    <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
                                 {% endif %}
 
                                 {% if producto.stock <= 0 %}
-                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
                                     <span class="bg-red-500 text-white text-lg font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-lg">
                                         AGOTADO
                                     </span>
@@ -106,15 +97,12 @@
 
                             <div class="md:w-2/3 w-full flex flex-col pl-8 py-4">
                                 <div class="flex-auto overflow-y-auto overflow-x-auto mt-12 pr-20" style="max-height: calc(300px - 5rem);">
-                                    
                                     <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block text-4xl font-extrabold text-gray-900 mb-2 transition hover:text-[#bf7149]">
                                         {{ producto.nombre|upper }}
                                     </a>
-                                    
                                     <p class="text-xs text-gray-500 mb-3">
                                         Fabricante: {{ producto.fabricante }}
                                     </p>
-                                    
                                     <a href="{% url 'productos_por_categoria' categoria=producto.categoria %}" class="text-[#bf7149] text-xs font-medium hover:underline">
                                         {{ producto.get_seccion_display }} / {{ producto.get_categoria_display }} 
                                     </a>
@@ -127,7 +115,6 @@
                                         </span>
                                         
                                         {% if not user.is_staff %}
-                                            
                                             {% if producto.stock > 0 %}
                                                 <form class="add-to-cart-form" data-product-id="{{ producto.id }}">
                                                     {% csrf_token %}
@@ -140,7 +127,6 @@
                                                     AGOTADO
                                                 </button>
                                             {% endif %}
-
                                         {% endif %}
                                     </div>
                                 </div>
@@ -166,22 +152,19 @@
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">
                     También te podría interesar
                 </h2>
-    
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    
                     {% for producto in productos_random %} 
-                    <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300">
-                        
+                    <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300 relative group">
                         <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
                             {% if producto.imagen %}
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                             {% else %}
-                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Sin imagen" class="opacity-50 max-h-full max-w-full">
+                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Sin imagen" class="opacity-50 max-h-full max-w-full mix-blend-multiply">
                             {% endif %}
 
                             {% if producto.stock <= 0 %}
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap">AGOTADO</span>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-md">AGOTADO</span>
                             </div>
                             {% endif %}
                         </a>
@@ -190,12 +173,10 @@
                             <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem] hover:text-[#bf7149]">
                                 {{ producto.nombre|lower|capfirst }}
                             </a>
-                            
                             <div class="mt-auto pt-4">
                                 <div class="text-2xl font-bold text-[#A91B0D] mb-4">
                                     {{ producto.precio|floatformat:2 }} €
                                 </div>
-                                
                                 {% if not user.is_staff %}
                                     {% if producto.stock > 0 %}
                                         <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
@@ -220,17 +201,15 @@
         {% endif %}
     </div>
 
-   {% if messages %}
-    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2">
-        {% for message in messages %}
-        <div class="toast {{ message.tags }}">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none"></div>
-    {% endif %}
+   <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none">
+       {% if messages %}
+           {% for message in messages %}
+           <div class="toast {{ message.tags }} show pointer-events-auto">
+               {{ message }}
+           </div>
+           {% endfor %}
+       {% endif %}
+   </div>
 
 </main>
 {% endblock content %}
@@ -241,9 +220,7 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         
-        // ------------------------------------------------
-        // 1. CARRUSEL (TU CÓDIGO ORIGINAL)
-        // ------------------------------------------------
+        // 1. CARRUSEL
         const carousel = document.getElementById('product-carousel');
         const prevButton = document.getElementById('prev-btn');
         const nextButton = document.getElementById('next-btn');
@@ -310,19 +287,23 @@
             }
         }
 
-        // ------------------------------------------------
-        // 2. FUNCIONES AUXILIARES (TOAST & BADGE)
-        // ------------------------------------------------
+        // 2. UTILIDADES
         function showToast(mensaje){
-            const container = document.getElementById('toast-container');
-            if(!container) return;
+            let container = document.getElementById('toast-container');
+            if(!container){
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
+                document.body.appendChild(container);
+            }
             
             const toast = document.createElement('div');
             toast.className = 'toast';
+            // Sin lógica de error (siempre verde)
             toast.textContent = mensaje;
             container.appendChild(toast);
             
-            void toast.offsetWidth; // Reflow
+            void toast.offsetWidth; 
             
             toast.classList.add('show');
             setTimeout(() => {
@@ -337,7 +318,6 @@
                 badge.textContent = totalItems;
                 badge.style.display = totalItems > 0 ? 'flex' : 'none';
             } else {
-                // Intento de encontrar el enlace del carrito
                 const cestaLink = document.querySelector('a[href*="carrito"]'); 
                 if(cestaLink && totalItems > 0){
                     cestaLink.classList.add('relative'); 
@@ -350,23 +330,18 @@
             }
         }
 
-        // ------------------------------------------------
-        // 3. CARRITO AJAX (LÓGICA CORREGIDA)
-        // ------------------------------------------------
+        // 3. CARRITO AJAX
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
                 const btn = this.querySelector('button');
                 const originalText = btn.innerText;
                 
-                // Feedback visual
                 btn.disabled = true;
                 btn.innerText = "Añadiendo...";
 
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-
-                // 1. URL Correcta: /carrito/update/...
                 const url = `/carrito/update/${productId}/`;
 
                 fetch(url, {
@@ -376,7 +351,6 @@
                         'X-Requested-With': 'XMLHttpRequest',
                         'Content-Type': 'application/x-www-form-urlencoded'
                     },
-                    // 2. Acción Correcta: 'add' para restar stock
                     body: new URLSearchParams({
                         'action': 'add',   
                         'cantidad': 1
@@ -386,25 +360,18 @@
                 .then(data => {
                     if(data.success){
                         showToast("✅ " + data.mensaje);
-                        
-                        if(data.total_items !== undefined){
-                            actualizarBadge(data.total_items);
-                        }
-                        
-                        // 3. Recarga para actualizar stock visualmente
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 500);
-
+                        if(data.total_items !== undefined) actualizarBadge(data.total_items);
+                        setTimeout(() => { window.location.reload(); }, 500);
                     } else {
-                        showToast("❌ " + data.mensaje);
+                        // Mensaje normal, sin icono rojo
+                        showToast(data.mensaje);
                         btn.disabled = false;
                         btn.innerText = originalText;
                     }
                 })
                 .catch(err => {
                     console.error(err);
-                    showToast("❌ Error de conexión");
+                    showToast("Error de conexión");
                     btn.disabled = false;
                     btn.innerText = originalText;
                 });

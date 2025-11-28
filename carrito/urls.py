@@ -9,5 +9,5 @@ urlpatterns = [
     path('procesar/', views.procesar_pago, name='procesar_pago'),
     path('fin-compra/', views.compra_finalizada, name='fin_compra'),
     path('vaciar/', views.vaciar_cesta, name='vaciar_cesta'),
-
+    path('api/verificar-stock/', views.verificar_stock_api, name='verificar_stock_api'),
 ]
