@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 
 {% block breadcrumbs %}
-    </li>
     <li>
         <span class="text-lg text-gray-500">></span>
         <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
@@ -22,7 +21,7 @@
         <div class="lg:w-2/3">
             {% if articulos %}
                 {% for articulo in articulos %}
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex items-start">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex items-start" data-cart-item-id="{{ articulo.id }}">
                         
                         <div class="flex-shrink-0 mr-4">
                             <img src="{{ articulo.imagen_url }}" alt="{{ articulo.nombre }}" class="w-24 h-24 object-cover rounded-md border border-gray-100">
@@ -35,36 +34,40 @@
                             </div>
                             
                             <div class="flex items-center space-x-2 sm:w-3/12 justify-center mt-2 sm:mt-0">
+                                
                                 <form action="{% url 'carrito:update_cart' producto_id=articulo.id %}?" method="POST" class="inline-block">
                                     {% csrf_token %}
                                     <input type="hidden" name="action" value="remove">
-                                    <button type="submit" class="text-gray-500 hover:bg-gray-100 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-l">-</button>
+                                    <button type="submit" class="text-gray-500 hover:bg-gray-100 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-l transition-colors">-</button>
                                 </form>
 
-                                <span class="border border-gray-300 px-1 py-1 text-center text-sm font-medium w-12">
+                                <span class="border border-gray-300 px-1 py-1 text-center text-sm font-medium w-12 quantity-display">
                                     {{ articulo.cantidad }}
                                 </span>
                                 
-                                {% if articulo.stock > 0 %}
-                                <form action="{% url 'carrito:update_cart' producto_id=articulo.id %}?action=add" method="POST" class="inline-block">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="action" value="add">
-                                    <button type="submit" class="text-green-600 hover:bg-gray-100 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-r">+</button>
-                                </form>
-                                {% else %}
-                                <button disabled class="text-gray-300 bg-gray-50 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-r cursor-not-allowed">+</button>
-                                {% endif %}
+                                <div id="plus-btn-container-{{ articulo.id }}" class="inline-block">
+                                    {% if articulo.cantidad < articulo.stock %}
+                                        <form action="{% url 'carrito:update_cart' producto_id=articulo.id %}?action=add" method="POST" class="inline-block">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="action" value="add">
+                                            <button type="submit" class="text-gray-500 hover:bg-gray-100 border border-gray-300 w-8 h-8 flex items-center justify-center rounded-r transition-colors">+</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+
                             </div>
                         </div>
                         
                         <div class="ml-auto text-right flex flex-col items-end">
                             <form action="{% url 'carrito:remove_from_cart' producto_id=articulo.id %}" method="POST" class="inline-block">
                                 {% csrf_token %}
-                                <button type="submit" class="text-gray-400 hover:text-red-500 mb-4">
+                                <button type="submit" class="text-gray-400 hover:text-red-500 mb-4 transition-colors">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 100 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 6h6v10H7V6z" clip-rule="evenodd" /></svg>
                                 </button>
                             </form>
                             <p class="text-xl font-bold text-gray-800">{{ articulo.precio_total|floatformat:2 }} €</p>
+                            
+                            <p id="stock-warning-{{ articulo.id }}" class="text-xs text-red-600 font-bold mt-1 hidden">¡Stock Agotado!</p>
                         </div>
                         
                     </div>
@@ -129,29 +132,28 @@
             ">
 
                 {% for producto in productos_destacados %}
-                <div class="bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] border border-gray-200"
-                     style="flex: 0 0 260px; min-width: 260px; position: relative;">
+                <div class="bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] border border-gray-200 relative"
+                     style="flex: 0 0 260px; min-width: 260px;">
                     
                     <a href="{% url 'detalle_producto' pk=producto.pk %}" class="w-full flex flex-col items-center flex-grow">
-                        {% if producto.imagen and producto.imagen.name %}
-                        <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-                            <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}"
-                                 class="max-h-full max-w-full object-contain mix-blend-multiply">
-                        </div>
-                        {% else %}
-                        <div class="relative w-full h-32 mb-4 flex justify-center items-center">
-                            <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
-                                 class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
-                        </div>
-                        {% endif %}
+                        
+                        <div class="relative w-full h-32 mb-4 flex justify-center items-center bg-gray-50 rounded overflow-hidden">
+                            {% if producto.imagen and producto.imagen.name %}
+                                <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}"
+                                     class="max-h-full max-w-full object-contain mix-blend-multiply">
+                            {% else %}
+                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto"
+                                     class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
+                            {% endif %}
 
-                        {% if producto.stock <= 0 %}
-                        <div class="absolute top-10 flex items-center justify-center pointer-events-none">
-                            <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap">
-                                AGOTADO
-                            </span>
+                            {% if producto.stock <= 0 %}
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                                <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-md">
+                                    AGOTADO
+                                </span>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% endif %}
 
                         <div class="w-full text-center">
                             <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2 h-10 flex items-center justify-center">
@@ -270,7 +272,6 @@
     .toast.show { opacity: 1; transform: translateY(0); }
 </style>
 {% endblock extra_css %}
-
 {% block extra_js %}
     {{ block.super }} 
     
@@ -278,37 +279,79 @@
     document.addEventListener('DOMContentLoaded', function() {
         
         // ------------------------------------------------
-        // 1. CARRUSEL
+        // 1. CARRUSEL (Se mantiene igual)
         // ------------------------------------------------
         const carousel = document.getElementById('product-carousel');
         if(carousel){ 
+            const items = carousel.children;
+            const totalItems = items.length; 
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
-            
-            // Calculo ancho: 260px carta + 20px gap
-            const cardWidth = 280; 
+            const dotNavigation = document.getElementById('dot-navigation');
+            let currentIndex = 0;
+            const intervalTime = 8000;
+            let autoSlide;
 
-            if(prevBtn) prevBtn.addEventListener('click', () => {
-                carousel.scrollBy({ left: -cardWidth, behavior: 'smooth' });
-            });
-            if(nextBtn) nextBtn.addEventListener('click', () => {
-                carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
-            });
+            if (totalItems <= 1) {
+                if(prevBtn) prevBtn.style.display = 'none';
+                if(nextBtn) nextBtn.style.display = 'none';
+                if(dotNavigation) dotNavigation.style.display = 'none'; 
+            } else {
+                function createDots() {
+                    for (let i = 0; i < totalItems; i++) {
+                        const li = document.createElement('li');
+                        li.classList.add('dot-nav'); 
+                        li.dataset.index = i;
+                        li.addEventListener('click', () => {
+                            currentIndex = i;
+                            updateCarousel();
+                            startAutoSlide();
+                        });
+                        dotNavigation.appendChild(li);
+                    }
+                }
+                function updateDots() {
+                    Array.from(dotNavigation.children).forEach((dot, index) => {
+                        if (index === currentIndex) {
+                            dot.classList.add('dot-nav--current'); 
+                        } else {
+                            dot.classList.remove('dot-nav--current');
+                        }
+                    });
+                }
+                function updateCarousel() {
+                    const offset = -currentIndex * 100;
+                    carousel.style.transform = `translateX(${offset}%)`;
+                    updateDots();
+                }
+                function nextSlide() {
+                    currentIndex = (currentIndex + 1) % totalItems;
+                    updateCarousel();
+                }
+                function prevSlide() {
+                    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+                    updateCarousel();
+                }
+                function startAutoSlide() {
+                    clearInterval(autoSlide); 
+                    autoSlide = setInterval(nextSlide, intervalTime);
+                }
+                
+                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+
+                createDots(); 
+                updateCarousel(); 
+                startAutoSlide();
+            }
         }
 
         // ------------------------------------------------
-        // 2. UTILIDADES (Toast y Badge)
+        // 2. FUNCIONES AUXILIARES (Toast y Badge)
         // ------------------------------------------------
         function showToast(mensaje){
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                // Crear contenedor si no existe (seguridad)
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
-                document.body.appendChild(container);
-            }
-            
+            const container = document.getElementById('toast-container');
+            if (!container) return; 
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
@@ -322,9 +365,10 @@
             }, 3000);
         }
 
-        function actualizarBadge(totalItems){
+function actualizarBadge(totalItems){
             let badge = document.querySelector('#cesta-badge');
-            // Si no existe, buscamos el enlace para crearlo
+            
+            // Si no existe el badge, intentamos crearlo
             if(!badge){
                 const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
                 if(cestaLink && totalItems > 0){
@@ -335,7 +379,8 @@
                     cestaLink.appendChild(badge);
                 }
             }
-            // Actualizar valor
+            
+            // Si existe (o se acaba de crear), actualizamos el valor
             if(badge){
                 badge.textContent = totalItems;
                 badge.style.display = totalItems > 0 ? 'flex' : 'none';
@@ -349,7 +394,7 @@
             const originalText = btnElement.innerText;
             btnElement.innerText = "Añadiendo...";
             btnElement.disabled = true;
-
+// ✅ CORRECCIÓN: La URL debe coincidir con urls.py (/carrito/update/...)
             const url = `/carrito/update/${productId}/`; 
 
             fetch(url, {
@@ -359,6 +404,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
+// ✅ CORRECCIÓN: Enviamos 'action': 'add'
                 body: new URLSearchParams({ 
                     'action': 'add', 
                     'cantidad': cantidad 
@@ -368,56 +414,163 @@
             .then(data => {
                 if(data.success){
                     showToast("✅ " + data.mensaje);
+                    
                     if(data.total_items !== undefined){
                         actualizarBadge(data.total_items);
                     }
-                    // Recargar página tras 1 segundo para ver cambios en la lista principal
+                    
+                    // Recargamos para actualizar el stock visualmente
                     setTimeout(() => {
                         window.location.reload(); 
                     }, 800);
 
                 } else {
                     btnElement.innerText = originalText;
-                    btnElement.disabled = false;
-                    showToast("❌ " + (data.mensaje || 'Error al añadir'));
+                    btnElement.disabled = false;// Usamos la versión limpia sin iconos
+                    showToast(data.mensaje || 'Error al añadir'); 
                 }
             })
             .catch(error => {
                 console.error(error);
                 btnElement.innerText = originalText;
                 btnElement.disabled = false;
-                showToast('❌ Error de conexión');
+                // He quitado la '❌' aquí también para mantener la consistencia
+                showToast('Error de conexión');
             });
         }
 
         // ------------------------------------------------
-        // 4. EVENT LISTENER PARA BOTONES
+// 4. EVENT LISTENERS (Botones y Formularios)
         // ------------------------------------------------
+
+        // A) Botones sueltos (Carrusel, relacionados) con clase .add-related
         document.querySelectorAll('.add-related').forEach(btn => {
             btn.addEventListener('click', function(e){
                 e.preventDefault();
                 e.stopPropagation(); 
 
-                let productId = this.dataset.productId;
-                
-                // Buscar la cantidad en el input más cercano (en el mismo contenedor)
-                const cantidadInput = this.closest('div').querySelector('.quantity-input');
+                let productId = this.dataset.productId;const parentDiv = this.parentElement; 
+                const parentDiv = this.parentElement;
+
+                // 1. OBTENER CANTIDAD (Lógica de 'main')
+                // Buscamos si hay un input de cantidad cerca. Si no hay, enviamos 1.
+                // Usamos 'closest' para buscar en el contenedor padre por seguridad.
+                const container = this.closest('div') || parentDiv;
+                const cantidadInput = container.querySelector('.quantity-input');
                 const cantidad = cantidadInput ? parseInt(cantidadInput.value) || 1 : 1;
                 
-                // CORRECCIÓN CLAVE: Buscar el token hermano (en el mismo div)
-                // Esto es crucial cuando el carrito está vacío y no hay otros forms
-                const parentDiv = this.parentElement; 
-                const csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                // 2. OBTENER TOKEN CSRF (Lógica robusta de 'develop')
+                // Plan A: Buscar el token específico de este formulario
+                let csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                
+                // Plan B: Si no lo encontramos, cogemos el primero que haya en la página
+                if (!csrfTokenInput) {
+                    csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                }
                 
                 if (productId && csrfTokenInput) {
                     realizarPeticionCarrito(productId, cantidad, csrfTokenInput.value, this);
                 } else {
                     console.error("Error: Token CSRF no encontrado para el producto " + productId);
-                    showToast("❌ Error técnico, recarga la página");
+                    showToast("Error técnico");
+                }
+            });
+        });
+    });
+</script>
+        });
+// B) Formularios de añadir (Ficha de producto principal y listados)
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                
+                // Buscar datos dentro del formulario o del botón
+                const btn = this.querySelector('button');
+                // Aseguramos que tenemos el ID del producto
+                let productId = this.dataset.productId || (btn ? btn.dataset.productId : null);
+                
+                const csrfTokenInput = this.querySelector('[name=csrfmiddlewaretoken]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+                if (productId && csrfToken) {
+                    // En los listados la cantidad siempre es 1
+                    realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                } else {
+                    console.error("Faltan datos (ID o Token) para añadir al carrito");
                 }
             });
         });
 
+        // ------------------------------------------------
+        // 5. POLLING / VERIFICACIÓN DE STOCK EN TIEMPO REAL
+        // ------------------------------------------------
+        function iniciarRevisionStock() {
+            setInterval(() => {
+                actualizarStocksEnTiempoReal();
+            }, 5000); // 5 segundos
+        }
+
+        function actualizarStocksEnTiempoReal() {
+            // Recolectar IDs de productos en el carrito
+            const items = document.querySelectorAll('[data-cart-item-id]');
+            
+            // Si estamos en el carrito (hay items con data-cart-item-id)
+            if (items.length > 0) {
+                let ids = new Set();
+                items.forEach(item => {
+                    if(item.dataset.cartItemId) ids.add(item.dataset.cartItemId);
+                });
+
+                // Recolectar también del carrusel de abajo si los hubiera
+                document.querySelectorAll('.add-related').forEach(btn => {
+                    if(btn.dataset.productId) ids.add(btn.dataset.productId);
+                });
+
+                const idsString = Array.from(ids).join(',');
+
+                fetch(`/api/verificar-stock/?ids=${idsString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // data: { "1": 10, "5": 0 }
+                        
+                        // Actualizar productos del carrito
+                        document.querySelectorAll('[data-cart-item-id]').forEach(itemRow => {
+                            const productId = itemRow.dataset.cartItemId;
+                            const stockReal = data[productId];
+                            
+                            // Obtenemos la cantidad actual en el carrito
+                            const cantidadDisplay = itemRow.querySelector('.quantity-display');
+                            const cantidadEnCarrito = parseInt(cantidadDisplay ? cantidadDisplay.innerText : 0);
+                            
+                            // Buscamos los elementos visuales que hemos definido en el HTML nuevo
+                            const formPlus = document.getElementById(`form-plus-${productId}`);
+                            const btnDisabled = document.getElementById(`btn-disabled-${productId}`);
+                            const warningMsg = document.getElementById(`stock-warning-${productId}`);
+
+                            if (stockReal !== undefined) {
+                                // Lógica de intercambio de botones
+                                if (cantidadEnCarrito >= stockReal) {
+                                    // Ocultar + activo, mostrar + gris
+                                    if(formPlus) formPlus.style.display = 'none';
+                                    if(btnDisabled) btnDisabled.style.display = 'inline-flex';
+                                    if(warningMsg) warningMsg.classList.remove('hidden'); 
+                                } else {
+                                    // Mostrar + activo, ocultar + gris
+                                    if(formPlus) formPlus.style.display = 'inline-block';
+                                    if(btnDisabled) btnDisabled.style.display = 'none';
+                                    if(warningMsg) warningMsg.classList.add('hidden');
+                                }
+                            }
+                        });
+                    })
+                    .catch(err => console.error("Error verificando stock:", err));
+            }
+        }
+
+        // Arrancar el sistema de sondeo solo si estamos en la página del carrito
+        if (document.querySelector('[data-cart-item-id]')) {
+            iniciarRevisionStock();
+        }
     });
 </script>
 {% endblock extra_js %}
