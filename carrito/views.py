@@ -3,6 +3,7 @@ from django.views.decorators.http import require_POST
 from django.http import JsonResponse
 from decimal import Decimal
 from django.contrib import messages
+from django.template.loader import render_to_string # Importante para el email bonito
 import uuid
 from django.db import transaction
 from django.core.mail import EmailMultiAlternatives
@@ -114,7 +115,6 @@ def update_cart(request, producto_id):
     elif action == 'remove':
         
         # Como no restamos stock al añadir, no hace falta devolverlo al quitar.
-        # Solo gestionamos la línea del carrito.
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
@@ -140,7 +140,7 @@ def remove_from_cart(request, producto_id):
         # Buscamos el producto en el carrito
         item = ItemCestaCompra.objects.get(cesta_compra=cesta, producto_id=producto_id)
         
-        # Borramos el item del carrito (El stock no se toca porque nunca se restó)
+        # Borramos el item del carrito
         item.delete()
         
         messages.success(request, "Producto eliminado del carrito.")
@@ -425,12 +425,6 @@ def procesar_pago(request):
     email = request.POST.get('contact_email') 
     telefon = request.POST.get('contact_phone') 
     
-    calle = request.POST.get('direccion_calle')
-    ciudad = request.POST.get('direccion_ciudad')
-    cpi = request.POST.get('direccion_cp')      
-    pais = request.POST.get('direccion_pais')    
-    
-    # Datos Tarjeta
     calle = (request.POST.get('address_street') or request.POST.get('direccion_calle') or '').strip()
     ciudad = (request.POST.get('address_city') or request.POST.get('direccion_ciudad') or '').strip()
     cpi = (request.POST.get('address_zip') or request.POST.get('direccion_cp') or '').strip()
@@ -467,7 +461,6 @@ def procesar_pago(request):
             coste_entrega = Decimal('5.00')
         else:
             coste_entrega = Decimal('0.00')
-        direccion_final = direccion
         direccion_final = direccion or ''
             
     elif entrega_value == 'express':
@@ -561,12 +554,22 @@ def procesar_pago(request):
             producto.stock -= item_cesta.cantidad
             producto.save()
 
-        # Enviar correo confirmación
+        # Enviar correo confirmación (Formato bonito usando template)
         try:
-            tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', args=[pedido.id, pedido.tracking_id]))
+            # Asegurar que el pedido tiene el tracking_id más reciente
+            pedido.refresh_from_db()
+            tracking_url = request.build_absolute_uri(
+                reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id})
+            )
+            items_para_email = pedido.items.select_related('producto').all()
+            contexto = {
+                'pedido': pedido,
+                'items': items_para_email,
+                'tracking_url': tracking_url,
+            }
             subject = f"Confirmación pedido #{pedido.id}"
-            text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguirlo en: {tracking_url}"
-            html_body = f"<p>Gracias por tu pedido <strong>#{pedido.id}</strong>.</p><p><a href=\"{tracking_url}\">Ver seguimiento</a></p>"
+            text_body = f"Gracias por tu pedido #{pedido.id}. Puedes seguir el pedido en: {tracking_url}"
+            html_body = render_to_string('correo.html', contexto)
 
             msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
             msg.attach_alternative(html_body, "text/html")
