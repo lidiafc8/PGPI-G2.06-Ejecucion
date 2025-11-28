@@ -246,7 +246,6 @@
     .toast.show { opacity: 1; transform: translateY(0); }
 </style>
 {% endblock extra_css %}
-
 {% block extra_js %}
     {{ block.super }} 
     
@@ -254,34 +253,79 @@
     document.addEventListener('DOMContentLoaded', function() {
         
         // ------------------------------------------------
-        // 1. CARRUSEL
+        // 1. CARRUSEL (Se mantiene igual)
         // ------------------------------------------------
         const carousel = document.getElementById('product-carousel');
         if(carousel){ 
+            const items = carousel.children;
+            const totalItems = items.length; 
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
-            const cardWidth = 280; 
+            const dotNavigation = document.getElementById('dot-navigation');
+            let currentIndex = 0;
+            const intervalTime = 8000;
+            let autoSlide;
 
-            if(prevBtn) prevBtn.addEventListener('click', () => {
-                carousel.scrollBy({ left: -cardWidth, behavior: 'smooth' });
-            });
-            if(nextBtn) nextBtn.addEventListener('click', () => {
-                carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
-            });
+            if (totalItems <= 1) {
+                if(prevBtn) prevBtn.style.display = 'none';
+                if(nextBtn) nextBtn.style.display = 'none';
+                if(dotNavigation) dotNavigation.style.display = 'none'; 
+            } else {
+                function createDots() {
+                    for (let i = 0; i < totalItems; i++) {
+                        const li = document.createElement('li');
+                        li.classList.add('dot-nav'); 
+                        li.dataset.index = i;
+                        li.addEventListener('click', () => {
+                            currentIndex = i;
+                            updateCarousel();
+                            startAutoSlide();
+                        });
+                        dotNavigation.appendChild(li);
+                    }
+                }
+                function updateDots() {
+                    Array.from(dotNavigation.children).forEach((dot, index) => {
+                        if (index === currentIndex) {
+                            dot.classList.add('dot-nav--current'); 
+                        } else {
+                            dot.classList.remove('dot-nav--current');
+                        }
+                    });
+                }
+                function updateCarousel() {
+                    const offset = -currentIndex * 100;
+                    carousel.style.transform = `translateX(${offset}%)`;
+                    updateDots();
+                }
+                function nextSlide() {
+                    currentIndex = (currentIndex + 1) % totalItems;
+                    updateCarousel();
+                }
+                function prevSlide() {
+                    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+                    updateCarousel();
+                }
+                function startAutoSlide() {
+                    clearInterval(autoSlide); 
+                    autoSlide = setInterval(nextSlide, intervalTime);
+                }
+                
+                if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); startAutoSlide(); });
+                if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); startAutoSlide(); });
+
+                createDots(); 
+                updateCarousel(); 
+                startAutoSlide();
+            }
         }
 
         // ------------------------------------------------
-        // 2. UTILIDADES
+        // 2. FUNCIONES AUXILIARES (Toast y Badge)
         // ------------------------------------------------
         function showToast(mensaje){
-            let container = document.getElementById('toast-container');
-            if (!container) {
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
-                document.body.appendChild(container);
-            }
-            
+            const container = document.getElementById('toast-container');
+            if (!container) return; 
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
@@ -295,8 +339,10 @@
             }, 3000);
         }
 
-        function actualizarBadge(totalItems){
+function actualizarBadge(totalItems){
             let badge = document.querySelector('#cesta-badge');
+            
+            // Si no existe el badge, intentamos crearlo
             if(!badge){
                 const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
                 if(cestaLink && totalItems > 0){
@@ -307,6 +353,8 @@
                     cestaLink.appendChild(badge);
                 }
             }
+            
+            // Si existe (o se acaba de crear), actualizamos el valor
             if(badge){
                 badge.textContent = totalItems;
                 badge.style.display = totalItems > 0 ? 'flex' : 'none';
@@ -320,7 +368,7 @@
             const originalText = btnElement.innerText;
             btnElement.innerText = "Añadiendo...";
             btnElement.disabled = true;
-
+// ✅ CORRECCIÓN: La URL debe coincidir con urls.py (/carrito/update/...)
             const url = `/carrito/update/${productId}/`; 
 
             fetch(url, {
@@ -330,6 +378,7 @@
                     'X-Requested-With': 'XMLHttpRequest',
                     'Content-Type': 'application/x-www-form-urlencoded'
                 },
+// ✅ CORRECCIÓN: Enviamos 'action': 'add'
                 body: new URLSearchParams({ 
                     'action': 'add', 
                     'cantidad': cantidad 
@@ -339,44 +388,80 @@
             .then(data => {
                 if(data.success){
                     showToast("✅ " + data.mensaje);
+                    
                     if(data.total_items !== undefined){
                         actualizarBadge(data.total_items);
                     }
+                    
+                    // Recargamos para actualizar el stock visualmente
                     setTimeout(() => {
                         window.location.reload(); 
                     }, 800);
 
                 } else {
                     btnElement.innerText = originalText;
-                    btnElement.disabled = false;
-                    showToast(data.mensaje || 'Error al añadir'); // Mensaje limpio
+                    btnElement.disabled = false;// Usamos la versión limpia sin iconos
+                    showToast(data.mensaje || 'Error al añadir'); 
                 }
             })
             .catch(error => {
                 console.error(error);
                 btnElement.innerText = originalText;
                 btnElement.disabled = false;
+                // He quitado la '❌' aquí también para mantener la consistencia
                 showToast('Error de conexión');
             });
         }
 
         // ------------------------------------------------
-        // 4. EVENT LISTENER PARA BOTONES
+// 4. EVENT LISTENERS (Botones y Formularios)
         // ------------------------------------------------
+
+        // A) Botones sueltos (Carrusel, relacionados) con clase .add-related
         document.querySelectorAll('.add-related').forEach(btn => {
             btn.addEventListener('click', function(e){
                 e.preventDefault();
                 e.stopPropagation(); 
 
-                let productId = this.dataset.productId;
-                const parentDiv = this.parentElement; 
-                const csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                let productId = this.dataset.productId;const parentDiv = this.parentElement; 
+                
+                // 1. Intentamos buscar el token específico de este producto
+                let csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                
+                // 2. Si no lo encontramos (Plan B), cogemos el primero que haya en la página
+                if (!csrfTokenInput) {
+                    csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                }
                 
                 if (productId && csrfTokenInput) {
                     realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
                 } else {
                     console.error("Error: Token CSRF no encontrado para el producto " + productId);
                     showToast("Error técnico");
+                }
+            });
+        });
+    });
+</script>
+        });
+// B) Formularios de añadir (Ficha de producto principal y listados)
+        document.querySelectorAll('.add-to-cart-form').forEach(form => {
+            form.addEventListener('submit', function(e){
+                e.preventDefault();
+                
+                // Buscar datos dentro del formulario o del botón
+                const btn = this.querySelector('button');
+                // Aseguramos que tenemos el ID del producto
+                let productId = this.dataset.productId || (btn ? btn.dataset.productId : null);
+                
+                const csrfTokenInput = this.querySelector('[name=csrfmiddlewaretoken]');
+                const csrfToken = csrfTokenInput ? csrfTokenInput.value : null;
+
+                if (productId && csrfToken) {
+                    // En los listados la cantidad siempre es 1
+                    realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                } else {
+                    console.error("Faltan datos (ID o Token) para añadir al carrito");
                 }
             });
         });
@@ -393,54 +478,64 @@
         function actualizarStocksEnTiempoReal() {
             // Recolectar IDs de productos en el carrito
             const items = document.querySelectorAll('[data-cart-item-id]');
-            if (items.length === 0) return;
+            
+            // Si estamos en el carrito (hay items con data-cart-item-id)
+            if (items.length > 0) {
+                let ids = new Set();
+                items.forEach(item => {
+                    if(item.dataset.cartItemId) ids.add(item.dataset.cartItemId);
+                });
 
-            let ids = new Set();
-            items.forEach(item => {
-                if(item.dataset.cartItemId) ids.add(item.dataset.cartItemId);
-            });
+                // Recolectar también del carrusel de abajo si los hubiera
+                document.querySelectorAll('.add-related').forEach(btn => {
+                    if(btn.dataset.productId) ids.add(btn.dataset.productId);
+                });
 
-            // Recolectar también del carrusel de abajo si los hubiera
-            document.querySelectorAll('.add-related').forEach(btn => {
-                if(btn.dataset.productId) ids.add(btn.dataset.productId);
-            });
+                const idsString = Array.from(ids).join(',');
 
-            const idsString = Array.from(ids).join(',');
-
-            fetch(`/api/verificar-stock/?ids=${idsString}`)
-                .then(response => response.json())
-                .then(data => {
-                    // data: { "1": 10, "5": 0 }
-                    
-                    // Actualizar productos del carrito
-                    document.querySelectorAll('[data-cart-item-id]').forEach(itemRow => {
-                        const productId = itemRow.dataset.cartItemId;
-                        const stockReal = data[productId];
+                fetch(`/api/verificar-stock/?ids=${idsString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // data: { "1": 10, "5": 0 }
                         
-                        // Obtenemos la cantidad actual en el carrito
-                        const cantidadDisplay = itemRow.querySelector('.quantity-display');
-                        const cantidadEnCarrito = parseInt(cantidadDisplay ? cantidadDisplay.innerText : 0);
-                        const btnPlusContainer = document.getElementById(`plus-btn-container-${productId}`);
-                        const warningMsg = document.getElementById(`stock-warning-${productId}`);
+                        // Actualizar productos del carrito
+                        document.querySelectorAll('[data-cart-item-id]').forEach(itemRow => {
+                            const productId = itemRow.dataset.cartItemId;
+                            const stockReal = data[productId];
+                            
+                            // Obtenemos la cantidad actual en el carrito
+                            const cantidadDisplay = itemRow.querySelector('.quantity-display');
+                            const cantidadEnCarrito = parseInt(cantidadDisplay ? cantidadDisplay.innerText : 0);
+                            
+                            // Buscamos los elementos visuales que hemos definido en el HTML nuevo
+                            const formPlus = document.getElementById(`form-plus-${productId}`);
+                            const btnDisabled = document.getElementById(`btn-disabled-${productId}`);
+                            const warningMsg = document.getElementById(`stock-warning-${productId}`);
 
-                        if (stockReal !== undefined) {
-                            // Si la cantidad en carrito >= stock real, ocultar el botón +
-                            if (cantidadEnCarrito >= stockReal) {
-                                if(btnPlusContainer) btnPlusContainer.style.display = 'none';
-                                if(warningMsg) warningMsg.classList.remove('hidden'); // Mostrar aviso
-                            } else {
-                                if(btnPlusContainer) btnPlusContainer.style.display = 'inline-block';
-                                if(warningMsg) warningMsg.classList.add('hidden');
+                            if (stockReal !== undefined) {
+                                // Lógica de intercambio de botones
+                                if (cantidadEnCarrito >= stockReal) {
+                                    // Ocultar + activo, mostrar + gris
+                                    if(formPlus) formPlus.style.display = 'none';
+                                    if(btnDisabled) btnDisabled.style.display = 'inline-flex';
+                                    if(warningMsg) warningMsg.classList.remove('hidden'); 
+                                } else {
+                                    // Mostrar + activo, ocultar + gris
+                                    if(formPlus) formPlus.style.display = 'inline-block';
+                                    if(btnDisabled) btnDisabled.style.display = 'none';
+                                    if(warningMsg) warningMsg.classList.add('hidden');
+                                }
                             }
-                        }
-                    });
-                })
-                .catch(err => console.error("Error verificando stock:", err));
+                        });
+                    })
+                    .catch(err => console.error("Error verificando stock:", err));
+            }
         }
 
-        // Arrancar el sistema de sondeo
-        iniciarRevisionStock();
-
+        // Arrancar el sistema de sondeo solo si estamos en la página del carrito
+        if (document.querySelector('[data-cart-item-id]')) {
+            iniciarRevisionStock();
+        }
     });
 </script>
 {% endblock extra_js %}

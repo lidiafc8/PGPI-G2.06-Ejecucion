@@ -219,21 +219,23 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Carrusel
+            
+            // 1. CARRUSEL
             const carousel = document.getElementById('product-carousel');
             const prevButton = document.getElementById('prev-btn');
             const nextButton = document.getElementById('next-btn');
-            const cardsToScroll = 3; 
-            const gapSize = 20;
-            let CARD_WIDTH_PLUS_GAP = 260; 
-            if (carousel && carousel.children.length > 0) CARD_WIDTH_PLUS_GAP = carousel.children[0].offsetWidth + gapSize;
             
-            if (carousel && prevButton && nextButton) {
+            if(carousel && prevButton && nextButton){ 
+                const cardsToScroll = 3; 
+                const gapSize = 20;
+                let CARD_WIDTH_PLUS_GAP = 260; 
+                if (carousel.children.length > 0) CARD_WIDTH_PLUS_GAP = carousel.children[0].offsetWidth + gapSize;
+                
                 prevButton.addEventListener('click', (e) => { e.preventDefault(); carousel.scrollBy({ left: -(CARD_WIDTH_PLUS_GAP * cardsToScroll), behavior: 'smooth' }); });
                 nextButton.addEventListener('click', (e) => { e.preventDefault(); carousel.scrollBy({ left: (CARD_WIDTH_PLUS_GAP * cardsToScroll), behavior: 'smooth' }); });
             }
 
-            // Utilidades
+            // 2. UTILIDADES
             function showToast(mensaje){
                 let toastContainer = document.getElementById('toast-container');
                 if(!toastContainer){
@@ -244,7 +246,6 @@
                 }
                 const toast = document.createElement('div');
                 toast.className = 'toast show'; 
-                // Sin lógica de color rojo
                 toast.textContent = mensaje;
                 toastContainer.appendChild(toast);
                 setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
@@ -254,9 +255,9 @@
                 const badge = document.querySelector('#cesta-badge');
                 if(badge){ badge.textContent = totalItems; badge.style.display = totalItems > 0 ? 'flex' : 'none'; }
                 else {
-                    const cestaLink = document.querySelector('a[href*="/carrito/"]');
+                    const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
                     if(cestaLink && totalItems > 0){
-                        cestaLink.classList.add('relative');
+                        cestaLink.classList.add('relative'); 
                         const span = document.createElement('span');
                         span.id = "cesta-badge";
                         span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
@@ -266,7 +267,7 @@
                 }
             }
 
-            // AJAX
+            // 3. AJAX (Añadir al Carrito)
             function agregarAlCarrito(productId, cantidad, csrfToken, formElement = null){
                 if (cantidad < 1) { showToast("Selecciona una cantidad válida"); return; }
                 const url = `/carrito/update/${productId}/`; 
@@ -280,27 +281,18 @@
                     if(data.success){
                         showToast("✅ " + data.mensaje);
                         if(data.total_items !== undefined) actualizarBadge(data.total_items);
-                        if(data.nuevo_stock !== undefined){
-                            const stockDisplay = document.getElementById(`stock-display-${productId}`);
-                            if(stockDisplay){
-                                stockDisplay.textContent = data.nuevo_stock;
-                                if(data.nuevo_stock === 0){
-                                    const container = document.getElementById(`stock-container-${productId}`);
-                                    if(container) container.innerHTML = '<span class="text-red-600 font-bold">¡AGOTADO!</span>';
-                                }
-                            }
-                            if(formElement){
-                                const input = formElement.querySelector('.quantity-input');
-                                if(input){ input.max = data.nuevo_stock; input.value = 1; }
-                            }
-                        }
+                        
+                        // Recarga para actualizar stock visualmente
+                        setTimeout(() => { window.location.reload(); }, 500);
+
                     } else {
-                        showToast(data.mensaje); // Mensaje normal
+                        showToast(data.mensaje); // Mensaje limpio
                     }
                 })
                 .catch(error => { console.error(error); showToast('Error de conexión'); });
             }
 
+            // A) Formularios de la ficha
             document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
@@ -311,6 +303,7 @@
                 });
             });
 
+            // B) Botones sueltos (carrusel)
             document.querySelectorAll('.add-related').forEach(btn => {
                 btn.addEventListener('click', function(e){
                     e.preventDefault(); e.stopPropagation(); 
@@ -319,6 +312,78 @@
                     if (mainToken && productId) agregarAlCarrito(productId, 1, mainToken.value, null);
                 });
             });
+
+            // 4. POLLING DE STOCK
+            function iniciarRevisionStock() {
+                setInterval(() => { actualizarStocksEnTiempoReal(); }, 5000); 
+            }
+
+            function actualizarStocksEnTiempoReal() {
+                // Recolectar IDs visibles
+                let ids = new Set();
+                
+                // Del producto principal
+                const mainForm = document.querySelector('.add-to-cart-form');
+                if (mainForm && mainForm.dataset.productId) ids.add(mainForm.dataset.productId);
+
+                // Del carrusel
+                document.querySelectorAll('.add-related').forEach(btn => {
+                    if(btn.dataset.productId) ids.add(btn.dataset.productId);
+                });
+
+                if (ids.size === 0) return;
+
+                const idsString = Array.from(ids).join(',');
+
+                fetch(`/api/verificar-stock/?ids=${idsString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        for (const [productId, stockReal] of Object.entries(data)) {
+                            // 1. Actualizar texto
+                            const stockSpan = document.getElementById(`stock-display-${productId}`);
+                            if(stockSpan) {
+                                if (stockReal > 0) {
+                                    stockSpan.textContent = stockReal;
+                                } else {
+                                    const container = document.getElementById(`stock-container-${productId}`);
+                                    if(container) container.innerHTML = '<span class="text-red-600 font-bold">SIN PRODUCTO</span>';
+                                }
+                            }
+
+                            // 2. Deshabilitar botones si se agota
+                            const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
+                            forms.forEach(form => {
+                                const btn = form.querySelector('button[type="submit"]');
+                                const input = form.querySelector('.quantity-input');
+                                
+                                if (stockReal <= 0) {
+                                    if(btn && !btn.disabled) {
+                                        btn.disabled = true;
+                                        btn.innerText = "Agotado";
+                                        btn.classList.remove('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.add('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                                    }
+                                    if(input) input.disabled = true;
+                                } else {
+                                    // Reponer si vuelve stock
+                                    if(btn && btn.disabled) {
+                                        btn.disabled = false;
+                                        btn.innerText = "Añadir a la Cesta";
+                                        btn.classList.add('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.remove('bg-gray-200', 'text-gray-500', 'cursor-not-allowed');
+                                    }
+                                    if(input) {
+                                        input.disabled = false;
+                                        input.max = stockReal;
+                                    }
+                                }
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error stock:", err));
+            }
+
+            iniciarRevisionStock();
         });
     </script>
 </main>

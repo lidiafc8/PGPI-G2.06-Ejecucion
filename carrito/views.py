@@ -10,14 +10,17 @@ from django.template import loader
 from django.urls import reverse
 from django.conf import settings
 
-# Importaciones de tus modelos y vistas auxiliares
+# Importaciones de modelos unificadas
 from home.models import (
     Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
     Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido, Tarjeta
 )
+
+# Importación de vistas auxiliares (filtros)
 from home.views import obtener_opciones_filtro
 
 def obtener_cesta_actual(request):
+    """Obtiene la cesta del usuario autenticado o de la sesión."""
     cesta = None
     if request.user.is_authenticated:
         try:
@@ -40,7 +43,7 @@ def obtener_cesta_actual(request):
 def update_cart(request, producto_id):
     """
     Gestiona los botones (+) y (-) del carrito.
-    Resta stock al añadir y devuelve stock al quitar.
+    SOLO VALIDA disponibilidad. NO RESTA STOCK de la base de datos hasta el pago.
     """
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request)
@@ -51,6 +54,7 @@ def update_cart(request, producto_id):
         defaults={'cantidad': 0, 'precio_unitario': producto.precio}
     )
     
+    # Detectar AJAX
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     action = request.POST.get('action')
     
@@ -59,6 +63,9 @@ def update_cart(request, producto_id):
 
     json_response_data = {'success': False, 'mensaje': 'Error'}
 
+    # =========================================================
+    # ACCIÓN: AÑADIR (Botón + o "Añadir a Cesta")
+    # =========================================================
     if action == 'add':
         try:
             cantidad_add = int(request.POST.get('cantidad', 1))
@@ -73,9 +80,8 @@ def update_cart(request, producto_id):
             messages.error(request, mensaje)
             return redirect('carrito:carrito')
 
-        # 2. Validación: Stock suficiente para la cantidad solicitada
+        # 2. Validación: Stock suficiente GLOBAL (sin decir el número exacto)
         if cantidad_add > producto.stock:
-            # MENSAJE GENÉRICO (Sin decir cuántos quedan)
             mensaje = "Stock insuficiente para la cantidad solicitada."
             
             if is_ajax:
@@ -87,6 +93,7 @@ def update_cart(request, producto_id):
             if item.cantidad + cantidad_add <= producto.stock:
                 item.cantidad += cantidad_add
                 item.save()      
+                # NOTA: No hacemos producto.save() aquí. El stock se mantiene reservado visualmente pero no en BD.
                 
                 json_response_data = {
                     'success': True, 
@@ -95,15 +102,19 @@ def update_cart(request, producto_id):
                     'nuevo_stock': producto.stock
                 }
             else: 
-                # MENSAJE GENÉRICO (Sin decir cuántos quedan)
+                # Mensaje genérico
                 mensaje = "No puedes añadir más unidades; has alcanzado el límite de stock disponible."
                 
                 if is_ajax:
                     return JsonResponse({'success': False, 'mensaje': mensaje})
 
+    # =========================================================
+    # ACCIÓN: QUITAR (Botón -)
+    # =========================================================
     elif action == 'remove':
         
-        # Ahora gestionamos el carrito
+        # Como no restamos stock al añadir, no hace falta devolverlo al quitar.
+        # Solo gestionamos la línea del carrito.
         if item.cantidad > 1:
             item.cantidad -= 1
             item.save()
@@ -129,7 +140,7 @@ def remove_from_cart(request, producto_id):
         # Buscamos el producto en el carrito
         item = ItemCestaCompra.objects.get(cesta_compra=cesta, producto_id=producto_id)
         
-        # Borramos el item del carrito
+        # Borramos el item del carrito (El stock no se toca porque nunca se restó)
         item.delete()
         
         messages.success(request, "Producto eliminado del carrito.")
@@ -166,9 +177,15 @@ def ver_cesta(request):
     if cesta:
         items = cesta.items.all()
         for item in items:
-            # Asegurarnos de que precio_linea siempre esté definido
-            precio_linea = Decimal('0.00')
-            precio_linea = item.producto.precio * item.cantidad
+            
+            # 1. Determinamos precio (oferta vs normal)
+            if hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado:
+                precio_unitario = item.producto.precio_rebajado
+            else:
+                precio_unitario = item.producto.precio
+
+            # 2. Calculamos precio de línea
+            precio_linea = precio_unitario * item.cantidad
             subtotal += precio_linea
                 
             if item.producto.imagen and item.producto.imagen.name:
@@ -177,19 +194,19 @@ def ver_cesta(request):
                 imagen_url = "https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg"
                 
             articulos_para_plantilla.append({
-                'id': item.producto.id, 
-                'nombre': item.producto.nombre,
-                'imagen_url': imagen_url,
-                'precio_unidad': item.producto.precio,
-                'cantidad': item.cantidad,
-                'precio_total': precio_linea,
-                'stock': item.producto.stock,
-        })
+                    'id': item.producto.id, 
+                    'nombre': item.producto.nombre,
+                    'imagen_url': imagen_url,
+                    'precio_unidad': precio_unitario,
+                    'cantidad': item.cantidad,
+                    'precio_total': precio_linea,
+                    'stock': item.producto.stock,
+            })
         total = subtotal 
     
     opciones_filtro = obtener_opciones_filtro()
 
-    # --- Obtener productos sugeridos para el carrusel de abajo ---
+    # Productos sugeridos
     productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
 
     context = {
@@ -227,6 +244,7 @@ def vaciar_cesta(request):
 
     messages.success(request, "La cesta ha sido vaciada correctamente.")
     return redirect('carrito:carrito')
+
 def checkout(request):
     """
     Vista que muestra la página de pago (GET).
@@ -267,19 +285,22 @@ def checkout(request):
     # --- SI LLEGAMOS AQUÍ, TODO ESTÁ CORRECTO ---
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
-        subtotal += item.producto.precio * item.cantidad
+        if hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado:
+            precio = item.producto.precio_rebajado
+        else:
+            precio = item.producto.precio
+        subtotal += precio * item.cantidad
         
-    coste_envio= Decimal('0.00')
     coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
-
     total_inicial = subtotal + coste_envio
-    tarjetas_guardadas = None
-    tarjetas_para_contexto = []
     
+    tarjetas_para_contexto = []
+
     datos_cliente = {
         'nombre': '', 'apellidos': '', 'email': '', 'telefono': '',
         'direccion_calle': '', 'direccion_cp': '', 'direccion_ciudad': '', 'direccion_pais': '',      
-        'tipo_envio_default': TipoEnvio.DOMICILIO, 'tipo_pago_default': TipoPago.PASARELA_PAGO,
+        'tipo_envio_default': TipoEnvio.DOMICILIO,        
+        'tipo_pago_default': TipoPago.PASARELA_PAGO,
     }
 
     if request.user.is_authenticated:
@@ -287,50 +308,56 @@ def checkout(request):
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             tarjetas_guardadas = usuario_cliente.tarjetas.all()
             
+            # Enmascarar tarjetas
             for tarjeta in tarjetas_guardadas:
                 tarjetas_para_contexto.append({
                     'id': tarjeta.id,
                     'numero_enmascarado': f"************{tarjeta.ultimos_cuatro}",
                     'ultimos_cuatro': tarjeta.ultimos_cuatro,
-                    'fecha_expiracion': tarjeta.card_expiry,
-                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first())
+                    'fecha_expiracion': tarjeta.card_expiry, 
+                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first()) 
                 })
             
+            # Rellenar datos básicos
             datos_cliente['nombre'] = request.user.nombre 
             datos_cliente['apellidos'] = request.user.apellidos
             datos_cliente['email'] = request.user.corre_electronico
-            datos_cliente['telefono'] = usuario_cliente.telefono 
+            datos_cliente['telefono'] = usuario_cliente.telefono if usuario_cliente.telefono and str(usuario_cliente.telefono) != 'None' else ''
             
+            # Lógica de desglose de dirección
             direccion_completa = usuario_cliente.direccion_envio
-            if direccion_completa:
+            if direccion_completa and str(direccion_completa) != 'None':
                 partes = [p.strip() for p in direccion_completa.split(',')]
                 if len(partes) >= 4:
                     datos_cliente['direccion_calle'] = f"{partes[0]}, {partes[1]}"
                     datos_cliente['direccion_pais'] = partes[-1]
-                    cp_ciudad = partes[-2].split(' ', 1)
-                    if len(cp_ciudad) >= 2:
-                        datos_cliente['direccion_cp'] = cp_ciudad[0]
-                        datos_cliente['direccion_ciudad'] = cp_ciudad[1]
+                    cp_ciudad_raw = partes[-2] 
+                    cp_ciudad_split = cp_ciudad_raw.split(' ', 1)
+                    if len(cp_ciudad_split) >= 2:
+                        datos_cliente['direccion_cp'] = cp_ciudad_split[0]
+                        datos_cliente['direccion_ciudad'] = cp_ciudad_split[1]
+                        
                 elif len(partes) == 3:
                     datos_cliente['direccion_calle'] = partes[0]
                     datos_cliente['direccion_pais'] = partes[-1]
-                    cp_ciudad = partes[1].split(' ', 1)
-                    if len(cp_ciudad) >= 2:
-                        datos_cliente['direccion_cp'] = cp_ciudad[0]
-                        datos_cliente['direccion_ciudad'] = cp_ciudad[1]
+                    cp_ciudad_split = partes[1].split(' ', 1)
+                    if len(cp_ciudad_split) >= 2:
+                        datos_cliente['direccion_cp'] = cp_ciudad_split[0]
+                        datos_cliente['direccion_ciudad'] = cp_ciudad_split[1]
 
             datos_cliente['tipo_envio_default'] = usuario_cliente.tipo_envio 
             datos_cliente['tipo_pago_default'] = usuario_cliente.tipo_pago
 
+            # Recalcular envío según preferencia
             if usuario_cliente.tipo_envio == TipoEnvio.RECOGIDA_TIENDA:
                 coste_envio = Decimal('0.00')
             else:
                 coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
-            total_inicial = subtotal + coste_envio
-            
+                
         except UsuarioCliente.DoesNotExist:
             pass
     
+    total_inicial = subtotal + coste_envio
     opciones_filtro = obtener_opciones_filtro()
 
     context = {
@@ -342,9 +369,9 @@ def checkout(request):
         'tarjetas_para_contexto': tarjetas_para_contexto, 
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto), 
         'opciones_filtro': opciones_filtro, 
-        'precio_seleccionado': '',
-        'fabricante_seleccionado': '',
-        'seccion_filtro_seleccionada': '',
+        
+        # Filtros vacíos
+        'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
     }
     
     return render(request, "pago.html", context)
@@ -391,13 +418,19 @@ def procesar_pago(request):
     # ==============================================================================
     # 2. FASE DE PROCESAMIENTO (Si llegamos aquí, el stock es correcto)
     # ==============================================================================
-        
+    
     # Recoger datos del formulario
     entrega_value = request.POST.get('shipping_option') 
     payment_method_value = request.POST.get('payment_method') 
     email = request.POST.get('contact_email') 
     telefon = request.POST.get('contact_phone') 
     
+    calle = request.POST.get('direccion_calle')
+    ciudad = request.POST.get('direccion_ciudad')
+    cpi = request.POST.get('direccion_cp')      
+    pais = request.POST.get('direccion_pais')    
+    
+    # Datos Tarjeta
     calle = (request.POST.get('address_street') or request.POST.get('direccion_calle') or '').strip()
     ciudad = (request.POST.get('address_city') or request.POST.get('direccion_ciudad') or '').strip()
     cpi = (request.POST.get('address_zip') or request.POST.get('direccion_cp') or '').strip()
@@ -408,7 +441,7 @@ def procesar_pago(request):
     card_cvv = request.POST.get('cvv') 
     save_card_flag = request.POST.get('save_card') == 'on'
     
-    # Construcción de la dirección
+    direccion = f"{calle}, {cpi} {ciudad}, {pais}"
     partes = []
     if calle.strip(): partes.append(calle.strip())
     cp_ciudad = ' '.join(p for p in (cpi.strip(), ciudad.strip()) if p)
@@ -434,6 +467,7 @@ def procesar_pago(request):
             coste_entrega = Decimal('5.00')
         else:
             coste_entrega = Decimal('0.00')
+        direccion_final = direccion
         direccion_final = direccion or ''
             
     elif entrega_value == 'express':
@@ -444,7 +478,7 @@ def procesar_pago(request):
         messages.error(request, "Opción de envío no válida.")
         return redirect('carrito:checkout')
 
-    # Validación dirección
+    # Lógica de Pago
     if metodo_envio == TipoEnvio.DOMICILIO and not direccion_final:
         messages.error(request, "Debe proporcionar una dirección válida para el envío a domicilio.")
         return redirect('carrito:checkout')
@@ -465,12 +499,15 @@ def procesar_pago(request):
     if request.user.is_authenticated:
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+            
+            # Actualizar perfil con los nuevos datos
             usuario_cliente.direccion_envio = direccion_final if metodo_envio == TipoEnvio.DOMICILIO else usuario_cliente.direccion_envio
             usuario_cliente.tipo_envio = metodo_envio
             usuario_cliente.tipo_pago = metodo_pago
             usuario_cliente.telefono = telefon 
             usuario_cliente.save()
 
+            # Guardar tarjeta si el usuario lo pidió
             if metodo_pago == TipoPago.PASARELA_PAGO and save_card_flag and card_number and expiry_date and card_cvv:
                 nueva_tarjeta = Tarjeta(usuario_cliente=usuario_cliente)
                 nueva_tarjeta.set_card_details(card_number, expiry_date, card_cvv)
@@ -478,9 +515,10 @@ def procesar_pago(request):
                     nueva_tarjeta.save()
                     messages.info(request, f"💳 Tarjeta guardada correctamente.")
                 except Exception:
-                    pass 
+                    pass # Ya existía
+            
         except UsuarioCliente.DoesNotExist:
-            pass 
+            pass # Usuario sin perfil cliente (raro pero posible)
             
     # --- CREAR PEDIDO ---
     try:
@@ -501,11 +539,12 @@ def procesar_pago(request):
         for item_cesta in cesta.items.select_related('producto'):
             producto = item_cesta.producto
             
-            # Segunda comprobación de seguridad (Fail-safe)
+            # 1. Comprobación final de stock antes de confirmar (por si acaso)
             if item_cesta.cantidad > producto.stock:
                  messages.error(request, f"Stock insuficiente en '{producto.nombre}' durante el procesamiento. Inténtalo de nuevo.")
                  raise ValueError("Stock insuficiente.") 
             
+            # Precio final para el historial
             if hasattr(producto, 'precio_rebajado') and producto.precio_rebajado:
                 precio_unitario_final = producto.precio_rebajado
             else:
@@ -518,11 +557,11 @@ def procesar_pago(request):
                 precio_unitario=precio_unitario_final,
             )
             
-            # RESTA DE STOCK REAL
+            # 2. RESTA DE STOCK (AQUÍ ES DONDE SE RESTA REALMENTE)
             producto.stock -= item_cesta.cantidad
             producto.save()
 
-        # Enviar correo
+        # Enviar correo confirmación
         try:
             tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', args=[pedido.id, pedido.tracking_id]))
             subject = f"Confirmación pedido #{pedido.id}"
@@ -535,6 +574,7 @@ def procesar_pago(request):
         except Exception:
             messages.warning(request, "Pedido realizado, pero no se pudo enviar el correo de confirmación.")
 
+        # Limpieza final
         cesta.items.all().delete()
         request.session['ultimo_correo_pedido'] = email
 
@@ -542,11 +582,12 @@ def procesar_pago(request):
         return redirect('carrito:fin_compra')
         
     except ValueError:
+        # Si hubo error de stock, deshacer cambios en BD
         transaction.set_rollback(True)
         return redirect('carrito:carrito')
     
 def compra_finalizada(request):
-    """Muestra la página de confirmación después de una compra exitosa."""
+    """Muestra confirmación post-compra."""
     correo_pedido = request.session.pop('ultimo_correo_pedido', '')
     opciones_filtro = obtener_opciones_filtro()
 
@@ -560,7 +601,7 @@ def compra_finalizada(request):
     }
     return render(request, 'compra_finalizada.html', contexto)
 
-# --- AÑADIR AL FINAL DE views.py ---
+# --- API DE STOCK (PARA JAVASCRIPT) ---
 
 def verificar_stock_api(request):
     """

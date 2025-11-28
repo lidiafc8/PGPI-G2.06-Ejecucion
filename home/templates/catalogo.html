@@ -58,7 +58,7 @@
                                 
                                 <div class="mb-3">
                                     {% if producto.stock > 0 %}
-                                        <span class="text-xs font-semibold text-[#6a760c]">
+                                        <span id="stock-display-{{ producto.pk }}" class="text-xs font-semibold text-[#6a760c]">
                                             {{ producto.stock }} unidades disponibles
                                         </span>
                                     {% else %}
@@ -206,8 +206,15 @@
     .hover\:shadow-hard-halo:hover { box-shadow: 0 0 15px rgba(39, 43, 4, 0.2); }
     .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .toast {
-        background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600;
-        opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); pointer-events: auto;
+        background: #16a34a; 
+        color: white; 
+        padding: 12px 24px; 
+        border-radius: 8px; 
+        font-weight: 600;
+        opacity: 0; 
+        transition: opacity 0.5s ease, transform 0.5s ease; 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+        pointer-events: auto;
     }
     .toast.show { opacity: 1; transform: translateY(0); }
 </style>
@@ -219,24 +226,34 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
-            // --- 1. CARRUSEL ---
+            // ------------------------------------------------
+            // 1. CARRUSEL
+            // ------------------------------------------------
             const carousel = document.getElementById('product-carousel');
-            const prevButton = document.getElementById('prev-btn');
-            const nextButton = document.getElementById('next-btn');
-            
-            if (carousel && prevButton && nextButton) {
-                const scrollAmount = 280 * 2; 
-                prevButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-                });
-                nextButton.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                });
+            if(carousel){ 
+                const items = carousel.children;
+                const totalItems = items.length; 
+                const prevBtn = document.getElementById('prev-btn');
+                const nextBtn = document.getElementById('next-btn');
+                const cardWidth = 280; 
+
+                // Si hay items, activamos el scroll
+                if (carousel && prevBtn && nextButton) {
+                    const scrollAmount = cardWidth * 2; 
+                    prevBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                    });
+                    nextBtn.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                    });
+                }
             }
 
-            // --- 2. AUXILIARES ---
+            // ------------------------------------------------
+            // 2. UTILIDADES (Toast & Badge)
+            // ------------------------------------------------
             function showToast(mensaje){
                 let container = document.getElementById('toast-container');
                 if (!container) {
@@ -252,7 +269,7 @@
                 toast.textContent = mensaje;
                 container.appendChild(toast);
                 
-                void toast.offsetWidth;
+                void toast.offsetWidth; // Forzar reflow para animación
                 
                 toast.classList.add('show');
                 setTimeout(() => {
@@ -279,54 +296,168 @@
                 }
             }
 
-            // --- 3. LÓGICA AJAX (ADD TO CART) ---
+            // ------------------------------------------------
+            // 3. PETICIÓN AJAX UNIFICADA (Añadir al carrito)
+            // ------------------------------------------------
+            function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
+                const originalText = btnElement.innerText;
+                btnElement.innerText = "Añadiendo...";
+                btnElement.disabled = true;
+
+                const url = `/carrito/update/${productId}/`; 
+
+                fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({ 
+                        'action': 'add', 
+                        'cantidad': cantidad 
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if(data.success){
+                        showToast("✅ " + data.mensaje);
+                        if(data.total_items !== undefined){
+                            actualizarBadge(data.total_items);
+                        }
+                        // Recargar página para actualizar stocks visualmente
+                        setTimeout(() => { window.location.reload(); }, 500);
+                    } else {
+                        // Mensaje limpio en caso de error (ej: stock insuficiente)
+                        btnElement.innerText = originalText;
+                        btnElement.disabled = false;
+                        showToast(data.mensaje || 'Error al añadir');
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                    btnElement.innerText = originalText;
+                    btnElement.disabled = false;
+                    showToast('Error de conexión');
+                });
+            }
+
+            // ------------------------------------------------
+            // 4. EVENT LISTENERS (Formularios y Botones)
+            // ------------------------------------------------
+            
+            // A) Listener para botones .add-to-cart-form (Grid principal y carrusel)
             document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 form.addEventListener('submit', function(e){
                     e.preventDefault();
-
+                    
                     const btn = this.querySelector('button');
-                    const originalText = btn.innerText;
-                    btn.disabled = true;
-                    btn.innerText = "Añadiendo...";
-
-                    const productId = this.dataset.productId;
+                    let productId = this.dataset.productId;
                     const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
 
-                    const url = `/carrito/update/${productId}/`; 
-
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: new URLSearchParams({ 
-                            'action': 'add', 
-                            'cantidad': 1 
-                        })
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if(data.success){
-                            showToast("✅ " + data.mensaje);
-                            if(data.total_items !== undefined) actualizarBadge(data.total_items);
-                            setTimeout(() => { window.location.reload(); }, 500);
-                        } else {
-                            // Muestra el mensaje limpio
-                            showToast(data.mensaje || 'Error');
-                            btn.innerText = originalText;
-                            btn.disabled = false;
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        showToast("Error de conexión");
-                        btn.innerText = originalText;
-                        btn.disabled = false;
-                    });
+                    if (productId && csrfToken) {
+                        realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                    }
                 });
             });
+
+            // B) Listener de respaldo para botones sueltos (por si acaso)
+            document.querySelectorAll('.add-related').forEach(btn => {
+                btn.addEventListener('click', function(e){
+                    e.preventDefault();
+                    e.stopPropagation(); 
+
+                    let productId = this.dataset.productId;
+                    const parentDiv = this.parentElement; 
+                    
+                    // Buscamos token cerca o globalmente
+                    let csrfTokenInput = parentDiv.querySelector('[name=csrfmiddlewaretoken]');
+                    if (!csrfTokenInput) {
+                        csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+                    }
+                    
+                    if (productId && csrfTokenInput) {
+                        realizarPeticionCarrito(productId, 1, csrfTokenInput.value, this);
+                    } else {
+                        showToast("Error técnico");
+                    }
+                });
+            });
+
+            // ------------------------------------------------
+            // 5. POLLING / VERIFICACIÓN DE STOCK EN TIEMPO REAL
+            // ------------------------------------------------
+            function iniciarRevisionStock() {
+                setInterval(() => {
+                    actualizarStocksEnTiempoReal();
+                }, 5000); // 5 segundos
+            }
+
+            function actualizarStocksEnTiempoReal() {
+                // Recolectar IDs de productos visibles
+                let ids = new Set();
+                
+                // De los formularios
+                document.querySelectorAll('.add-to-cart-form').forEach(form => {
+                    if(form.dataset.productId) ids.add(form.dataset.productId);
+                });
+                
+                // De los botones sueltos
+                document.querySelectorAll('.add-related').forEach(btn => {
+                    if(btn.dataset.productId) ids.add(btn.dataset.productId);
+                });
+
+                if (ids.size === 0) return;
+
+                const idsString = Array.from(ids).join(',');
+
+                fetch(`/api/verificar-stock/?ids=${idsString}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // Recorremos los datos recibidos { "id": stock, ... }
+                        for (const [productId, stockReal] of Object.entries(data)) {
+                            
+                            // 1. Actualizar texto de disponibilidad
+                            const stockSpan = document.getElementById(`stock-display-${productId}`);
+                            if(stockSpan) {
+                                if (stockReal > 0) {
+                                    stockSpan.textContent = `${stockReal} unidades disponibles`;
+                                    stockSpan.className = "text-xs font-semibold text-[#6a760c]";
+                                } else {
+                                    stockSpan.textContent = "Sin stock";
+                                    stockSpan.className = "text-xs font-semibold text-red-600";
+                                }
+                            }
+
+                            // 2. Deshabilitar botones si se agota
+                            const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
+                            forms.forEach(form => {
+                                const btn = form.querySelector('button');
+                                if (stockReal <= 0) {
+                                    if(btn && !btn.disabled) {
+                                        btn.disabled = true;
+                                        btn.innerText = "Agotado";
+                                        btn.classList.remove('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.add('bg-gray-200', 'text-gray-400', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    }
+                                } else {
+                                    // Si vuelve a haber stock (reposición)
+                                    if(btn && btn.disabled) {
+                                        btn.disabled = false;
+                                        btn.innerText = "Añadir a la Cesta";
+                                        btn.classList.add('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
+                                        btn.classList.remove('bg-gray-200', 'text-gray-400', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    }
+                                }
+                            });
+                        }
+                    })
+                    .catch(err => console.error("Error verificando stock:", err));
+            }
+
+            // Arrancar el sistema de sondeo
+            iniciarRevisionStock();
+
         });
     </script>
 {% endblock extra_js %}
