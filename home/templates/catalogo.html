@@ -199,12 +199,37 @@
                                 
                                 {% if not user.is_staff %}
                                     {% if producto.stock > 0 %}
-                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.id }}">
+                                        
+                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
                                             {% csrf_token %}
-                                            <button type="submit" class="w-full py-3 bg-[#bf7149] text-white font-bold rounded-lg hover:bg-yellow-600 transition duration-300 text-sm uppercase shadow-sm">
-                                                AÑADIR A LA CESTA
+                                            
+                                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                                <button type="button"
+                                                        onclick="changeQuantity(this, -1)"
+                                                        class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 font-bold text-sm">
+                                                    -
+                                                </button>
+
+                                                <input type="number"
+                                                       name="cantidad"
+                                                       class="quantity-input w-12 text-center border-none focus:ring-0 focus:outline-none text-gray-700 font-medium h-full py-2 text-sm"
+                                                       value="1"
+                                                       min="1"
+                                                       max="{{ producto.stock }}"
+                                                       readonly>
+
+                                                <button type="button"
+                                                        onclick="changeQuantity(this, 1)"
+                                                        class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 font-bold text-sm">
+                                                    +
+                                                </button>
+                                            </div>
+
+                                            <button type="submit" class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-sm uppercase text-sm">
+                                                Añadir a la Cesta
                                             </button>
                                         </form>
+
                                     {% else %}
                                         <button disabled class="w-full py-3 bg-gray-300 text-gray-500 font-bold rounded-lg cursor-not-allowed text-sm uppercase shadow-inner">
                                             AGOTADO
@@ -238,9 +263,30 @@
     {{ block.super }} 
     
 <script>
+    // 1. FUNCIÓN GLOBAL DE CANTIDAD (Para que funcione el onclick)
+    function changeQuantity(btn, change) {
+        const container = btn.closest('div'); 
+        const input = container.querySelector('.quantity-input');
+        
+        if (!input) return;
+
+        let currentValue = parseInt(input.value);
+        const maxStock = parseInt(input.getAttribute('max'));
+        const minVal = 1;
+
+        let newValue = currentValue + change;
+
+        // Validaciones
+        if (newValue >= minVal && newValue <= maxStock) {
+            input.value = newValue;
+        } else if (newValue > maxStock) {
+            input.value = maxStock; // No pasar del stock
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         
-        // 1. LÓGICA DEL CARRUSEL SUPERIOR
+        // 2. LÓGICA DEL CARRUSEL
         const carousel = document.getElementById('product-carousel');
         const prevButton = document.getElementById('prev-btn');
         const nextButton = document.getElementById('next-btn');
@@ -307,7 +353,7 @@
             }
         }
 
-        // 2. UTILIDADES (TOAST & BADGE)
+        // 3. UTILIDADES (TOAST & BADGE)
         function showToast(mensaje){
             let container = document.getElementById('toast-container');
             if(!container){
@@ -319,7 +365,7 @@
             
             const toast = document.createElement('div');
             toast.className = 'toast';
-            toast.textContent = mensaje; // Mensaje limpio
+            toast.textContent = mensaje;
             container.appendChild(toast);
             
             void toast.offsetWidth; // Reflow
@@ -349,7 +395,7 @@
             }
         }
 
-        // 3. CARRITO AJAX (Añadir al carrito)
+        // 4. CARRITO AJAX
         function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
             const originalText = btnElement.innerText;
             btnElement.innerText = "Añadiendo...";
@@ -374,7 +420,7 @@
                 if(data.success){
                     showToast("✅ " + data.mensaje);
                     if(data.total_items !== undefined) actualizarBadge(data.total_items);
-                    setTimeout(() => { window.location.reload(); }, 500);
+                    setTimeout(() => { window.location.reload(); }, 600);
                 } else {
                     btnElement.innerText = originalText;
                     btnElement.disabled = false;
@@ -389,23 +435,28 @@
             });
         }
 
-        // A) Listener para botones .add-to-cart-form
+        // Listener para los formularios de añadir al carrito
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
-                const btn = this.querySelector('button');
+                
+                const btn = this.querySelector('button[type="submit"]');
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-                // En el grid/carrusel siempre añadimos 1
-                realizarPeticionCarrito(productId, 1, csrfToken, btn);
+                
+                // Leemos el input si existe (para el grid), si no (para carrusel) usamos 1
+                const inputCantidad = this.querySelector('.quantity-input');
+                const cantidad = inputCantidad ? inputCantidad.value : 1;
+
+                realizarPeticionCarrito(productId, cantidad, csrfToken, btn);
             });
         });
 
-        // 4. POLLING DE STOCK (Actualización en tiempo real)
+        // 5. POLLING DE STOCK (Actualización en tiempo real)
         function iniciarRevisionStock() {
             setInterval(() => {
                 actualizarStocksEnTiempoReal();
-            }, 5000); // 5 segundos
+            }, 5000); 
         }
 
         function actualizarStocksEnTiempoReal() {
@@ -422,9 +473,19 @@
                 .then(data => {
                     for (const [productId, stockReal] of Object.entries(data)) {
                         const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
+                        
                         forms.forEach(form => {
-                            const btn = form.querySelector('button');
-                            
+                            const btn = form.querySelector('button[type="submit"]');
+                            const input = form.querySelector('.quantity-input');
+
+                            // Actualizar el atributo MAX para que el usuario no seleccione de más
+                            if(input) {
+                                input.setAttribute('max', stockReal);
+                                if(parseInt(input.value) > stockReal && stockReal > 0) {
+                                    input.value = stockReal;
+                                }
+                            }
+
                             if (stockReal <= 0) {
                                 if(btn && !btn.disabled) {
                                     btn.disabled = true;
@@ -433,7 +494,6 @@
                                     btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'border', 'border-gray-300');
                                 }
                             } else {
-                                // Reponer stock visualmente si vuelve a haber
                                 if(btn && btn.disabled) {
                                     btn.disabled = false;
                                     btn.innerText = "AÑADIR A LA CESTA";
