@@ -30,7 +30,7 @@
         </h1>
         <hr classs="mb-8"> 
         <a href="{% url 'lista_pedidos' %}" 
-           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
+            class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H16a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
             </svg>
@@ -57,7 +57,6 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Detalles del Cliente y Envío</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     
-                    <!-- CLIENTE -->
                     <div>
                         <p class="text-sm font-medium text-gray-500">Cliente</p>
 
@@ -72,7 +71,6 @@
                         {% endif %}
                     </div>
 
-                    <!-- EMAIL -->
                     <div>
                         <p class="text-sm font-medium text-gray-500">Email</p>
 
@@ -87,21 +85,32 @@
                         {% endif %}
                     </div>
 
-                    <!-- DIRECCIÓN (como cadena) -->
                     <div class="sm:col-span-2">
                         <p class="text-sm font-medium text-gray-500 mt-3">Dirección de Envío</p>
                         <p class="text-gray-700">{{ pedido.direccion_envio|default:"[Dirección no proporcionada]" }}</p>
                     </div>
 
-                    <!-- FECHA -->
-                    <div class="sm:col-span-2 pt-4 border-t mt-4">
-                        <p class="text-sm font-medium text-gray-500">Fecha del Pedido</p>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mt-3">Fecha del Pedido</p>
                         <p class="text-lg text-gray-700">{{ pedido.fecha_creacion|date:"d M Y - H:i" }}</p>
                     </div>
+
+                    <div>
+                        <p class="text-sm font-medium text-gray-500 mt-3">Estado de Pago</p>
+                        {% if pedido.pago %}
+                            <span class="px-3 py-1 text-sm font-bold rounded-full bg-green-500 text-white shadow-md">
+                                PAGADO
+                            </span>
+                        {% else %}
+                            <span class="px-3 py-1 text-sm font-bold rounded-full bg-red-500 text-white shadow-md">
+                                PENDIENTE DE PAGO
+                            </span>
+                        {% endif %}
+                    </div>
+
                 </div>
             </div>
 
-            <!-- ARTÍCULOS -->
             <div class="bg-white shadow-xl rounded-xl p-6 border border-gray-100">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Artículos</h2>
                 
@@ -143,7 +152,6 @@
 
         </div>
 
-        <!-- ESTADO -->
         <div class="md:col-span-1">
             <div class="bg-white shadow-xl rounded-xl p-6 h-fit sticky top-6 border-l-4 lm-border-green">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800">Actualizar Estado</h2>

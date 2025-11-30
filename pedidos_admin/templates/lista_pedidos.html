@@ -35,6 +35,9 @@
                     <th scope="col" class="px-6 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider">
                         Estado
                     </th>
+                    <th scope="col" class="px-6 py-4 text-left text-xs font-extrabold text-black uppercase tracking-wider">
+                        Pago
+                    </th>
                     <th scope="col" class="px-6 py-4 text-right text-xs font-extrabold text-black uppercase tracking-wider">
                         Total
                     </th>
@@ -86,13 +89,24 @@
                         {% endif %}
                     </td>
 
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold">
+                        {% if pedido.pago %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-500 text-white shadow-md">
+                                Pagado
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 text-xs rounded-full bg-red-500 text-white shadow-md">
+                                No Pagado
+                            </span>
+                        {% endif %}
+                    </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-bold text-[#6a760c]">
                         {{ pedido.total_importe|default:0.00|floatformat:2 }}€
                     </td>
 
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <a href="{% url 'detalle_pedido' pk=pedido.pk %}" 
-                           class="text-indigo-600 hover:text-indigo-900 transition font-semibold">
+                            class="text-indigo-600 hover:text-indigo-900 transition font-semibold">
                             Ver Detalle
                         </a>
                     </td>
