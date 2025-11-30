@@ -34,6 +34,9 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Estado
                             </th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Pago
+                            </th>
                             <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Acciones
                             </th>
@@ -67,6 +70,13 @@
                                 {% endif %}
                             </td>
                             
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                {% if pedido.pago %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-500 text-white">Pagado</span>
+                                {% else %}
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-red-500 text-white">Pendiente</span>
+                                {% endif %}
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <a href="{% url 'perfil:ver_ticket' pedido.id %}" 
                                     class="text-[#bf7149] hover:text-[#a95d3c] transition duration-150 font-semibold flex items-center justify-end">

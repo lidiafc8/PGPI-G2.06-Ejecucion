@@ -22,7 +22,7 @@
                         <p class="font-semibold text-gray-900">{{ pedido.fecha_creacion|date:"d M Y (H:i)" }}</p>
                     </div>
                     <div class="md:text-right">
-                        <p class="text-sm text-gray-500 mb-1">Estado</p>
+                        <p class="text-sm text-gray-500 mb-1">Estado del Pedido</p>
                         <span class="px-3 py-1 inline-flex text-sm leading-5 font-bold rounded-full 
                             {% if pedido.estado == 'COMPLETADO' %} bg-green-100 text-green-800
                             {% elif pedido.estado == 'PENDIENTE' %} bg-yellow-100 text-yellow-800
@@ -44,7 +44,17 @@
                         <p class="font-semibold text-gray-700">{{ pedido.get_metodo_pago_display }}</p>
                     </div>
                 </div>
-
+                
+                <h5 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Estado de Pago</h5>
+                <div class="p-4 bg-gray-50 rounded-lg mb-6 shadow-inner text-center">
+                    {% if pedido.pago %}
+                        <p class="text-lg font-bold text-green-700">PAGADO</p>
+                        <p class="text-sm text-gray-600 mt-1">El pago de {{ pedido.total_importe|floatformat:2 }} € ha sido procesado.</p>
+                    {% else %}
+                        <p class="text-lg font-bold text-red-700">PENDIENTE DE PAGO</p>
+                        <p class="text-sm text-gray-600 mt-1">El pago se realizará contra reembolso al momento de la entrega.</p>
+                    {% endif %}
+                </div>
                 <h5 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Información de Entrega</h5>
                 <div class="p-4 bg-gray-50 rounded-lg mb-6 shadow-inner">
                     {% if pedido.direccion_envio %}
@@ -57,7 +67,7 @@
                     <p class="text-gray-700 mb-1">
                         <span class="font-medium text-gray-600">Email:</span> {{ pedido.correo_electronico }}
                     </p>
-                     <p class="text-gray-700">
+                    <p class="text-gray-700">
                         <span class="font-medium text-gray-600">Teléfono:</span> {{ pedido.telefono }}
                     </p>
                 </div>
@@ -79,7 +89,7 @@
                                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-800">{{ item.producto.nombre }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-600">{{ item.cantidad }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-600">{{ item.precio_unitario|floatformat:2 }} €</td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-800">{{ item.total|floatformat:2 }} €</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-800">{{ item.total|floatformat:2 }} €</td> 
                             </tr>
                             {% endfor %}
                         </tbody>
