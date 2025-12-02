@@ -1,227 +1,257 @@
 {% extends "base.html" %}
-{% load static %}
-
 {% block breadcrumbs %}
     </li>
+    
     <li>
         <span class="text-lg text-gray-500">></span>
-        <span class="font-medium text-gray-500 hover:text-[#bf7149]">
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
             {{ categoria_actual }}
         </span>
     </li>
 {% endblock breadcrumbs %}
 
-{% block extra_css %}
-<style>
-    /* --- Estilos Toast y UI --- */
-    .toast {
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%) translateY(-20px);
-        background: #16a34a; 
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        font-weight: 600;
-        opacity: 0;
-        transition: opacity 0.5s ease, transform 0.5s ease;
-        z-index: 9999;
-        pointer-events: auto;
-    }
-    .toast.show {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
-    }
-    
-    .hover\:shadow-hard-halo:hover {
-        box-shadow: 0 0 15px rgba(39, 43, 4, 0.4); 
-    }
-    
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    /* Ocultar barra de scroll para que se vea más limpio con las flechas (opcional) */
-    .scrollbar-hide::-webkit-scrollbar {
-        display: none;
-    }
-    .scrollbar-hide {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-        -webkit-appearance: none; 
-        margin: 0; 
-    }
-</style>
-{% endblock extra_css %}
-
 {% block content %}
+{% load static %}
 <main class="py-10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
             {{ categoria_actual }}      
         </h1>
+        
         <hr class="mb-8">
 
         {% if productos_destacados %}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 xl:gap-8 mb-16">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 xl:gap-8">
+                
                 {% for producto in productos_destacados %}
-                    <a href="{% url 'detalle_producto' pk=producto.pk %}" 
-                       class="block bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] relative group">
+                
+                    <div class="bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] relative group border border-gray-200">
                         
+                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="w-full flex flex-col flex-grow text-gray-900 no-underline">
+                            
+                            <div class="relative w-full h-32 mb-4 flex justify-center items-center">
+                                {% if producto.imagen %}
+                                    <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" 
+                                         class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                {% else %}
+                                    <img src="{% static 'imagen1.jpg' %}" alt="Imagen por defecto"
+                                         class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
+                                {% endif %}
+                                
+                                {% if producto.stock <= 0 %}
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-md">
+                                        AGOTADO
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+                    <div>
+
+                        </div>
+
+                            <div class="w-full text-center flex-grow flex flex-col justify-end">
+                                <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2 min-h-[2.5rem] flex items-center justify-center">
+                                    {{ producto.nombre|upper }}
+                                </h4>
+                                
+                                <p class="text-xs text-gray-500 mb-2">
+                                    Fabricante: {{ producto.fabricante }}
+                                </p>
+                                
+                                <div class="mb-3">
+                                    {% if producto.stock > 0 %}
+                                        <span class="text-xs font-semibold text-[#6a760c]">
+                                            {{ producto.stock }} unidades disponibles
+                                        </span>
+                                    {% else %}
+                                        <span class="text-xs font-semibold text-red-600">
+                                            Sin stock
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <span class="text-3xl font-bold mb-4 text-[#A91B0D]">
+                                    {{ producto.precio|floatformat:2 }} €
+                                </span>
+                            </div>
+                        </a>
+
+                        <div class="w-full mt-auto relative z-20">
+                            {% if not user.is_authenticated or not user.is_staff %}
+                                
+                                {% if producto.stock > 0 %}
+                                    <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
+                                    {% csrf_token %}
+
+                                    <!-- SELECTOR DE CANTIDAD -->
+                                    <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                        <button type="button"
+                                                onclick="changeQuantity(this, -1)"
+                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 text-sm">
+                                            -
+                                        </button>
+
+                                        <input type="number"
+                                            name="cantidad"
+                                            class="quantity-input w-10 text-center border-none focus:ring-0 focus:outline-none text-gray-700 text-sm"
+                                            value="1"
+                                            min="1"
+                                            max="{{ producto.stock }}"
+                                            readonly>
+
+                                        <button type="button"
+                                                onclick="changeQuantity(this, 1)"
+                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 text-sm">
+                                            +
+                                        </button>
+                                    </div>
+
+
+                                    <!-- BOTÓN -->
+                                    <button type="submit" 
+                                            class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-sm">
+                                        Añadir a la Cesta
+                                    </button>
+                                </form>
+                                {% else %}
+                                    <button disabled class="w-full py-2 bg-gray-200 text-gray-400 font-semibold rounded-lg cursor-not-allowed">
+                                        Agotado
+                                    </button>
+                                {% endif %}
+
+                            {% endif %}
+                        </div>
+
+                    </div>
+                {% endfor %}
+                
+            </div>
+        {% else %}
+            <div class="p-6 bg-[#f9fdf2] border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
+                <p class="font-semibold">¡Lo sentimos!</p>
+                <p>Actualmente no hay productos disponibles.</p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    {% if productos_destacados %}
+    <div class="related-products-section border-t pt-8 mt-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <h2 style="font-size: 1.8em; text-align: center; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid #ccc; padding-bottom: 5px;">
+            También te podría interesar
+        </h2>
+
+        <div class="carousel-container" style="position: relative;">
+
+            <div id="product-carousel" class="product-list flex overflow-x-hidden scroll-smooth gap-5 py-10 select-none">
+
+                {% for producto in productos_destacados %}
+                
+                <div class="bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] border border-gray-200 relative"
+                     style="flex: 0 0 260px; min-width: 260px;">
+                     
+                    <a href="{% url 'detalle_producto' pk=producto.pk %}" class="w-full flex flex-col flex-grow text-gray-900 no-underline">
                         <div class="relative w-full h-32 mb-4 flex justify-center items-center">
                             {% if producto.imagen %}
-                                <img src="{{ producto.imagen.url }}" alt="Imagen de {{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
+                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                             {% else %}
-                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Imagen por defecto" class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
+                                <img src="{% static 'imagen1.jpg' %}" alt="Default" class="max-h-full max-w-full object-contain mix-blend-multiply opacity-50">
                             {% endif %}
-                            
+
                             {% if producto.stock <= 0 %}
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                <span class="bg-red-500 text-white text-base font-bold text-center uppercase tracking-wider py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-sm">
-                                    AGOTADO
-                                </span>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 shadow-md">AGOTADO</span>
                             </div>
                             {% endif %}
                         </div>
 
                         <div class="w-full text-center flex-grow flex flex-col justify-end">
-                            <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2">
+                            <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2 h-10 flex items-center justify-center">
                                 {{ producto.nombre|upper }}
                             </h4>
-                            <p class="text-xs text-gray-500 mb-2">Fabricante: {{ producto.fabricante }}</p>
+                            <p class="text-xs text-gray-500 mb-2">{{ producto.fabricante }}</p>
+                            
                             <div class="mb-3">
                                 {% if producto.stock > 0 %}
-                                    <span class="text-sm font-semibold text-[#6a760c]">{{ producto.stock }} unidades en stock</span>
+                                    <span class="text-xs font-semibold text-[#6a760c]">{{ producto.stock }} disponibles</span>
                                 {% else %}
-                                    <span class="text-sm font-semibold text-red-600">Sin stock</span>
+                                    <span class="text-xs font-semibold text-red-600">Sin stock</span>
                                 {% endif %}
                             </div>
-                            <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
-                                {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
+
+                            <span class="text-3xl font-bold mb-4 text-[#A91B0D]">
+                                {{ producto.precio|floatformat:2 }} €
                             </span>
                         </div>
-                        
-                        {% if not user.is_staff %}
+                    </a>
+
+                    <div class="w-full mt-2 relative z-20">
+                        {% if not user.is_authenticated or not user.is_staff %}
                             {% if producto.stock > 0 %}
-                            <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
-                                {% csrf_token %}
-                                <button type="submit" class="w-full px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
-                                    Añadir a la Cesta
-                                </button>
-                            </form>
+                                <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
+                                    {% csrf_token %}
+
+                                    <!-- SELECTOR DE CANTIDAD -->
+                                    <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
+                                        <button type="button"
+                                                onclick="changeQuantity(this, -1)"
+                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 text-sm">
+                                            -
+                                        </button>
+
+                                        <input type="number"
+                                            name="cantidad"
+                                            class="quantity-input w-10 text-center border-none focus:ring-0 focus:outline-none text-gray-700 text-sm"
+                                            value="1"
+                                            min="1"
+                                            max="{{ producto.stock }}"
+                                            readonly>
+
+                                        <button type="button"
+                                                onclick="changeQuantity(this, 1)"
+                                                class="px-2.5 py-1.5 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 text-sm">
+                                            +
+                                        </button>
+                                    </div>
+
+
+                                    <!-- BOTÓN -->
+                                    <button type="submit" 
+                                            class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-sm">
+                                        Añadir a la Cesta
+                                    </button>
+                                </form>
                             {% else %}
-                                <button disabled class="w-full px-4 mb-4 py-1 bg-gray-300 text-gray-500 font-semibold rounded-lg cursor-not-allowed border border-gray-300">
-                                    AGOTADO
+                                <button disabled class="w-full py-2 bg-gray-100 text-gray-400 font-semibold rounded-md border-2 border-gray-200 cursor-not-allowed">
+                                    Agotado
                                 </button>
                             {% endif %}
                         {% endif %}
-                    </a>
-                {% endfor %}
-            </div>
-        {% else %}
-            <div class="p-6 bg-[#f9fdf2] border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
-                <p class="font-semibold">¡Lo sentimos!</p>
-                <p>Actualmente no hay productos disponibles en esta subcategoría.</p>
-            </div>
-        {% endif %}
-
-        {% if productos_random %}
-        <div class="border-t border-gray-200 pt-12 mt-8">
-
-            <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">
-                También te podría interesar
-            </h2>
-
-            <div class="relative w-full group">
-                
-                <button id="scroll-left-btn" class="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-4 z-20 bg-white rounded-full p-3 shadow-lg border border-gray-200 text-gray-700 hover:bg-[#bf7149] hover:text-white transition focus:outline-none hidden md:flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-
-                <div id="related-products-scroll" class="flex overflow-x-auto gap-6 pb-6 px-4 snap-x scrollbar-hide scroll-smooth">
-                    
-                    {% for producto in productos_random %}
-                    <div class="bg-white rounded-xl p-4 flex flex-col border border-gray-100 shadow-sm hover:shadow-hard-halo transition-all duration-300 snap-center"
-                         style="flex: 0 0 260px; min-width: 260px;">
-                        
-                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-40 mb-4 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
-                            {% if producto.imagen %}
-                                <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
-                            {% else %}
-                                <img src="https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg" alt="Sin imagen" class="opacity-50 max-h-full max-w-full mix-blend-multiply">
-                            {% endif %}
-
-                            {% if producto.stock <= 0 %}
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none bg-white bg-opacity-60">
-                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-3 transform -rotate-12 shadow-md">AGOTADO</span>
-                            </div>
-                            {% endif %}
-                        </a>
-
-                        <div class="flex-grow flex flex-col text-center">
-                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-sm font-bold uppercase text-gray-800 mb-1 hover:text-[#bf7149] line-clamp-2 min-h-[2.5rem]">
-                                {{ producto.nombre|lower|capfirst }}
-                            </a>
-                            
-                            <p class="text-xl font-bold text-[#A91B0D] mb-3">
-                                {{ producto.precio|floatformat:2 }} €
-                            </p>
-
-                            <div class="mt-auto">
-                                {% if not user.is_staff %}
-                                    {% if producto.stock > 0 %}
-                                        <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
-                                            {% csrf_token %}
-                                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-2 mx-auto w-fit bg-white">
-                                                <button type="button" onclick="changeQuantity(this, -1)" class="px-2 py-1 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600 font-bold">-</button>
-                                                <input type="number" name="cantidad" class="quantity-input w-8 text-center border-none text-sm p-1 focus:ring-0 font-medium" value="1" min="1" max="{{ producto.stock }}" readonly>
-                                                <button type="button" onclick="changeQuantity(this, 1)" class="px-2 py-1 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600 font-bold">+</button>
-                                            </div>
-                                            <button type="submit" class="w-full py-2 bg-white text-[#bf7149] text-sm font-bold rounded border border-[#bf7149] hover:bg-[#bf7149] hover:text-white transition uppercase">
-                                                Añadir
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <button disabled class="w-full py-2 bg-gray-100 text-gray-400 text-sm font-bold rounded border border-gray-200 cursor-not-allowed uppercase">
-                                            AGOTADO
-                                        </button>
-                                    {% endif %}
-                                {% endif %}
-                            </div>
-                        </div>
                     </div>
-                    {% endfor %}
+                    
                 </div>
-
-                <button id="scroll-right-btn" class="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-4 z-20 bg-white rounded-full p-3 shadow-lg border border-gray-200 text-gray-700 hover:bg-[#bf7149] hover:text-white transition focus:outline-none hidden md:flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
+                {% endfor %}
 
             </div>
-        </div>
-        {% endif %}
 
+            <button id="prev-btn" class="absolute top-1/2 left-0 transform -translate-y-1/2 ml-4 w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-hard-halo hover:bg-gray-100 transition z-40">
+                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+            <button id="next-btn" class="absolute top-1/2 right-0 transform -translate-y-1/2 mr-4 w-10 h-10 flex items-center justify-center bg-white rounded-lg shadow-hard-halo hover:bg-gray-100 transition z-40">
+                <svg class="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+
+        </div>
     </div>
+    {% endif %}
 
     <div id="toast-container" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none">
         {% if messages %}
             {% for message in messages %}
-            <div class="toast {{ message.tags }} show pointer-events-auto">
-                {{ message }}
-            </div>
+            <div class="toast {{ message.tags }} pointer-events-auto">{{ message }}</div>
             {% endfor %}
         {% endif %}
     </div>
@@ -229,200 +259,127 @@
 </main>
 {% endblock content %}
 
+{% block extra_css %}
+<style>
+    .hover\:shadow-hard-halo:hover { box-shadow: 0 0 15px rgba(39, 43, 4, 0.2); }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .toast {
+        background: #16a34a; color: white; padding: 12px 24px; border-radius: 8px; font-weight: 600;
+        opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.1); pointer-events: auto;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+{% endblock extra_css %}
+
 {% block extra_js %}
     {{ block.super }} 
     
-<script>
-    // 1. FUNCIÓN GLOBAL DE CANTIDAD
-    function changeQuantity(btn, change) {
-        const container = btn.closest('div'); 
-        const input = container.querySelector('.quantity-input');
-        
-        if (!input) return;
-
-        let currentValue = parseInt(input.value);
-        const maxStock = parseInt(input.getAttribute('max'));
-        const minVal = 1;
-        let newValue = currentValue + change;
-
-        if (newValue >= minVal && newValue <= maxStock) {
-            input.value = newValue;
-        } else if (newValue > maxStock) {
-            input.value = maxStock; 
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        
-        // 2. LÓGICA DE FLECHAS DEL CARRUSEL
-        const scrollContainer = document.getElementById('related-products-scroll');
-        const leftBtn = document.getElementById('scroll-left-btn');
-        const rightBtn = document.getElementById('scroll-right-btn');
-
-        if(scrollContainer && leftBtn && rightBtn) {
-            // Cantidad de scroll al hacer clic (ancho de tarjeta + gap aprox)
-            const scrollAmount = 300; 
-
-            leftBtn.addEventListener('click', () => {
-                scrollContainer.scrollBy({
-                    left: -scrollAmount,
-                    behavior: 'smooth'
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // --- 1. CARRUSEL ---
+            const carousel = document.getElementById('product-carousel');
+            const prevButton = document.getElementById('prev-btn');
+            const nextButton = document.getElementById('next-btn');
+            
+            if (carousel && prevButton && nextButton) {
+                const scrollAmount = 280 * 2; 
+                prevButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    carousel.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
                 });
-            });
-
-            rightBtn.addEventListener('click', () => {
-                scrollContainer.scrollBy({
-                    left: scrollAmount,
-                    behavior: 'smooth'
+                nextButton.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 });
-            });
-        }
-
-        // 3. UTILIDADES (TOAST & BADGE)
-        function showToast(mensaje){
-            let container = document.getElementById('toast-container');
-            if(!container){
-                container = document.createElement('div');
-                container.id = 'toast-container';
-                container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
-                document.body.appendChild(container);
             }
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = mensaje;
-            container.appendChild(toast);
-            void toast.offsetWidth; 
-            toast.classList.add('show');
-            setTimeout(() => {
-                toast.classList.remove('show'); 
-                setTimeout(() => toast.remove(), 500); 
-            }, 3000);
-        }
 
-        function actualizarBadge(totalItems){
-            let badge = document.querySelector('#cesta-badge');
-            if(!badge){
-                const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
-                if(cestaLink && totalItems > 0){
-                    cestaLink.classList.add('relative'); 
-                    badge = document.createElement('span');
-                    badge.id = "cesta-badge";
-                    badge.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
-                    cestaLink.appendChild(badge);
-                }
+            // --- 2. AUXILIARES ---
+            function showToast(mensaje){
+                const container = document.getElementById('toast-container');
+                if (!container) return; 
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = mensaje;
+                container.appendChild(toast);
+                void toast.offsetWidth;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show'); 
+                    setTimeout(() => toast.remove(), 500); 
+                }, 3000);
             }
-            if(badge){
-                badge.textContent = totalItems;
-                badge.style.display = totalItems > 0 ? 'flex' : 'none';
-            }
-        }
 
-        // 4. CARRITO AJAX
-        function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
-            const originalText = btnElement.innerText;
-            // Texto corto para botones pequeños
-            btnElement.innerText = "..."; 
-            btnElement.disabled = true;
-
-            const url = `/carrito/update/${productId}/`; 
-
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: new URLSearchParams({ 
-                    'action': 'add', 
-                    'cantidad': cantidad 
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if(data.success){
-                    showToast("✅ " + data.mensaje);
-                    if(data.total_items !== undefined) actualizarBadge(data.total_items);
-                    setTimeout(() => { window.location.reload(); }, 600);
+            function actualizarBadge(totalItems){
+                const badge = document.querySelector('#cesta-badge');
+                if(badge){
+                    badge.textContent = totalItems;
+                    badge.style.display = totalItems > 0 ? 'flex' : 'none';
                 } else {
-                    btnElement.innerText = originalText;
-                    btnElement.disabled = false;
-                    showToast(data.mensaje || 'Error al añadir');
+                    const cestaLink = document.querySelector('a[href*="/carrito/"]'); 
+                    if(cestaLink && totalItems > 0){
+                        cestaLink.classList.add('relative'); 
+                        const span = document.createElement('span');
+                        span.id = "cesta-badge";
+                        span.className = "absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-4 w-4 flex items-center justify-center";
+                        span.textContent = totalItems;
+                        cestaLink.appendChild(span);
+                    }
                 }
-            })
-            .catch(error => {
-                console.error(error);
-                btnElement.innerText = originalText;
-                btnElement.disabled = false;
-                showToast('Error de conexión');
-            });
-        }
+            }
 
-        // Listener Universal
-        document.querySelectorAll('.add-to-cart-form').forEach(form => {
-            form.addEventListener('submit', function(e){
-                e.preventDefault();
-                const btn = this.querySelector('button[type="submit"]');
-                const productId = this.dataset.productId;
-                const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-                const inputCantidad = this.querySelector('.quantity-input');
-                const cantidad = inputCantidad ? inputCantidad.value : 1;
-                realizarPeticionCarrito(productId, cantidad, csrfToken, btn);
+            // --- 3. LÓGICA AJAX (ADD TO CART) ---
+            document.querySelectorAll('.add-to-cart-form').forEach(form => {
+                form.addEventListener('submit', function(e){
+                    e.preventDefault();
+
+                    const btn = this.querySelector('button');
+                    const originalText = btn.innerText;
+                    btn.disabled = true;
+                    btn.innerText = "...";
+
+                    const productId = this.dataset.productId;
+                    const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
+                    const cantidad = this.querySelector('.quantity-input').value;
+
+                    // ✅ URL CORRECTA
+                    const url = `/carrito/update/${productId}/`; 
+
+                    fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        // ✅ ACTION: 'add' + cantidad del input
+                        body: new URLSearchParams({ 
+                            'action': 'add', 
+                            'cantidad': cantidad 
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success){
+                            showToast("✅ " + data.mensaje);
+                            if(data.total_items !== undefined) actualizarBadge(data.total_items);
+                            
+                            // ✅ RECARGA para actualizar stock
+                            setTimeout(() => { window.location.reload(); }, 500);
+                        } else {
+                            showToast("❌ " + (data.mensaje || 'Error'));
+                            btn.innerText = originalText;
+                            btn.disabled = false;
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        showToast("❌ Error de conexión");
+                        btn.innerText = originalText;
+                        btn.disabled = false;
+                    });
+                });
             });
         });
-
-        // 5. POLLING DE STOCK
-        function iniciarRevisionStock() {
-            setInterval(() => { actualizarStocksEnTiempoReal(); }, 5000); 
-        }
-
-        function actualizarStocksEnTiempoReal() {
-            let ids = new Set();
-            document.querySelectorAll('.add-to-cart-form').forEach(form => {
-                if(form.dataset.productId) ids.add(form.dataset.productId);
-            });
-            if (ids.size === 0) return;
-            const idsString = Array.from(ids).join(',');
-
-            fetch(`/api/verificar-stock/?ids=${idsString}`)
-                .then(response => response.json())
-                .then(data => {
-                    for (const [productId, stockReal] of Object.entries(data)) {
-                        const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
-                        forms.forEach(form => {
-                            const btn = form.querySelector('button[type="submit"]');
-                            const input = form.querySelector('.quantity-input');
-                            if(input) {
-                                input.setAttribute('max', stockReal);
-                                if(parseInt(input.value) > stockReal && stockReal > 0) {
-                                    input.value = stockReal;
-                                }
-                            }
-                            if (stockReal <= 0) {
-                                if(btn && !btn.disabled) {
-                                    btn.disabled = true;
-                                    btn.innerText = "AGOTADO";
-                                    btn.className = "w-full py-2 bg-gray-100 text-gray-400 text-sm font-bold rounded border border-gray-200 cursor-not-allowed uppercase";
-                                }
-                            } else {
-                                if(btn && btn.disabled) {
-                                    btn.disabled = false;
-                                    if(input){ // Botón de abajo
-                                         btn.innerText = "AÑADIR";
-                                         btn.className = "w-full py-2 bg-white text-[#bf7149] text-sm font-bold rounded border border-[#bf7149] hover:bg-[#bf7149] hover:text-white transition uppercase";
-                                    } else { // Botón de arriba
-                                         btn.innerText = "AÑADIR A LA CESTA";
-                                         btn.className = "w-full px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300";
-                                    }
-                                }
-                            }
-                        });
-                    }
-                })
-                .catch(err => console.error("Error stock:", err));
-        }
-
-        iniciarRevisionStock();
-    });
-</script>
+    </script>
 {% endblock extra_js %}
