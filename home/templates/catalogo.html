@@ -34,7 +34,6 @@
         transform: translateX(-50%) translateY(0);
     }
     
-    /* Efecto Hover Tarjetas */
     .hover\:shadow-hard-halo:hover {
         box-shadow: 0 0 15px rgba(39, 43, 4, 0.4); 
     }
@@ -46,7 +45,15 @@
         overflow: hidden;
     }
 
-    /* Estilos extra para botones de cantidad (del segundo código) */
+    /* Ocultar barra de scroll para que se vea más limpio con las flechas (opcional) */
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
     input[type=number]::-webkit-inner-spin-button, 
     input[type=number]::-webkit-outer-spin-button { 
         -webkit-appearance: none; 
@@ -62,12 +69,10 @@
         <h1 class="text-4xl font-extrabold text-gray-900 mb-4">
             {{ categoria_actual }}      
         </h1>
-        
         <hr class="mb-8">
 
         {% if productos_destacados %}
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 xl:gap-8 mb-16">
-                
                 {% for producto in productos_destacados %}
                     <a href="{% url 'detalle_producto' pk=producto.pk %}" 
                        class="block bg-white rounded-lg p-3 flex flex-col items-center justify-between transition duration-300 ease-in-out transform hover:shadow-hard-halo hover:scale-[1.02] relative group">
@@ -92,23 +97,14 @@
                             <h4 class="text-sm font-bold uppercase text-gray-900 leading-tight mb-1 line-clamp-2">
                                 {{ producto.nombre|upper }}
                             </h4>
-                            
-                            <p class="text-xs text-gray-500 mb-2">
-                                Fabricante: {{ producto.fabricante }}
-                            </p>
-                            
+                            <p class="text-xs text-gray-500 mb-2">Fabricante: {{ producto.fabricante }}</p>
                             <div class="mb-3">
                                 {% if producto.stock > 0 %}
-                                    <span class="text-sm font-semibold text-[#6a760c]">
-                                        {{ producto.stock }} unidades en stock
-                                    </span>
+                                    <span class="text-sm font-semibold text-[#6a760c]">{{ producto.stock }} unidades en stock</span>
                                 {% else %}
-                                    <span class="text-sm font-semibold text-red-600">
-                                        Sin stock
-                                    </span>
+                                    <span class="text-sm font-semibold text-red-600">Sin stock</span>
                                 {% endif %}
                             </div>
-                            
                             <span class="text-4xl font-bold mb-4 text-[#A91B0D]">
                                 {{ producto.euros }},<span class="text-2xl">{{ producto.centavos|stringformat:"02d" }}€</span>
                             </span>
@@ -118,8 +114,7 @@
                             {% if producto.stock > 0 %}
                             <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
                                 {% csrf_token %}
-                                <button type="submit" 
-                                    class="w-full px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
+                                <button type="submit" class="w-full px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300">
                                     Añadir a la Cesta
                                 </button>
                             </form>
@@ -131,7 +126,6 @@
                         {% endif %}
                     </a>
                 {% endfor %}
-                
             </div>
         {% else %}
             <div class="p-6 bg-[#f9fdf2] border-l-4 border-[#bf7149] text-[#bf7149] rounded-lg">
@@ -141,18 +135,27 @@
         {% endif %}
 
         {% if productos_random %}
-        <div class="bg-gray-50 border-t border-gray-200 mt-12 py-12 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8 rounded-xl">
-            <div class="max-w-7xl mx-auto">
-                <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-8 text-center">
-                    También te podría interesar
-                </h2>
-    
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div class="border-t border-gray-200 pt-12 mt-8">
+
+            <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">
+                También te podría interesar
+            </h2>
+
+            <div class="relative w-full group">
+                
+                <button id="scroll-left-btn" class="absolute left-0 top-1/2 transform -translate-y-1/2 -ml-4 z-20 bg-white rounded-full p-3 shadow-lg border border-gray-200 text-gray-700 hover:bg-[#bf7149] hover:text-white transition focus:outline-none hidden md:flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+
+                <div id="related-products-scroll" class="flex overflow-x-auto gap-6 pb-6 px-4 snap-x scrollbar-hide scroll-smooth">
                     
-                    {% for producto in productos_random %} 
-                    <div class="w-full bg-white rounded-xl p-6 flex flex-col border border-gray-100 hover:shadow-card transition-all duration-300 relative group">
+                    {% for producto in productos_random %}
+                    <div class="bg-white rounded-xl p-4 flex flex-col border border-gray-100 shadow-sm hover:shadow-hard-halo transition-all duration-300 snap-center"
+                         style="flex: 0 0 260px; min-width: 260px;">
                         
-                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-48 mb-4 flex items-center justify-center overflow-hidden rounded-lg bg-gray-50">
+                        <a href="{% url 'detalle_producto' pk=producto.pk %}" class="block relative h-40 mb-4 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden">
                             {% if producto.imagen %}
                                 <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}" class="max-h-full max-w-full object-contain mix-blend-multiply">
                             {% else %}
@@ -160,41 +163,37 @@
                             {% endif %}
 
                             {% if producto.stock <= 0 %}
-                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-4 transform -rotate-45 whitespace-nowrap shadow-md">AGOTADO</span>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none bg-white bg-opacity-60">
+                                <span class="bg-red-500 text-white text-xs font-bold uppercase py-1 px-3 transform -rotate-12 shadow-md">AGOTADO</span>
                             </div>
                             {% endif %}
                         </a>
 
-                        <div class="flex-grow flex flex-col">
-                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-lg font-bold uppercase text-gray-800 leading-tight mb-2 line-clamp-2 min-h-[3rem] hover:text-[#bf7149]">
+                        <div class="flex-grow flex flex-col text-center">
+                            <a href="{% url 'detalle_producto' pk=producto.pk %}" class="text-sm font-bold uppercase text-gray-800 mb-1 hover:text-[#bf7149] line-clamp-2 min-h-[2.5rem]">
                                 {{ producto.nombre|lower|capfirst }}
                             </a>
                             
-                            <div class="mt-auto pt-4">
-                                <div class="text-2xl font-bold text-[#A91B0D] mb-4">
-                                    {{ producto.precio|floatformat:2 }} €
-                                </div>
-                                
+                            <p class="text-xl font-bold text-[#A91B0D] mb-3">
+                                {{ producto.precio|floatformat:2 }} €
+                            </p>
+
+                            <div class="mt-auto">
                                 {% if not user.is_staff %}
                                     {% if producto.stock > 0 %}
-                                        
                                         <form class="add-to-cart-form w-full" data-product-id="{{ producto.pk }}">
                                             {% csrf_token %}
-                                            
-                                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-3 mx-auto w-fit bg-white shadow-sm">
-                                                <button type="button" onclick="changeQuantity(this, -1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 transition text-gray-600 font-bold text-sm">-</button>
-                                                <input type="number" name="cantidad" class="quantity-input w-12 text-center border-none focus:ring-0 focus:outline-none text-gray-700 font-medium h-full py-2 text-sm" value="1" min="1" max="{{ producto.stock }}" readonly>
-                                                <button type="button" onclick="changeQuantity(this, 1)" class="px-3 py-2 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 transition text-gray-600 font-bold text-sm">+</button>
+                                            <div class="flex items-center justify-center gap-0 border border-gray-300 rounded-lg mb-2 mx-auto w-fit bg-white">
+                                                <button type="button" onclick="changeQuantity(this, -1)" class="px-2 py-1 bg-gray-50 hover:bg-gray-100 border-r border-gray-300 text-gray-600 font-bold">-</button>
+                                                <input type="number" name="cantidad" class="quantity-input w-8 text-center border-none text-sm p-1 focus:ring-0 font-medium" value="1" min="1" max="{{ producto.stock }}" readonly>
+                                                <button type="button" onclick="changeQuantity(this, 1)" class="px-2 py-1 bg-gray-50 hover:bg-gray-100 border-l border-gray-300 text-gray-600 font-bold">+</button>
                                             </div>
-
-                                            <button type="submit" class="w-full py-2 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300 shadow-sm uppercase text-sm">
-                                                Añadir a la Cesta
+                                            <button type="submit" class="w-full py-2 bg-white text-[#bf7149] text-sm font-bold rounded border border-[#bf7149] hover:bg-[#bf7149] hover:text-white transition uppercase">
+                                                Añadir
                                             </button>
                                         </form>
-
                                     {% else %}
-                                        <button disabled class="w-full py-3 bg-gray-300 text-gray-500 font-bold rounded-lg cursor-not-allowed text-sm uppercase shadow-inner">
+                                        <button disabled class="w-full py-2 bg-gray-100 text-gray-400 text-sm font-bold rounded border border-gray-200 cursor-not-allowed uppercase">
                                             AGOTADO
                                         </button>
                                     {% endif %}
@@ -204,6 +203,13 @@
                     </div>
                     {% endfor %}
                 </div>
+
+                <button id="scroll-right-btn" class="absolute right-0 top-1/2 transform -translate-y-1/2 -mr-4 z-20 bg-white rounded-full p-3 shadow-lg border border-gray-200 text-gray-700 hover:bg-[#bf7149] hover:text-white transition focus:outline-none hidden md:flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+
             </div>
         </div>
         {% endif %}
@@ -227,7 +233,7 @@
     {{ block.super }} 
     
 <script>
-    // 1. FUNCIÓN GLOBAL DE CANTIDAD (Para la sección de abajo)
+    // 1. FUNCIÓN GLOBAL DE CANTIDAD
     function changeQuantity(btn, change) {
         const container = btn.closest('div'); 
         const input = container.querySelector('.quantity-input');
@@ -237,20 +243,42 @@
         let currentValue = parseInt(input.value);
         const maxStock = parseInt(input.getAttribute('max'));
         const minVal = 1;
-
         let newValue = currentValue + change;
 
-        // Validaciones
         if (newValue >= minVal && newValue <= maxStock) {
             input.value = newValue;
         } else if (newValue > maxStock) {
-            input.value = maxStock; // No pasar del stock
+            input.value = maxStock; 
         }
     }
 
     document.addEventListener('DOMContentLoaded', function() {
         
-        // 2. UTILIDADES (TOAST & BADGE)
+        // 2. LÓGICA DE FLECHAS DEL CARRUSEL
+        const scrollContainer = document.getElementById('related-products-scroll');
+        const leftBtn = document.getElementById('scroll-left-btn');
+        const rightBtn = document.getElementById('scroll-right-btn');
+
+        if(scrollContainer && leftBtn && rightBtn) {
+            // Cantidad de scroll al hacer clic (ancho de tarjeta + gap aprox)
+            const scrollAmount = 300; 
+
+            leftBtn.addEventListener('click', () => {
+                scrollContainer.scrollBy({
+                    left: -scrollAmount,
+                    behavior: 'smooth'
+                });
+            });
+
+            rightBtn.addEventListener('click', () => {
+                scrollContainer.scrollBy({
+                    left: scrollAmount,
+                    behavior: 'smooth'
+                });
+            });
+        }
+
+        // 3. UTILIDADES (TOAST & BADGE)
         function showToast(mensaje){
             let container = document.getElementById('toast-container');
             if(!container){
@@ -259,14 +287,11 @@
                 container.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 z-50 space-y-2 pointer-events-none';
                 document.body.appendChild(container);
             }
-            
             const toast = document.createElement('div');
             toast.className = 'toast';
             toast.textContent = mensaje;
             container.appendChild(toast);
-            
-            void toast.offsetWidth; // Reflow
-            
+            void toast.offsetWidth; 
             toast.classList.add('show');
             setTimeout(() => {
                 toast.classList.remove('show'); 
@@ -292,10 +317,11 @@
             }
         }
 
-        // 3. CARRITO AJAX
+        // 4. CARRITO AJAX
         function realizarPeticionCarrito(productId, cantidad, csrfToken, btnElement) {
             const originalText = btnElement.innerText;
-            btnElement.innerText = "Añadiendo...";
+            // Texto corto para botones pequeños
+            btnElement.innerText = "..."; 
             btnElement.disabled = true;
 
             const url = `/carrito/update/${productId}/`; 
@@ -332,28 +358,22 @@
             });
         }
 
-        // Listener para TODOS los formularios (Rejilla principal + Productos Random)
+        // Listener Universal
         document.querySelectorAll('.add-to-cart-form').forEach(form => {
             form.addEventListener('submit', function(e){
                 e.preventDefault();
-                
                 const btn = this.querySelector('button[type="submit"]');
                 const productId = this.dataset.productId;
                 const csrfToken = this.querySelector('[name=csrfmiddlewaretoken]').value;
-                
-                // Leemos el input si existe (sección de abajo), si no (rejilla principal) usamos 1
                 const inputCantidad = this.querySelector('.quantity-input');
                 const cantidad = inputCantidad ? inputCantidad.value : 1;
-
                 realizarPeticionCarrito(productId, cantidad, csrfToken, btn);
             });
         });
 
-        // 4. POLLING DE STOCK (Actualización en tiempo real)
+        // 5. POLLING DE STOCK
         function iniciarRevisionStock() {
-            setInterval(() => {
-                actualizarStocksEnTiempoReal();
-            }, 5000); 
+            setInterval(() => { actualizarStocksEnTiempoReal(); }, 5000); 
         }
 
         function actualizarStocksEnTiempoReal() {
@@ -361,7 +381,6 @@
             document.querySelectorAll('.add-to-cart-form').forEach(form => {
                 if(form.dataset.productId) ids.add(form.dataset.productId);
             });
-
             if (ids.size === 0) return;
             const idsString = Array.from(ids).join(',');
 
@@ -370,32 +389,31 @@
                 .then(data => {
                     for (const [productId, stockReal] of Object.entries(data)) {
                         const forms = document.querySelectorAll(`.add-to-cart-form[data-product-id="${productId}"]`);
-                        
                         forms.forEach(form => {
                             const btn = form.querySelector('button[type="submit"]');
                             const input = form.querySelector('.quantity-input');
-
-                            // Actualizar el atributo MAX
                             if(input) {
                                 input.setAttribute('max', stockReal);
                                 if(parseInt(input.value) > stockReal && stockReal > 0) {
                                     input.value = stockReal;
                                 }
                             }
-
                             if (stockReal <= 0) {
                                 if(btn && !btn.disabled) {
                                     btn.disabled = true;
                                     btn.innerText = "AGOTADO";
-                                    btn.classList.remove('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
-                                    btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    btn.className = "w-full py-2 bg-gray-100 text-gray-400 text-sm font-bold rounded border border-gray-200 cursor-not-allowed uppercase";
                                 }
                             } else {
                                 if(btn && btn.disabled) {
                                     btn.disabled = false;
-                                    btn.innerText = "AÑADIR A LA CESTA";
-                                    btn.classList.add('bg-[#bf7149]', 'hover:bg-yellow-600', 'text-white');
-                                    btn.classList.remove('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'border', 'border-gray-300');
+                                    if(input){ // Botón de abajo
+                                         btn.innerText = "AÑADIR";
+                                         btn.className = "w-full py-2 bg-white text-[#bf7149] text-sm font-bold rounded border border-[#bf7149] hover:bg-[#bf7149] hover:text-white transition uppercase";
+                                    } else { // Botón de arriba
+                                         btn.innerText = "AÑADIR A LA CESTA";
+                                         btn.className = "w-full px-4 mb-4 py-1 bg-[#bf7149] text-white font-semibold rounded-lg hover:bg-yellow-600 transition duration-300";
+                                    }
                                 }
                             }
                         });

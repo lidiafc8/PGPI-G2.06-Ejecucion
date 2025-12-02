@@ -1,11 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 import uuid
+import random # Necesario para el random sample si no usas order_by(?)
 from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra, Pedido, EstadoPedido, TipoEnvio
 from django.contrib import messages
 from django.http import JsonResponse
 
-# --- HELPER PARA FILTROS ---
+# --- HELPERS ---
+
 def obtener_opciones_filtro():
     """Retorna las opciones únicas para los filtros."""
     rangos_precio = [
@@ -17,42 +19,44 @@ def obtener_opciones_filtro():
     fabricantes = Producto.objects.values_list('fabricante', flat=True).distinct().order_by('fabricante')
     return { 'precios': rangos_precio, 'fabricantes': list(fabricantes) }
 
+def _calcular_desglose_precio(queryset):
+    """
+    Añade los atributos .euros y .centavos a cada producto de una lista o queryset.
+    """
+    for p in queryset:
+        p.euros = int(p.precio)
+        p.centavos = int((p.precio - p.euros) * 100)
+    return queryset
+
 # -------------------------------------------------------------------------
-# VISTA PRINCIPAL (ESTA ES LA QUE MANDA AHORA)
+# VISTA PRINCIPAL (HOME)
 # -------------------------------------------------------------------------
 def index(request, categoria=None):
-    template_name = 'index.html' # Asumo que tu template de portada se llama home.html o index.html
+    template_name = 'index.html'
     categoria_valor = None
     
-    # 1. LOGICA DE SELECCIÓN DE PRODUCTOS (CARRUSEL ARRIBA)
+    # 1. LOGICA PRINCIPAL (CARRUSEL ARRIBA / REJILLA PRINCIPAL)
     if categoria:
-        # Si hay categoría en la URL, filtramos por esa categoría
+        # Si hay categoría en la URL
         categoria_valor = categoria.upper()
         productos_principal = Producto.objects.filter(categoria=categoria_valor)
-        template_name = 'catalogo.html' # Cambiamos template si es categoría
+        template_name = 'catalogo.html'
         categoria_valor = categoria_valor.replace('_', ' ')
     else:
-        # SI ESTAMOS EN LA PORTADA:
-        # AQUÍ ESTÁ EL FILTRO IMPORTANTE. Solo carga los que tienen el check puesto.
+        # PORTADA: Solo destacados
         productos_principal = Producto.objects.filter(esta_destacado=True)
-    #Nota: Ya no se obtiene la lista de categorías/secciones aquí porque es estática en el template.
 
-    # 2. PRODUCTOS DE ABAJO (Grid de 6 destacados)
-    # Filtramos que tengan stock, que sean destacados y cogemos 6 aleatorios
-    productos_abajo = Producto.objects.filter(stock__gt=0, esta_destacado=True).order_by('?')[:6]
+    # 2. PRODUCTOS DE ABAJO (CARRUSEL INFERIOR)
+    # Cogemos 10 aleatorios que tengan stock para la sección "También te podría interesar"
+    productos_abajo = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
 
-    # 3. CALCULOS DE PRECIO (EUROS/CENTAVOS)
-    for p in productos_principal:
-        p.euros = int(p.precio)
-        p.centavos = int((p.precio - p.euros) * 100)
-
-    for p in productos_abajo:
-        p.euros = int(p.precio)
-        p.centavos = int((p.precio - p.euros) * 100)
+    # 3. PREPARAR PRECIOS
+    _calcular_desglose_precio(productos_principal)
+    _calcular_desglose_precio(productos_abajo)
 
     contexto = {
-        'productos_destacados': productos_principal, # Carrusel Arriba
-        'productos_random': productos_abajo,         # Carrusel Abajo
+        'productos_destacados': productos_principal, # Lo que sale arriba
+        'productos_random': productos_abajo,         # Lo que sale abajo (carrusel pequeño)
         'categoria_actual': categoria_valor,
         'opciones_filtro': obtener_opciones_filtro(),
         'precio_seleccionado': '',
@@ -61,25 +65,27 @@ def index(request, categoria=None):
         'plantilla_base': 'base.html',
     }
     
-    # Si por alguna razón tu archivo se llama home.html en vez de index.html, cambia esto abajo:
     return render(request, template_name, contexto)
 
 
 # -------------------------------------------------------------------------
-# RESTO DE VISTAS (CATÁLOGO, DETALLE, ETC)
+# VISTA CATÁLOGO (CON FILTROS Y CARRUSEL ALEATORIO)
 # -------------------------------------------------------------------------
-
 def catalogo(request, categoria=None):
+    """
+    Vista específica para listados con filtros laterales.
+    """
     productos_a_mostrar = Producto.objects.all()
     categoria_valor = None
     template_name = 'catalogo.html'
     filtros_activos = False 
 
-    # Recuperar filtros del GET
+    # 1. Recuperar filtros del GET
     precio_rango_str = request.GET.get('precio', '')
     fabricante_seleccionado = request.GET.get('fabricante', '')
     seccion_filtro_seleccionada = request.GET.get('seccion_filtro', '') 
 
+    # 2. Filtrado inicial por categoría o contexto
     if categoria:
         categoria_valor = categoria.upper()
         productos_a_mostrar = productos_a_mostrar.filter(categoria=categoria_valor)
@@ -87,7 +93,6 @@ def catalogo(request, categoria=None):
     else:
         # Lógica de fallback
         if request.resolver_match.url_name == 'home': 
-            # Si se llama desde home, filtrar destacados
             productos_a_mostrar = Producto.objects.filter(esta_destacado=True)
             template_name = 'index.html'
             categoria_display = None
@@ -96,7 +101,7 @@ def catalogo(request, categoria=None):
         else:
             categoria_display = 'CATÁLOGO COMPLETO'
 
-    # Aplicar filtros
+    # 3. Aplicar Filtros Avanzados
     q_filtros = Q()
     if precio_rango_str:
         try:
@@ -116,12 +121,17 @@ def catalogo(request, categoria=None):
     if q_filtros:
         productos_a_mostrar = productos_a_mostrar.filter(q_filtros)
 
-    for p in productos_a_mostrar:
-        p.euros = int(p.precio)
-        p.centavos = int((p.precio - p.euros) * 100)
+    # 4. OBTENER PRODUCTOS RANDOM PARA EL CARRUSEL DE ABAJO
+    # Esto soluciona tu problema: cogemos productos al azar de TODA la tienda, no solo los filtrados.
+    productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
+
+    # 5. Calcular precios
+    _calcular_desglose_precio(productos_a_mostrar)
+    _calcular_desglose_precio(productos_random)
 
     contexto = {
-        'productos_destacados': productos_a_mostrar,
+        'productos_destacados': productos_a_mostrar, # Rejilla principal
+        'productos_random': productos_random,        # Carrusel de abajo ("Cualquiera")
         'categoria_actual': categoria_display,
         'opciones_filtro': obtener_opciones_filtro(),
         'filtros_activos': filtros_activos,
@@ -132,20 +142,25 @@ def catalogo(request, categoria=None):
     }
     return render(request, template_name, contexto)
 
+
+# -------------------------------------------------------------------------
+# DETALLE DE PRODUCTO
+# -------------------------------------------------------------------------
 def detalle_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
-    # Precios
+    
+    # Precios del producto principal
     producto.euros = int(producto.precio)
     producto.centavos = int((producto.precio - producto.euros) * 100)
 
-    productos_relacionados = Producto.objects.filter(categoria=producto.categoria).exclude(pk=pk)
-    for p in productos_relacionados:
-        p.euros = int(p.precio)
-        p.centavos = int((p.precio - p.euros) * 100)
+    # Productos relacionados (Misma categoría, excluyendo el actual)
+    # Usamos el nombre 'productos_random' para que el template reutilice el carrusel de abajo
+    productos_relacionados = Producto.objects.filter(categoria=producto.categoria).exclude(pk=pk).order_by('?')[:10]
+    _calcular_desglose_precio(productos_relacionados)
 
     contexto = {
         'producto': producto,
-        'productos_relacionados': productos_relacionados,
+        'productos_random': productos_relacionados, # Enviamos como 'random' para el carrusel
         'opciones_filtro': obtener_opciones_filtro(), 
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
@@ -153,12 +168,24 @@ def detalle_producto(request, pk):
     }
     return render(request, 'detalle_producto.html', contexto)
 
+
+# -------------------------------------------------------------------------
+# BUSCADOR
+# -------------------------------------------------------------------------
 def buscar_productos(request):
     query = request.GET.get('q', '').strip()
     productos_encontrados = []
+    
     if query:
-        query_lower = query.lower()
+        # Filtro insensitivo (icontains suele ser mejor que iterar en python, pero mantengo tu lógica si prefieres)
+        # Optimizacion: Usar Q objects es más eficiente que iterar toda la DB en Python
+        criterio = Q(nombre__icontains=query) | Q(fabricante__icontains=query)
+        # Nota: filtrar por choice display value en DB es complejo, si funciona tu lógica actual ok, 
+        # pero si la DB crece, cámbialo a filtros directos.
+        
+        # Mantenemos tu lógica original para respetar tu forma de búsqueda:
         todos = Producto.objects.all()
+        query_lower = query.lower()
         for p in todos:
             if (query_lower in p.nombre.lower() or 
                 query_lower in p.fabricante.lower() or 
@@ -167,29 +194,43 @@ def buscar_productos(request):
                 p.centavos = int((p.precio - p.euros) * 100)
                 productos_encontrados.append(p)
 
+    # También pasamos randoms al buscador
+    productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
+    _calcular_desglose_precio(productos_random)
+
     contexto = {
         'query': query,
         'productos_destacados': productos_encontrados,
+        'productos_random': productos_random, # Carrusel abajo
         'categoria_actual': f'Resultados: {query}',
         'opciones_filtro': obtener_opciones_filtro(), 
-        'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
+        'precio_seleccionado': '', 
+        'fabricante_seleccionado': '', 
+        'seccion_filtro_seleccionada': '',
     }
     return render(request, 'catalogo.html', contexto)
 
+
+# -------------------------------------------------------------------------
+# CESTA DE LA COMPRA (AJAX)
+# -------------------------------------------------------------------------
 def agregar_a_cesta(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     cantidad = int(request.POST.get('cantidad', 1))
 
+    # VALIDACIÓN DE STOCK (CRÍTICO)
+    # No queremos añadir si no hay stock real
+    if cantidad > producto.stock:
+         return JsonResponse({
+            "success": False, 
+            "mensaje": f"❌ Solo quedan {producto.stock} unidades."
+        })
+
     if request.user.is_authenticated:
-        # Lógica usuario registrado
-        try:
-            cliente = UsuarioCliente.objects.get(usuario=request.user)
-        except UsuarioCliente.DoesNotExist:
-            # Crear cliente si no existe (parche rápido)
-            cliente = UsuarioCliente.objects.create(usuario=request.user)
+        # Usamos get_or_create para evitar errores si el usuario existe pero no tiene cliente
+        cliente, _ = UsuarioCliente.objects.get_or_create(usuario=request.user)
         cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=cliente)
     else:
-        # Lógica usuario anónimo
         session_id = request.session.get("cesta_id")
         if not session_id:
             session_id = str(uuid.uuid4())
@@ -200,44 +241,52 @@ def agregar_a_cesta(request, producto_id):
         cesta_compra=cesta, producto=producto,
         defaults={"cantidad": cantidad, "precio_unitario": producto.precio}
     )
+
+    # Validar stock acumulado (si ya tenía 1 y añade 5, pero solo hay 3)
+    cantidad_final = item.cantidad + cantidad if not creado else cantidad
+    
+    if cantidad_final > producto.stock:
+        return JsonResponse({
+            "success": False, 
+            "mensaje": f"❌ Stock insuficiente. Máximo: {producto.stock}"
+        })
+
     if not creado:
         item.cantidad += cantidad
+    
+    # Actualizar precio por si cambió desde que se añadió
     item.precio_unitario = producto.precio
     item.save()
 
     total_items = sum(i.cantidad for i in cesta.items.all())
+    
     return JsonResponse({
         "success": True, 
         "mensaje": f"✅ {producto.nombre} añadido.", 
         "total_items": total_items
-        
     })
 
+
+# -------------------------------------------------------------------------
+# SEGUIMIENTO DE PEDIDOS
+# -------------------------------------------------------------------------
 def _obtener_historial_del_pedido(pedido):
-    """
-    Define el estado del seguimiento basado en el campo 'estado' del pedido.
-    """
     estados_mapeados = [
         {'nombre': 'Pedido Recibido', 'completado': True, 'fecha': pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M')},
         {'nombre': 'En Preparación', 'completado': pedido.estado in [EstadoPedido.ENVIADO, EstadoPedido.ENTREGADO]},
         {'nombre': 'Enviado', 'completado': pedido.estado == EstadoPedido.ENVIADO or pedido.estado == EstadoPedido.ENTREGADO},
         {'nombre': 'Entregado', 'completado': pedido.estado == EstadoPedido.ENTREGADO},
     ]
+    # Ajuste visual simple para fechas
     for paso in estados_mapeados:
         if paso['completado'] and paso['nombre'] != 'Pedido Recibido':
             paso['fecha'] = "Completado" 
-
     return estados_mapeados
 
 def seguimiento_pedido(request, order_id, tracking_hash):
-    """
-    Muestra el estado actual del pedido usando ID y el tracking_id como hash de seguridad.
-    """
     try:
-        pedido = Pedido.objects.get( 
-            id=order_id, 
-            tracking_id=tracking_hash
-        )
+        pedido = Pedido.objects.get(id=order_id, tracking_id=tracking_hash)
+        
         total = pedido.total_importe
         total_euros = int(total)
         total_centavos = int((total - total_euros) * 100)
@@ -256,37 +305,27 @@ def seguimiento_pedido(request, order_id, tracking_hash):
         return render(request, 'seguimiento_pedido.html', context)
 
     except Pedido.DoesNotExist:
-        # Intentar obtener el pedido solo por ID para informar si hay mismatch de tracking_id
+        # Manejo de errores
         try:
+            # Check si es solo el hash lo que falla
             pedido_por_id = Pedido.objects.get(id=order_id)
-            mensaje = (
-                f"Pedido encontrado (ID={order_id}) pero el código de seguimiento no coincide. "
-                f"Tracking en DB: {pedido_por_id.tracking_id} | Tracking recibido: {tracking_hash}"
-            )
+            mensaje = f"Error de seguridad: El código de seguimiento no coincide para el pedido {order_id}."
         except Pedido.DoesNotExist:
-            mensaje = "El pedido no existe con el ID proporcionado. Por favor, verifica el enlace en tu email."
+            mensaje = "El pedido no existe."
 
         messages.error(request, mensaje)
-        # Renderizar plantilla de error para mostrar información útil al usuario/desarrollador
+        
         context_error = {
             'message': mensaje,
             'opciones_filtro': obtener_opciones_filtro(),
-            'precio_seleccionado': '',
-            'fabricante_seleccionado': '',
-            'seccion_filtro_seleccionada': '',
+            'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
         }
         return render(request, 'error_seguimiento.html', context_error)
+        
     except Exception as e:
-        # Registrar para depuración y mostrar mensaje de error genérico
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.exception("Error inesperado en seguimiento_pedido: %s", e)
-        messages.error(request, f"Error inesperado al acceder al seguimiento. Intente más tarde. ({e})")
-        context_error = {
-            'message': f"Error inesperado al acceder al seguimiento. ({e})",
+        messages.error(request, f"Error inesperado: {e}")
+        return render(request, 'error_seguimiento.html', {
+            'message': "Error del servidor.",
             'opciones_filtro': obtener_opciones_filtro(),
-            'precio_seleccionado': '',
-            'fabricante_seleccionado': '',
-            'seccion_filtro_seleccionada': '',
-        }
-        return render(request, 'error_seguimiento.html', context_error)
+            'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
+        })
