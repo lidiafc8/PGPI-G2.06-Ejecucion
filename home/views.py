@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 import uuid
-import random # Necesario para el random sample si no usas order_by(?)
+import random 
 from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra, Pedido, EstadoPedido, TipoEnvio
 from django.contrib import messages
 from django.http import JsonResponse
@@ -23,6 +23,10 @@ def _calcular_desglose_precio(queryset):
     """
     Añade los atributos .euros y .centavos a cada producto de una lista o queryset.
     """
+    # Convierte el queryset a lista si no lo es, para permitir la modificación de atributos
+    if not isinstance(queryset, list):
+        queryset = list(queryset)
+        
     for p in queryset:
         p.euros = int(p.precio)
         p.centavos = int((p.precio - p.euros) * 100)
@@ -56,7 +60,7 @@ def index(request, categoria=None):
 
     contexto = {
         'productos_destacados': productos_principal, # Lo que sale arriba
-        'productos_random': productos_abajo,         # Lo que sale abajo (carrusel pequeño)
+        'productos_random': productos_abajo,        # Lo que sale abajo (carrusel pequeño)
         'categoria_actual': categoria_valor,
         'opciones_filtro': obtener_opciones_filtro(),
         'precio_seleccionado': '',
@@ -122,7 +126,6 @@ def catalogo(request, categoria=None):
         productos_a_mostrar = productos_a_mostrar.filter(q_filtros)
 
     # 4. OBTENER PRODUCTOS RANDOM PARA EL CARRUSEL DE ABAJO
-    # Esto soluciona tu problema: cogemos productos al azar de TODA la tienda, no solo los filtrados.
     productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
 
     # 5. Calcular precios
@@ -144,7 +147,7 @@ def catalogo(request, categoria=None):
 
 
 # -------------------------------------------------------------------------
-# DETALLE DE PRODUCTO
+# DETALLE DE PRODUCTO (CORREGIDA)
 # -------------------------------------------------------------------------
 def detalle_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
@@ -154,13 +157,19 @@ def detalle_producto(request, pk):
     producto.centavos = int((producto.precio - producto.euros) * 100)
 
     # Productos relacionados (Misma categoría, excluyendo el actual)
-    # Usamos el nombre 'productos_random' para que el template reutilice el carrusel de abajo
-    productos_relacionados = Producto.objects.filter(categoria=producto.categoria).exclude(pk=pk).order_by('?')[:10]
+    productos_relacionados = Producto.objects.filter(
+        categoria=producto.categoria
+    ).exclude(
+        pk=pk
+    ).order_by('?')[:10]
+    
     _calcular_desglose_precio(productos_relacionados)
 
     contexto = {
         'producto': producto,
-        'productos_random': productos_relacionados, # Enviamos como 'random' para el carrusel
+        # *** CORRECCIÓN APLICADA AQUÍ: Se usa 'productos_relacionados' ***
+        'productos_relacionados': productos_relacionados, 
+        
         'opciones_filtro': obtener_opciones_filtro(), 
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
@@ -177,12 +186,6 @@ def buscar_productos(request):
     productos_encontrados = []
     
     if query:
-        # Filtro insensitivo (icontains suele ser mejor que iterar en python, pero mantengo tu lógica si prefieres)
-        # Optimizacion: Usar Q objects es más eficiente que iterar toda la DB en Python
-        criterio = Q(nombre__icontains=query) | Q(fabricante__icontains=query)
-        # Nota: filtrar por choice display value en DB es complejo, si funciona tu lógica actual ok, 
-        # pero si la DB crece, cámbialo a filtros directos.
-        
         # Mantenemos tu lógica original para respetar tu forma de búsqueda:
         todos = Producto.objects.all()
         query_lower = query.lower()
@@ -219,12 +222,11 @@ def agregar_a_cesta(request, producto_id):
     cantidad = int(request.POST.get('cantidad', 1))
 
     # VALIDACIÓN DE STOCK (CRÍTICO)
-    # No queremos añadir si no hay stock real
     if cantidad > producto.stock:
-         return JsonResponse({
-            "success": False, 
-            "mensaje": f"❌ Solo quedan {producto.stock} unidades."
-        })
+        return JsonResponse({
+             "success": False, 
+             "mensaje": f"❌ Solo quedan {producto.stock} unidades."
+         })
 
     if request.user.is_authenticated:
         # Usamos get_or_create para evitar errores si el usuario existe pero no tiene cliente
@@ -242,7 +244,7 @@ def agregar_a_cesta(request, producto_id):
         defaults={"cantidad": cantidad, "precio_unitario": producto.precio}
     )
 
-    # Validar stock acumulado (si ya tenía 1 y añade 5, pero solo hay 3)
+    # Validar stock acumulado
     cantidad_final = item.cantidad + cantidad if not creado else cantidad
     
     if cantidad_final > producto.stock:
