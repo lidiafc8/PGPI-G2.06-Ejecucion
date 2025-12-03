@@ -123,7 +123,7 @@
                 <div class="mt-6 space-y-3">
                     {% if articulos %}
                         
-                        <a href="#" class="block w-full">
+                        <a href="{% url 'carrito:checkout' %}">
                             <button class="w-full bg-[#6a760c] hover:bg-[#56600a] text-white font-bold py-4 rounded-lg shadow-md hover:shadow-lg transition duration-200 uppercase tracking-wide">
                                 Continuar al Pago
                             </button>
