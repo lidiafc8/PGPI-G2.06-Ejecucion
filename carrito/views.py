@@ -346,6 +346,8 @@ def checkout(request):
                 if len(partes) >= 3:
                     datos_cliente['direccion_calle'] = partes[0]
                     datos_cliente['direccion_pais'] = partes[-1]
+                    datos_cliente['direccion_cp'] = partes[1]
+                    datos_cliente['direccion_ciudad'] = partes[2]
             
             # Tarjetas
             for tarjeta in usuario_cliente.tarjetas.all():
