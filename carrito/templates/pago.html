@@ -121,9 +121,7 @@
                                             {% endfor %}
                                             <option value="nueva">Usar una nueva tarjeta</option>
                                         </select>
-                                        <button type="button" id="manage_cards_btn" class="text-sm px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition duration-150 whitespace-nowrap">
-                                            Gestionar
-                                        </button>
+                                        
                                     </div>
                                     <input type="hidden" id="selected_card_id" name="selected_card_id" 
                                         value="{% if tiene_tarjeta_guardada %}{{ tarjetas_para_contexto.0.id }}{% else %}nueva{% endif %}">
