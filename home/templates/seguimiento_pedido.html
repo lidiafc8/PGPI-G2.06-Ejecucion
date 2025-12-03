@@ -8,7 +8,7 @@
     
     <div class="flex justify-between items-center mb-6 border-b pb-4">
         <h1 class="text-3xl font-bold text-gray-900 lm-text-green">
-            Estado de tu Pedido <span class="text-black">#{{ pedido.id }}</span>
+            Estado de tu Pedido <span class="text-black">{{ pedido.tracking_id }}</span>
         </h1>
         <a href="{% url 'home' %}" 
             class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition font-medium flex items-center space-x-2 text-sm">
@@ -69,13 +69,15 @@
                 <h2 class="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Información de Envío</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Email de Contacto</p>
-                        <p class="text-lg font-semibold text-gray-900">{{ pedido.correo_electronico }}</p>
-                    </div>
-                    <div>
-                        <p class="text-sm font-medium text-gray-500">Teléfono</p>
-                        <p class="text-lg text-gray-700">{{ pedido.telefono|default:"N/A" }}</p>
+                    <div class="flex space-x-8"> 
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Email de Contacto</p>
+                            <p class="text-lg font-semibold text-gray-900">{{ pedido.correo_electronico }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-500">Teléfono</p>
+                            <p class="text-lg text-gray-700">{{ pedido.telefono|default:"N/A" }}</p>
+                        </div>
                     </div>
 
                     <div class="sm:col-span-2">
