@@ -2,6 +2,23 @@
 
 {% block title %}Ticket Pedido #{{ pedido.id }}{% endblock %}
 
+{% block breadcrumbs %}
+    <li>
+        {# Enlaza de nuevo a la lista de pedidos #}
+        <span class="text-lg text-gray-500">></span>
+        <a href="{% url 'perfil:lista_pedidos_cliente' %}" class="text-sm font-medium text-gray-700 hover:text-[#bf7149]">
+            MIS PEDIDOS
+        </a>
+    </li>
+    <li>
+        {# Muestra el ticket actual (sin enlace) #}
+        <span class="text-lg text-gray-500">></span>
+        <span class="text-sm font-medium text-gray-500">
+            TICKET #{{ pedido.id }}
+        </span>
+    </li>
+{% endblock breadcrumbs %}
+
 {% block content %}
 <main class="py-12">
     <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
