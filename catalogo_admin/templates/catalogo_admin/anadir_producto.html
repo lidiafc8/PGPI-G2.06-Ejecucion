@@ -21,10 +21,18 @@
     <svg class="w-4 h-4 mx-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
     </svg>
+    {% if es_edicion %}
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            EDITAR PRODUCTO: {{ producto.nombre }}
+        </span>
+    {% else %}
+        <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
+            AÑADIR PRODUCTO 
+        </span>
+    {% endif %}
     
-    <span class="text- font-medium text-gray-500 hover:text-[#bf7149]">
-        AÑADIR PRODUCTO 
-    </span>
+
+
 
 {% endblock %}
 
