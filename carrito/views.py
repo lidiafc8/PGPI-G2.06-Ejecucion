@@ -335,7 +335,29 @@ def checkout(request):
         'telefono': '', 'direccion_calle': '', 'direccion_cp': '', 'direccion_ciudad': '', 'direccion_pais': '',      
         'tipo_envio_default': TipoEnvio.DOMICILIO, 'tipo_pago_default': TipoPago.PASARELA_PAGO,
     }
+    tarjetas_guardadas = None
+    tiene_tarjeta_guardada = False
     tarjetas_para_contexto = []
+    if request.user.is_authenticated:
+        try:
+            usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
+            tarjetas_guardadas = usuario_cliente.tarjetas.all()
+            
+            # 1. Procesar y enmascarar las tarjetas para el frontend
+            for tarjeta in tarjetas_guardadas:
+                # La tarjeta enmascarada tendrá 12 asteriscos + los 4 dígitos finales
+                numero_enmascarado = f"************{tarjeta.ultimos_cuatro}"
+                
+                tarjetas_para_contexto.append({
+                    'id': tarjeta.id,
+                    'numero_enmascarado': numero_enmascarado,
+                    'ultimos_cuatro': tarjeta.ultimos_cuatro,
+                    'fecha_expiracion': tarjeta.card_expiry, # Pasa la fecha real (MM/AA)
+                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first()) # Marcar la primera por defecto
+                })
+            
+        except UsuarioCliente.DoesNotExist:
+            pass
 
     if request.user.is_authenticated:
         try:
@@ -348,16 +370,6 @@ def checkout(request):
                     datos_cliente['direccion_pais'] = partes[-1]
                     datos_cliente['direccion_cp'] = partes[1]
                     datos_cliente['direccion_ciudad'] = partes[2]
-            
-            # Tarjetas
-            for tarjeta in usuario_cliente.tarjetas.all():
-                tarjetas_para_contexto.append({
-                    'id': tarjeta.id,
-                    'numero_enmascarado': f"************{tarjeta.ultimos_cuatro}",
-                    'ultimos_cuatro': tarjeta.ultimos_cuatro,
-                    'fecha_expiracion': tarjeta.card_expiry, 
-                    'es_seleccionada': False 
-                })
                 
             if usuario_cliente.tipo_envio == TipoEnvio.RECOGIDA_TIENDA: coste_envio = Decimal('0.00')
             else: coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
@@ -373,7 +385,8 @@ def checkout(request):
         'coste_envio': coste_envio,
         'total': f"{total_inicial:.2f}", 
         'datos_cliente': datos_cliente,
-        'tarjetas_para_contexto': tarjetas_para_contexto, 
+        'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
+        'tiene_tarjeta_guardada': bool(tarjetas_para_contexto),
         'opciones_filtro': opciones_filtro, 
         'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
     }
@@ -384,11 +397,19 @@ def checkout(request):
 def procesar_pago(request):
     """
     1. Verifica stock y limpia.
-    2. Cobra y RESTA stock.
+    2. Cobra, VALIDA Tarjeta/CVV y RESTA stock.
+    
+    Esta función está diseñada para ser llamada vía AJAX desde el frontend.
     """
     cesta = obtener_cesta_actual(request)
+    # Identificar si la solicitud es AJAX para devolver JSON en caso de error
+    is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
+    
     if not cesta or not cesta.items.exists():
-        messages.error(request, "El carrito está vacío.")
+        mensaje_error = "El carrito está vacío."
+        if is_ajax:
+             return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+        messages.error(request, mensaje_error)
         return redirect('carrito:carrito')
 
     # 1. FASE DE LIMPIEZA
@@ -406,7 +427,8 @@ def procesar_pago(request):
             item.save()
             cesta_modificada = True
 
-    if cesta_modificada: return redirect('carrito:carrito')
+    # Si la cesta se modificó, redirigimos (no podemos hacerlo con JsonResponse ya que implica un recálculo)
+    if cesta_modificada: return redirect('carrito:checkout') # Redirigimos a checkout para recálculo/aviso
 
     # 2. PROCESAMIENTO
     entrega_value = request.POST.get('shipping_option') 
@@ -420,6 +442,15 @@ def procesar_pago(request):
     pais = (request.POST.get('address_country') or '').strip()
     
     direccion = f"{calle}, {cpi} {ciudad}, {pais}"
+
+    # Datos de Tarjeta (solo si el método es 'gateway')
+    card_number = request.POST.get('card_number')
+    expiry_date = request.POST.get('expiry_date') # MM/AA
+    card_cvv = request.POST.get('cvv') #  CVV
+    tarjeta_id = request.POST.get('tarjeta_guardada_id')
+    # Flag para guardar tarjeta (solo presente si el usuario está autenticado)
+    save_card_flag = request.POST.get('save_card') == 'on'
+
     
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
@@ -433,7 +464,9 @@ def procesar_pago(request):
     if entrega_value == 'standard':
         if subtotal < 50: coste_entrega = Decimal('5.00')
         if not calle: 
-            messages.error(request, "Dirección obligatoria para envío a domicilio.")
+            mensaje_error = "Dirección obligatoria para envío a domicilio."
+            if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+            messages.error(request, mensaje_error)
             return redirect('carrito:checkout')
     elif entrega_value == 'express':
         metodo_envio = TipoEnvio.RECOGIDA_TIENDA
@@ -442,6 +475,47 @@ def procesar_pago(request):
     metodo_pago = TipoPago.PASARELA_PAGO if payment_method_value == 'gateway' else TipoPago.CONTRAREEMBOLSO
     pago = (metodo_pago == TipoPago.PASARELA_PAGO)
     total_importe = subtotal + coste_entrega
+
+    # ====================================================================
+    # 💳 VALIDACIÓN DE PAGO (Tarjeta Guardada vs. Tarjeta Nueva)
+    # ====================================================================
+
+    if metodo_pago == TipoPago.PASARELA_PAGO:
+        # Caso 1: Se eligió pagar con una tarjeta guardada
+        if tarjeta_id:
+            if not card_cvv:
+                mensaje_error = "El CVV (código de seguridad) es obligatorio para usar una tarjeta guardada."
+                if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+                messages.error(request, mensaje_error)
+                return redirect('carrito:checkout')
+            
+            try:
+                # Aseguramos que la tarjeta exista y pertenezca al usuario
+                tarjeta_guardada = Tarjeta.objects.get(id=tarjeta_id, usuario_cliente__usuario=request.user)
+                
+                # **Validación de CVV contra el hash guardado**
+                if not tarjeta_guardada.check_cvv(card_cvv): 
+                    mensaje_error = f"❌ El CVV proporcionado no es correcto para la tarjeta que termina en {tarjeta_guardada.ultimos_cuatro}. Inténtelo de nuevo."
+                    # **CAMBIO CLAVE: Devolver JsonResponse en caso de error de CVV**
+                    if is_ajax: 
+                        return JsonResponse({'success': False, 'message': mensaje_error, 'code': 'CVV_INVALID'}, status=400)
+                    messages.error(request, mensaje_error)
+                    return redirect('carrito:checkout')
+                
+            except Tarjeta.DoesNotExist:
+                mensaje_error = "Tarjeta guardada inválida o no accesible. Por favor, inténtelo de nuevo."
+                if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+                messages.error(request, mensaje_error)
+                return redirect('carrito:checkout')
+
+        # Caso 2: Pago con tarjeta nueva (o no se seleccionó ninguna guardada)
+        elif not card_number or not expiry_date or not card_cvv:
+            mensaje_error = "Por favor, complete todos los datos de la tarjeta (Número, Fecha de expiración y CVV)."
+            if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+            messages.error(request, mensaje_error)
+            return redirect('carrito:checkout')
+
+    # ====================================================================
     
     usuario_cliente = None
     if request.user.is_authenticated:
@@ -450,9 +524,28 @@ def procesar_pago(request):
             if entrega_value == 'standard':
                 usuario_cliente.direccion_envio = direccion_final
             usuario_cliente.save()
+
+            if metodo_pago == TipoPago.PASARELA_PAGO and save_card_flag and card_number and expiry_date and card_cvv:
+                
+                # Crear instancia del nuevo modelo
+                nueva_tarjeta = Tarjeta(
+                    usuario_cliente=usuario_cliente
+                )
+                
+                # Hashear y asignar detalles (usa el método que definimos en models.py)
+                nueva_tarjeta.set_card_details(card_number, expiry_date, card_cvv)
+                
+                # Intentar guardar, verificando si ya existe un hash idéntico para este usuario
+                try:
+                    nueva_tarjeta.save()
+                    messages.info(request, f"💳 Tarjeta que termina en {nueva_tarjeta.ultimos_cuatro} guardada de forma segura.")
+                except Exception:
+                    # Si falla al guardar (unique_together error), significa que ya existe
+                    messages.warning(request, "Esta tarjeta ya está guardada en su perfil.")
         except UsuarioCliente.DoesNotExist: pass
             
     try:
+        # CREAR PEDIDO
         pedido = Pedido.objects.create(
             usuario_cliente=usuario_cliente, estado=EstadoPedido.PEDIDO, 
             subtotal_importe=subtotal, coste_entrega=coste_entrega, total_importe=total_importe,
@@ -471,7 +564,7 @@ def procesar_pago(request):
             producto.stock -= item_cesta.cantidad
             producto.save()
 
-        # Email
+        # Email (Lógica de envío de email)
         try:
             pedido.refresh_from_db()
             tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id}))
@@ -480,20 +573,38 @@ def procesar_pago(request):
             
             subject = f"Confirmación pedido #{pedido.id}"
             text_body = f"Gracias. Sigue tu pedido aquí: {tracking_url}"
-            html_body = render_to_string('correo.html', contexto) # Requiere template 'correo.html'
+            html_body = render_to_string('correo.html', contexto)
 
             msg = EmailMultiAlternatives(subject, text_body, settings.DEFAULT_FROM_EMAIL, [email])
             msg.attach_alternative(html_body, "text/html")
             msg.send(fail_silently=False)
         except Exception: pass
 
+        # FINALIZAR
         cesta.items.all().delete()
         request.session['ultimo_correo_pedido'] = email
+        
+        # **CAMBIO CLAVE: Devolver JsonResponse en caso de éxito**
+        if is_ajax:
+            success_url = reverse('carrito:fin_compra')
+            return JsonResponse({'success': True, 'redirect_url': success_url, 'message': f"¡Pedido realizado con éxito!"}, status=200)
+
+        # Si no es AJAX
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito!")
         return redirect('carrito:fin_compra')
         
-    except ValueError:
+    except ValueError as e:
+        # Captura el error específico de stock si se lanza
         transaction.set_rollback(True)
+        mensaje_error = f"Error al procesar el pedido: {e}"
+        if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+        messages.error(request, mensaje_error)
+        return redirect('carrito:carrito')
+    except Exception as e:
+        transaction.set_rollback(True)
+        mensaje_error = f"Error desconocido al procesar el pedido: {e}"
+        if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+        messages.error(request, mensaje_error)
         return redirect('carrito:carrito')
 
 def compra_finalizada(request):
