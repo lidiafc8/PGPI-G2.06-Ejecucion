@@ -159,7 +159,7 @@ class RegistroUsuarioForm(forms.Form):
         pais = cd.get('direccion_pais', '').strip()
 
         if calle or cp or ciudad or pais:
-             direccion_envio_final = f"{calle}, {cp} {ciudad}, {pais}".strip()
+             direccion_envio_final = f"{calle}, {cp}, {ciudad}, {pais}".strip()
         else:
              direccion_envio_final = ""
 

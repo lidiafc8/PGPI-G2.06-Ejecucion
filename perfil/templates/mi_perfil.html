@@ -105,19 +105,54 @@
                     {% endfor %}
                 </div>
 
-                <div class="field-wrapper" id="direccion-envio-wrapper"> 
-                    <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
-                        {{ perfil_form.direccion_envio }}
-                        
+                <h3 class="text-2xl font-bold mb-4 pt-6 border-b pb-2 text-gray-700">Dirección de Envío</h3>
+                {{ perfil_form.direccion_envio }}
+                <div class="grid grid-cols-2 gap-4">
+    
+                    {# 1. CAMPO CALLE (Fila 1, Ocupa las dos columnas) #}
+                    <div class="field-wrapper col-span-2">
+                        <label for="{{ perfil_form.direccion_calle.id_for_label }}" class="sr-only">Calle y Número</label>
+                        <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                            {{ perfil_form.direccion_calle }}
+                        </div>
+                        {% for error in perfil_form.direccion_calle.errors %}
+                            <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    {# 2. CAMPO CÓDIGO POSTAL (Fila 2, Columna 1) #}
+                    <div class="field-wrapper">
+                        <label for="{{ perfil_form.direccion_cp.id_for_label }}" class="sr-only">Código Postal</label>
+                        <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                            {{ perfil_form.direccion_cp }}
+                        </div>
+                        {% for error in perfil_form.direccion_cp.errors %}
+                            <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    {# 3. CAMPO CIUDAD (Fila 2, Columna 2) #}
+                    <div class="field-wrapper">
+                        <label for="{{ perfil_form.direccion_ciudad.id_for_label }}" class="sr-only">Ciudad</label>
+                        <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                            {{ perfil_form.direccion_ciudad }}
+                        </div>
+                        {% for error in perfil_form.direccion_ciudad.errors %}
+                            <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
                     </div>
                     
-                    {% if perfil_form.direccion_envio.help_text %}
-                        <small class="text-gray-500 mt-1 block">{{ perfil_form.direccion_envio.help_text }}</small>
-                    {% endif %}
-                    
-                    {% for error in perfil_form.direccion_envio.errors %}
-                        <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
-                    {% endfor %}
+                    {# 4. CAMPO PAÍS (Fila 3, Ocupa las dos columnas) #}
+                    <div class="field-wrapper col-span-2">
+                        <label for="{{ perfil_form.direccion_pais.id_for_label }}" class="sr-only">País</label>
+                        <div class="p-4 border-2 border-black rounded-lg bg-white shadow-sm flex items-center h-16">
+                            {{ perfil_form.direccion_pais }}
+                        </div>
+                        {% for error in perfil_form.direccion_pais.errors %}
+                            <p class="errorlist text-red-500 text-sm mt-1">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
                 </div>
             </form>
             

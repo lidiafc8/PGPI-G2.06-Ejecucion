@@ -19,7 +19,11 @@ def mi_perfil(request):
         messages.warning(request, "Eres Admin")
         return redirect('perfil:admin_perfil')
 
-    perfil_cliente_instancia, creado = UsuarioCliente.objects.get_or_create(usuario=usuario_instancia)
+    try:
+        perfil_cliente_instancia = usuario_instancia.usuariocliente
+    except UsuarioCliente.DoesNotExist:
+        perfil_cliente_instancia = UsuarioCliente.objects.create(usuario=usuario_instancia)
+
 
     if request.method == 'POST':
         user_form = UsuarioForm(request.POST, instance=usuario_instancia)
@@ -34,8 +38,7 @@ def mi_perfil(request):
             messages.error(request, "Error al actualizar el perfil. Revisa los datos.")
     else:
         user_form = UsuarioForm(instance=usuario_instancia)
-        perfil_form = PerfilClienteForm(instance=perfil_cliente_instancia)
-
+        perfil_form = PerfilClienteForm(instance=perfil_cliente_instancia) 
     contexto_cliente = {
         'user_form': user_form,
         'perfil_form': perfil_form,
