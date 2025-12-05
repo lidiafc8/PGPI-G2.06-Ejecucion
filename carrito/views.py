@@ -324,6 +324,7 @@ def checkout(request):
         precio = item.producto.precio_rebajado if (hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado) else item.producto.precio
         subtotal += precio * item.cantidad
         
+    # Calcular gastos de envío: 5€ si subtotal < 50€, gratis si >= 50€
     coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
     total_inicial = subtotal + coste_envio
     
@@ -363,6 +364,8 @@ def checkout(request):
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             datos_cliente['telefono'] = usuario_cliente.telefono or ''
+            datos_cliente['tipo_envio_default'] = usuario_cliente.tipo_envio
+            datos_cliente['tipo_pago_default'] = usuario_cliente.tipo_pago
             if usuario_cliente.direccion_envio:
                 partes = [p.strip() for p in usuario_cliente.direccion_envio.split(',')]
                 if len(partes) >= 3:
@@ -370,10 +373,6 @@ def checkout(request):
                     datos_cliente['direccion_pais'] = partes[-1]
                     datos_cliente['direccion_cp'] = partes[1]
                     datos_cliente['direccion_ciudad'] = partes[2]
-                
-            if usuario_cliente.tipo_envio == TipoEnvio.RECOGIDA_TIENDA: coste_envio = Decimal('0.00')
-            else: coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
-            total_inicial = subtotal + coste_envio
         except UsuarioCliente.DoesNotExist:
             pass
     
@@ -382,7 +381,7 @@ def checkout(request):
     context = {
         'articulos': cesta.items.all(), 
         'subtotal': f"{subtotal:.2f}",
-        'coste_envio': coste_envio,
+        'coste_envio': float(coste_envio),
         'total': f"{total_inicial:.2f}", 
         'datos_cliente': datos_cliente,
         'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
@@ -433,7 +432,16 @@ def procesar_pago(request):
     # 2. PROCESAMIENTO
     entrega_value = request.POST.get('shipping_option') 
     payment_method_value = request.POST.get('payment_method') 
-    email = request.POST.get('contact_email') 
+    email = request.POST.get('contact_email')
+    
+    # Validar que el email sea de Gmail
+    if email and not email.lower().endswith('@gmail.com'):
+        mensaje_error = "Solo se aceptan correos electrónicos con dominio @gmail.com"
+        if is_ajax:
+            return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
+        messages.error(request, mensaje_error)
+        return redirect('carrito:checkout')
+    
     telefon = request.POST.get('contact_phone') 
     
     calle = (request.POST.get('address_street') or '').strip()
