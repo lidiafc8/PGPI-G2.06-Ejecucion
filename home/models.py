@@ -8,7 +8,6 @@ from django.contrib.auth.hashers import make_password
 class TipoPago(models.TextChoices):
     PASARELA_PAGO = 'PASARELA_PAGO',
     CONTRAREEMBOLSO = 'CONTRAREEMBOLSO',
-    
 
 class TipoEnvio(models.TextChoices):
     DOMICILIO = 'DOMICILIO',
@@ -16,7 +15,7 @@ class TipoEnvio(models.TextChoices):
 
 class EstadoPedido(models.TextChoices):
     PEDIDO = 'PEDIDO',
-    ENVIADO = 'ENVIADO', 
+    ENVIADO = 'ENVIADO',
     ENTREGADO = 'ENTREGADO',
 
 class Seccion(models.TextChoices):
@@ -62,9 +61,9 @@ class UsuarioManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
-        
+
         extra_fields.setdefault('nombre', 'Admin')
-        extra_fields.setdefault('apellidos', 'Superuser') 
+        extra_fields.setdefault('apellidos', 'Superuser')
 
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
@@ -73,59 +72,35 @@ class UsuarioManager(BaseUserManager):
 
         return self.create_user(corre_electronico, password, **extra_fields)
 
-
-class Usuario(AbstractBaseUser, PermissionsMixin): 
+class Usuario(AbstractBaseUser, PermissionsMixin):
     nombre = models.CharField(max_length=200)
     apellidos = models.CharField(max_length=200)
     corre_electronico = models.EmailField(max_length=200, unique=True)
     password = models.CharField(max_length=128)
-    
-    # Asignar el gestor personalizado
-    # Esto le indica a Django que use UsuarioManager para todas
-    # las operaciones de consulta y creación de usuarios
+
     objects = UsuarioManager()
 
     last_login = models.DateTimeField(null=True, blank=True)
-    
-    USERNAME_FIELD = 'corre_electronico'
-    REQUIRED_FIELDS = ['nombre', 'apellidos'] 
 
-    
-    is_active = models.BooleanField(default=True) 
-    is_staff = models.BooleanField(default=False) 
+    USERNAME_FIELD = 'corre_electronico'
+    REQUIRED_FIELDS = ['nombre', 'apellidos']
+
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
 
-    # Ya heredado de AbstractBaseUser: se anula la lógica de seguridad de Django, 
-    # lo que puede ocasionar que un usuario no autenticado pueda acceder a ciertas funcionalidades.
-    # @property
-    # def is_authenticated(self):
-    #    """Retorna True si el usuario ha sido validado correctamente."""
-    #    return True 
-
-    # @property
-    #def is_anonymous(self):
-    #    """Retorna False para un objeto de usuario real."""
-    #    return False
-    
     def get_full_name(self):
         return f"{self.nombre} {self.apellidos}"
-    
+
     def get_short_name(self):
         return self.nombre
 
     def has_perm(self, perm, obj=None):
         return self.is_superuser
-    
+
     def has_module_perms(self, app_label):
         return self.is_superuser
 
-    #def set_password(self, raw_password):
-    #    self.password = make_password(raw_password)
-    #    self._password = raw_password 
-
-    #def check_password(self, raw_password):
-    #    return check_password(raw_password, self.password)
-    
     @property
     def es_administrador(self):
         """Verifica si el Usuario tiene un registro Administrador asociado."""
@@ -142,11 +117,11 @@ class UsuarioCliente(models.Model):
     usuario = models.OneToOneField(Usuario, on_delete=models.CASCADE)
     tipo_pago= models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
     telefono = models.CharField(max_length=15, blank=True, null=True)
-    direccion_envio = models.CharField(max_length=255, blank=True) 
+    direccion_envio = models.CharField(max_length=255, blank=True)
     tipo_envio= models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA)
 
     last_login = models.DateTimeField(null=True, blank=True)
-    
+
     def __str__(self):
         return self.usuario.nombre
 
@@ -188,14 +163,13 @@ class CestaCompra(models.Model):
     def get_total_cesta(self):
         return sum(item.total* item.cantidad for item in self.items.all())
 
-
 class ItemCestaCompra(models.Model):
 
     cesta_compra = models.ForeignKey(CestaCompra, related_name='items', on_delete=models.CASCADE)
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
-    cantidad = models.PositiveIntegerField(default=1) 
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2) 
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    cantidad = models.PositiveIntegerField(default=1)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def save(self, *args, **kwargs):
         self.total = self.cantidad * self.precio_unitario
@@ -205,24 +179,24 @@ class ItemCestaCompra(models.Model):
         return f'{self.cantidad} x {self.producto.nombre}'
 
 class Pedido(models.Model):
-    #permite q se realice un pedido si no hay cliente registrado y q si se borra un user los pedidos se mantengan pa el historial de ventas
-    usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.SET_NULL,  blank=True, null=True) 
-    fecha_creacion = models.DateTimeField(auto_now_add=True) 
+
+    usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.SET_NULL,  blank=True, null=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
     estado = models.CharField(max_length=20, choices=EstadoPedido.choices, default=EstadoPedido.PEDIDO)
-    subtotal_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    subtotal_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     coste_entrega = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_importe = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     metodo_pago = models.CharField(max_length=20, choices=TipoPago.choices, default=TipoPago.PASARELA_PAGO)
-    tipo_envio = models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA) 
-    direccion_envio = models.CharField(max_length=255, blank=True, null=True) #si se recoje  en tienda puede estar vacío
-    correo_electronico = models.EmailField() 
+    tipo_envio = models.CharField(max_length=20, choices=TipoEnvio.choices, default=TipoEnvio.RECOGIDA_TIENDA)
+    direccion_envio = models.CharField(max_length=255, blank=True, null=True)
+    correo_electronico = models.EmailField()
     telefono = models.CharField(max_length=15, blank=True)
     pago = models.BooleanField(default=False)
     tracking_id = models.CharField(max_length=50, unique=True, blank = True, null = True, verbose_name="ID de seguimiento")
 
     MINIMO_ENVIO_GRATUITO = Decimal('50.00')
     COSTO_ESTANDAR_ENVIO = Decimal('5.00')
-    
+
     def calculo_coste_entrega(self):
         """Calcula el coste de entrega según las reglas de negocio."""
         if self.tipo_envio == TipoEnvio.RECOGIDA_TIENDA:
@@ -230,33 +204,32 @@ class Pedido(models.Model):
         if self.subtotal_importe >= self.MINIMO_ENVIO_GRATUITO:
             return Decimal('0.00')
         return self.COSTO_ESTANDAR_ENVIO
-    
+
     def save(self, *args, **kwargs):
         if not self.tracking_id:
-            self.tracking_id = str(uuid.uuid4().hex[:8]).upper() 
+            self.tracking_id = str(uuid.uuid4().hex[:8]).upper()
         self.coste_entrega = self.calculo_coste_entrega()
         self.total_importe = self.subtotal_importe + self.coste_entrega
         super().save(*args, **kwargs)
-    
+
     def __str__(self):
         return f'Pedido #{self.id} ({self.tracking_id}) de {self.usuario_cliente.usuario.corre_electronico if self.usuario_cliente else self.correo_electronico}'
 
 class ItemPedido(models.Model):
 
     pedido = models.ForeignKey(Pedido, related_name='items', on_delete=models.CASCADE)
-    producto = models.ForeignKey(Producto, on_delete=models.PROTECT) 
-    
-    cantidad = models.PositiveIntegerField(default=1) 
-    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2) 
-    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00) 
+    producto = models.ForeignKey(Producto, on_delete=models.PROTECT)
+
+    cantidad = models.PositiveIntegerField(default=1)
+    precio_unitario = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
 
     def save(self, *args, **kwargs):
         self.total = self.cantidad * self.precio_unitario
         super().save(*args, **kwargs)
-        
+
     def __str__(self):
         return f'{self.cantidad} x {self.producto.nombre}'
-    
 
 class Tarjeta(models.Model):
     usuario_cliente = models.ForeignKey('UsuarioCliente', on_delete=models.CASCADE, related_name='tarjetas')
@@ -264,21 +237,19 @@ class Tarjeta(models.Model):
     card_cvv_hash = models.CharField(max_length=128, blank=True, null=True)
     card_expiry = models.CharField(max_length=5)
     ultimos_cuatro = models.CharField(max_length=4)
-    
+
     class Meta:
         unique_together = ('usuario_cliente', 'card_hash')
 
     def __str__(self):
         return f'Tarjeta que termina en {self.ultimos_cuatro} de {self.usuario_cliente.usuario.corre_electronico}'
 
-    def set_card_details(self, card_number, expiry_date, cvv): # <-- CVV AÑADIDO
+    def set_card_details(self, card_number, expiry_date, cvv):
         """Hashea el número de tarjeta y el CVV (cuidado con la seguridad del CVV)."""
-                
-        # Hashing del número de tarjeta
+
         self.card_hash = make_password(card_number)
-        
-        # Hashing del CVV (¡PELIGRO PCI-DSS!)
-        self.card_cvv_hash = make_password(cvv) # <-- LÓGICA DE CVV AÑADIDA
+
+        self.card_cvv_hash = make_password(cvv)
 
         self.ultimos_cuatro = card_number[-4:]
         self.card_expiry = expiry_date
@@ -287,8 +258,8 @@ class Tarjeta(models.Model):
         """Verifica si un número de tarjeta coincide con el hash guardado."""
         from django.contrib.auth.hashers import check_password
         return check_password(card_number, self.card_hash)
-        
-    def check_cvv(self, cvv): # <-- NUEVO MÉTODO PARA VERIFICAR CVV
+
+    def check_cvv(self, cvv):
         """Verifica si un CVV coincide con el hash guardado."""
         from django.contrib.auth.hashers import check_password
         if not self.card_cvv_hash:

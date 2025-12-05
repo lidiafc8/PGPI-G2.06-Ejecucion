@@ -1,12 +1,10 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.db.models import Q
 import uuid
-import random 
+import random
 from .models import Producto, UsuarioCliente, CestaCompra, ItemCestaCompra, Pedido, EstadoPedido, TipoEnvio
 from django.contrib import messages
 from django.http import JsonResponse
-
-# --- HELPERS ---
 
 def obtener_opciones_filtro():
     """Retorna las opciones únicas para los filtros."""
@@ -23,44 +21,37 @@ def _calcular_desglose_precio(queryset):
     """
     Añade los atributos .euros y .centavos a cada producto de una lista o queryset.
     """
-    # Convierte el queryset a lista si no lo es, para permitir la modificación de atributos
+
     if not isinstance(queryset, list):
         queryset = list(queryset)
-        
+
     for p in queryset:
         p.euros = int(p.precio)
         p.centavos = int((p.precio - p.euros) * 100)
     return queryset
 
-# -------------------------------------------------------------------------
-# VISTA PRINCIPAL (HOME)
-# -------------------------------------------------------------------------
 def index(request, categoria=None):
     template_name = 'index.html'
     categoria_valor = None
-    
-    # 1. LOGICA PRINCIPAL (CARRUSEL ARRIBA / REJILLA PRINCIPAL)
+
     if categoria:
-        # Si hay categoría en la URL
+
         categoria_valor = categoria.upper()
         productos_principal = Producto.objects.filter(categoria=categoria_valor)
         template_name = 'catalogo.html'
         categoria_valor = categoria_valor.replace('_', ' ')
     else:
-        # PORTADA: Solo destacados
+
         productos_principal = Producto.objects.filter(esta_destacado=True)
 
-    # 2. PRODUCTOS DE ABAJO (CARRUSEL INFERIOR)
-    # Cogemos 10 aleatorios que tengan stock para la sección "También te podría interesar"
     productos_abajo = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
 
-    # 3. PREPARAR PRECIOS
     _calcular_desglose_precio(productos_principal)
     _calcular_desglose_precio(productos_abajo)
 
     contexto = {
-        'productos_destacados': productos_principal, # Lo que sale arriba
-        'productos_random': productos_abajo,        # Lo que sale abajo (carrusel pequeño)
+        'productos_destacados': productos_principal,
+        'productos_random': productos_abajo,
         'categoria_actual': categoria_valor,
         'opciones_filtro': obtener_opciones_filtro(),
         'precio_seleccionado': '',
@@ -68,13 +59,9 @@ def index(request, categoria=None):
         'seccion_filtro_seleccionada': '',
         'plantilla_base': 'base.html',
     }
-    
+
     return render(request, template_name, contexto)
 
-
-# -------------------------------------------------------------------------
-# VISTA CATÁLOGO (CON FILTROS Y CARRUSEL ALEATORIO)
-# -------------------------------------------------------------------------
 def catalogo(request, categoria=None):
     """
     Vista específica para listados con filtros laterales.
@@ -82,21 +69,19 @@ def catalogo(request, categoria=None):
     productos_a_mostrar = Producto.objects.all()
     categoria_valor = None
     template_name = 'catalogo.html'
-    filtros_activos = False 
+    filtros_activos = False
 
-    # 1. Recuperar filtros del GET
     precio_rango_str = request.GET.get('precio', '')
     fabricante_seleccionado = request.GET.get('fabricante', '')
-    seccion_filtro_seleccionada = request.GET.get('seccion_filtro', '') 
+    seccion_filtro_seleccionada = request.GET.get('seccion_filtro', '')
 
-    # 2. Filtrado inicial por categoría o contexto
     if categoria:
         categoria_valor = categoria.upper()
         productos_a_mostrar = productos_a_mostrar.filter(categoria=categoria_valor)
         categoria_display = categoria_valor.replace('_', ' ')
     else:
-        # Lógica de fallback
-        if request.resolver_match.url_name == 'home': 
+
+        if request.resolver_match.url_name == 'home':
             productos_a_mostrar = Producto.objects.filter(esta_destacado=True)
             template_name = 'index.html'
             categoria_display = None
@@ -105,7 +90,6 @@ def catalogo(request, categoria=None):
         else:
             categoria_display = 'CATÁLOGO COMPLETO'
 
-    # 3. Aplicar Filtros Avanzados
     q_filtros = Q()
     if precio_rango_str:
         try:
@@ -113,7 +97,7 @@ def catalogo(request, categoria=None):
             q_filtros &= Q(precio__gte=min_precio) & Q(precio__lte=max_precio)
             filtros_activos = True
         except ValueError: pass
-    
+
     if fabricante_seleccionado:
         q_filtros &= Q(fabricante__iexact=fabricante_seleccionado)
         filtros_activos = True
@@ -125,111 +109,93 @@ def catalogo(request, categoria=None):
     if q_filtros:
         productos_a_mostrar = productos_a_mostrar.filter(q_filtros)
 
-    # 4. OBTENER PRODUCTOS RANDOM PARA EL CARRUSEL DE ABAJO
     productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
 
-    # 5. Calcular precios
     _calcular_desglose_precio(productos_a_mostrar)
     _calcular_desglose_precio(productos_random)
 
     contexto = {
-        'productos_destacados': productos_a_mostrar, # Rejilla principal
-        'productos_random': productos_random,        # Carrusel de abajo ("Cualquiera")
+        'productos_destacados': productos_a_mostrar,
+        'productos_random': productos_random,
         'categoria_actual': categoria_display,
         'opciones_filtro': obtener_opciones_filtro(),
         'filtros_activos': filtros_activos,
         'precio_seleccionado': precio_rango_str,
         'fabricante_seleccionado': fabricante_seleccionado,
         'seccion_filtro_seleccionada': seccion_filtro_seleccionada,
-        'es_catalogo': template_name == 'catalogo.html', 
+        'es_catalogo': template_name == 'catalogo.html',
     }
     return render(request, template_name, contexto)
 
-
-# -------------------------------------------------------------------------
-# DETALLE DE PRODUCTO (CORREGIDA)
-# -------------------------------------------------------------------------
 def detalle_producto(request, pk):
     producto = get_object_or_404(Producto, pk=pk)
-    
-    # Precios del producto principal
+
     producto.euros = int(producto.precio)
     producto.centavos = int((producto.precio - producto.euros) * 100)
 
-    # Productos relacionados (Misma categoría, excluyendo el actual)
     productos_relacionados = Producto.objects.filter(
         categoria=producto.categoria
     ).exclude(
         pk=pk
     ).order_by('?')[:10]
-    
+
     _calcular_desglose_precio(productos_relacionados)
 
     contexto = {
         'producto': producto,
-        # *** CORRECCIÓN APLICADA AQUÍ: Se usa 'productos_relacionados' ***
-        'productos_relacionados': productos_relacionados, 
-        
-        'opciones_filtro': obtener_opciones_filtro(), 
+
+        'productos_relacionados': productos_relacionados,
+
+        'opciones_filtro': obtener_opciones_filtro(),
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
         'seccion_filtro_seleccionada': '',
     }
     return render(request, 'detalle_producto.html', contexto)
 
-
-# -------------------------------------------------------------------------
-# BUSCADOR
-# -------------------------------------------------------------------------
 def buscar_productos(request):
     query = request.GET.get('q', '').strip()
     productos_encontrados = []
-    
+
     if query:
-        # Mantenemos tu lógica original para respetar tu forma de búsqueda:
+
         todos = Producto.objects.all()
         query_lower = query.lower()
         for p in todos:
-            if (query_lower in p.nombre.lower() or 
-                query_lower in p.fabricante.lower() or 
+            if (query_lower in p.nombre.lower() or
+                query_lower in p.fabricante.lower() or
                 query_lower in p.get_categoria_display().lower()):
                 p.euros = int(p.precio)
                 p.centavos = int((p.precio - p.euros) * 100)
                 productos_encontrados.append(p)
 
-    # También pasamos randoms al buscador
     productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:10]
     _calcular_desglose_precio(productos_random)
 
     contexto = {
         'query': query,
         'productos_destacados': productos_encontrados,
-        'productos_random': productos_random, # Carrusel abajo
+        'productos_random': productos_random,
         'categoria_actual': f'Resultados: {query}',
-        'opciones_filtro': obtener_opciones_filtro(), 
-        'precio_seleccionado': '', 
-        'fabricante_seleccionado': '', 
+        'opciones_filtro': obtener_opciones_filtro(),
+        'precio_seleccionado': '',
+        'fabricante_seleccionado': '',
         'seccion_filtro_seleccionada': '',
     }
     return render(request, 'catalogo.html', contexto)
 
-
-# -------------------------------------------------------------------------
-# CESTA DE LA COMPRA (AJAX)
-# -------------------------------------------------------------------------
 def agregar_a_cesta(request, producto_id):
     producto = get_object_or_404(Producto, id=producto_id)
     cantidad = int(request.POST.get('cantidad', 1))
 
-    # VALIDACIÓN DE STOCK (CRÍTICO)
     if cantidad > producto.stock:
         return JsonResponse({
-             "success": False, 
+             "success": False,
              "mensaje": f"❌ Solo quedan {producto.stock} unidades."
          })
 
     if request.user.is_authenticated:
-        # Usamos get_or_create para evitar errores si el usuario existe pero no tiene cliente
+
         cliente, _ = UsuarioCliente.objects.get_or_create(usuario=request.user)
         cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=cliente)
     else:
@@ -244,34 +210,28 @@ def agregar_a_cesta(request, producto_id):
         defaults={"cantidad": cantidad, "precio_unitario": producto.precio}
     )
 
-    # Validar stock acumulado
     cantidad_final = item.cantidad + cantidad if not creado else cantidad
-    
+
     if cantidad_final > producto.stock:
         return JsonResponse({
-            "success": False, 
+            "success": False,
             "mensaje": f"❌ Stock insuficiente. Máximo: {producto.stock}"
         })
 
     if not creado:
         item.cantidad += cantidad
-    
-    # Actualizar precio por si cambió desde que se añadió
+
     item.precio_unitario = producto.precio
     item.save()
 
     total_items = sum(i.cantidad for i in cesta.items.all())
-    
+
     return JsonResponse({
-        "success": True, 
-        "mensaje": f"✅ {producto.nombre} añadido.", 
+        "success": True,
+        "mensaje": f"✅ {producto.nombre} añadido.",
         "total_items": total_items
     })
 
-
-# -------------------------------------------------------------------------
-# SEGUIMIENTO DE PEDIDOS
-# -------------------------------------------------------------------------
 def _obtener_historial_del_pedido(pedido):
     estados_mapeados = [
         {'nombre': 'Pedido Recibido', 'completado': True, 'fecha': pedido.fecha_creacion.strftime('%d/%m/%Y %H:%M')},
@@ -279,25 +239,25 @@ def _obtener_historial_del_pedido(pedido):
         {'nombre': 'Enviado', 'completado': pedido.estado == EstadoPedido.ENVIADO or pedido.estado == EstadoPedido.ENTREGADO},
         {'nombre': 'Entregado', 'completado': pedido.estado == EstadoPedido.ENTREGADO},
     ]
-    # Ajuste visual simple para fechas
+
     for paso in estados_mapeados:
         if paso['completado'] and paso['nombre'] != 'Pedido Recibido':
-            paso['fecha'] = "Completado" 
+            paso['fecha'] = "Completado"
     return estados_mapeados
 
 def seguimiento_pedido(request, order_id, tracking_hash):
     try:
         pedido = Pedido.objects.get(id=order_id, tracking_id=tracking_hash)
-        
+
         total = pedido.total_importe
         total_euros = int(total)
         total_centavos = int((total - total_euros) * 100)
-        
+
         context = {
             'pedido': pedido,
             'total_euros': total_euros,
             'total_centavos': total_centavos,
-            'estado_actual_display': pedido.get_estado_display(), 
+            'estado_actual_display': pedido.get_estado_display(),
             'historial_estados': _obtener_historial_del_pedido(pedido),
             'opciones_filtro': obtener_opciones_filtro(),
             'precio_seleccionado': '',
@@ -307,23 +267,23 @@ def seguimiento_pedido(request, order_id, tracking_hash):
         return render(request, 'seguimiento_pedido.html', context)
 
     except Pedido.DoesNotExist:
-        # Manejo de errores
+
         try:
-            # Check si es solo el hash lo que falla
+
             pedido_por_id = Pedido.objects.get(id=order_id)
             mensaje = f"Error de seguridad: El código de seguimiento no coincide para el pedido {order_id}."
         except Pedido.DoesNotExist:
             mensaje = "El pedido no existe."
 
         messages.error(request, mensaje)
-        
+
         context_error = {
             'message': mensaje,
             'opciones_filtro': obtener_opciones_filtro(),
             'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
         }
         return render(request, 'error_seguimiento.html', context_error)
-        
+
     except Exception as e:
         messages.error(request, f"Error inesperado: {e}")
         return render(request, 'error_seguimiento.html', {

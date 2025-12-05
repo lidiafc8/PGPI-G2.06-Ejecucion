@@ -5,9 +5,7 @@ from django.contrib.auth import get_user_model
 
 from home.models import UsuarioCliente
 
-
 User = get_user_model()
-
 
 class RegistroUsuarioTests(TestCase):
 	def test_get_shows_form(self):
@@ -22,7 +20,7 @@ class RegistroUsuarioTests(TestCase):
 			'nombre': 'Prueba',
 			'apellidos': 'Usuario',
 			'corre_electronico': 'nuevo@example.com',
-			# use a stronger, less-common password to satisfy password validators
+
 			'password': 'Un1qu3P@ssw0rd!',
 			'password2': 'Un1qu3P@ssw0rd!',
 			'telefono': '600000000',
@@ -30,16 +28,14 @@ class RegistroUsuarioTests(TestCase):
 		}
 
 		resp = self.client.post(url, data, follow=True)
-		# should redirect (followed) and user should be created
+
 		self.assertEqual(resp.status_code, 200)
 
-		# user and UsuarioCliente created
 		user = User.objects.filter(corre_electronico='nuevo@example.com').first()
 		self.assertIsNotNone(user)
 		cliente = UsuarioCliente.objects.filter(usuario=user).first()
 		self.assertIsNotNone(cliente)
-		# Either the view logged the user in automatically (success message)
-		# or it created the account but could not log in (warning message).
+
 		messages = [m.message for m in get_messages(resp.wsgi_request)]
 		self.assertTrue(
 			any('Tu cuenta se ha creado' in m for m in messages)
@@ -47,7 +43,7 @@ class RegistroUsuarioTests(TestCase):
 		)
 
 	def test_post_invalid_shows_errors_and_does_not_create(self):
-		# password mismatch
+
 		url = reverse('registro:registro')
 		data = {
 			'nombre': 'Prueba',
@@ -58,10 +54,10 @@ class RegistroUsuarioTests(TestCase):
 			'tipo_envio': 'RECOGIDA_TIENDA',
 		}
 		resp = self.client.post(url, data)
-		# form invalid -> re-render page
+
 		self.assertEqual(resp.status_code, 200)
 		self.assertIn('form', resp.context)
 		form = resp.context['form']
 		self.assertTrue(form.errors)
-		# ensure user not created
+
 		self.assertFalse(User.objects.filter(corre_electronico='dup@example.com').exists())

@@ -9,20 +9,17 @@ from home.models import UsuarioCliente, Pedido, EstadoPedido
 
 User = get_user_model()
 
-
 class VentasAdminTests(TestCase):
 	def setUp(self):
-		# create a staff user
+
 		self.staff = User.objects.create_superuser('staff@example.com', 'staffpass', nombre='Staff', apellidos='User')
 
-		# create two clients
 		self.u1 = User.objects.create_user('c1@example.com', 'pass1', nombre='C1', apellidos='One')
 		self.c1 = UsuarioCliente.objects.create(usuario=self.u1)
 
 		self.u2 = User.objects.create_user('c2@example.com', 'pass2', nombre='C2', apellidos='Two')
 		self.c2 = UsuarioCliente.objects.create(usuario=self.u2)
 
-		# create pedidos: two for c1 and one for c2, all ENTREGADO
 		now = timezone.now()
 		self.p1 = Pedido.objects.create(usuario_cliente=self.c1, total_importe=Decimal('10.00'), estado=EstadoPedido.ENTREGADO, correo_electronico=self.u1.corre_electronico)
 		self.p1.fecha_creacion = now

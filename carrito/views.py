@@ -12,13 +12,11 @@ from django.conf import settings
 from django.db.models import Q
 import uuid
 
-# Importación de tus modelos
 from home.models import (
     Producto, CestaCompra, UsuarioCliente, ItemCestaCompra,
     Pedido, ItemPedido, TipoPago, TipoEnvio, EstadoPedido, Tarjeta
 )
 
-# --- FUNCIÓN AUXILIAR PARA FILTROS (Recuperada) ---
 def obtener_opciones_filtro():
     fabricantes = Producto.objects.values_list('fabricante', flat=True).distinct().order_by('fabricante')
     precios = [
@@ -32,19 +30,15 @@ def obtener_opciones_filtro():
         'precios': precios,
     }
 
-# ==============================================================================
-# 1. VISTAS DE LA TIENDA (INICIO, DETALLE, CATEGORÍAS)
-# ==============================================================================
-
 def index(request):
     """Vista de la Página de Inicio"""
-    # Carrusel superior
+
     productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
-    # Grid inferior
+
     productos_random = Producto.objects.filter(stock__gt=0).order_by('?')[:6]
-    
+
     opciones_filtro = obtener_opciones_filtro()
-    
+
     contexto = {
         'productos_destacados': productos_destacados,
         'productos_random': productos_random,
@@ -55,21 +49,20 @@ def index(request):
         'seccion_filtro_seleccionada': '',
         'plantilla_base': 'base.html'
     }
-    # IMPORTANTE: Asegúrate de que tu template se llame 'index.html' o 'home.html'
-    return render(request, 'index.html', contexto) 
+
+    return render(request, 'index.html', contexto)
 
 def detalle_producto(request, pk):
     """Vista de Ficha de Producto"""
     producto = get_object_or_404(Producto, pk=pk)
-    
-    # Productos relacionados (misma categoría, excluyendo el actual)
+
     productos_relacionados = Producto.objects.filter(
-        categoria=producto.categoria, 
+        categoria=producto.categoria,
         stock__gt=0
     ).exclude(pk=pk).order_by('?')[:5]
-    
+
     opciones_filtro = obtener_opciones_filtro()
-    
+
     contexto = {
         'producto': producto,
         'productos_relacionados': productos_relacionados,
@@ -83,19 +76,17 @@ def detalle_producto(request, pk):
 def productos_por_categoria(request, categoria):
     """Vista de Listado por Categoría"""
     productos = Producto.objects.filter(categoria=categoria)
-    
-    # Si no hay productos, intentamos buscar por sección si el modelo lo permite
+
     if not productos.exists():
         productos = Producto.objects.filter(seccion=categoria)
 
     opciones_filtro = obtener_opciones_filtro()
-    
-    # Nombre legible para el título
+
     categoria_display = categoria.replace('_', ' ').upper()
 
     contexto = {
         'categoria_actual': categoria_display,
-        'productos_destacados': productos, # Usamos la misma variable que en el template
+        'productos_destacados': productos,
         'opciones_filtro': opciones_filtro,
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
@@ -107,16 +98,16 @@ def buscar(request):
     """Vista de Búsqueda"""
     query = request.GET.get('q', '')
     productos = Producto.objects.all()
-    
+
     if query:
         productos = productos.filter(
-            Q(nombre__icontains=query) | 
+            Q(nombre__icontains=query) |
             Q(descripcion__icontains=query) |
             Q(fabricante__icontains=query)
         )
-    
+
     opciones_filtro = obtener_opciones_filtro()
-    
+
     contexto = {
         'categoria_actual': f'Resultados para: "{query}"',
         'productos_destacados': productos,
@@ -128,10 +119,6 @@ def buscar(request):
     }
     return render(request, 'productos_por_categoria.html', contexto)
 
-# ==============================================================================
-# 2. LÓGICA DEL CARRITO (Añadir, Quitar, Ver)
-# ==============================================================================
-
 def obtener_cesta_actual(request):
     """Obtiene la cesta del usuario autenticado o de la sesión."""
     cesta = None
@@ -140,19 +127,19 @@ def obtener_cesta_actual(request):
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             cesta, _ = CestaCompra.objects.get_or_create(usuario_cliente=usuario_cliente)
         except UsuarioCliente.DoesNotExist:
-             cesta = None 
+             cesta = None
     else:
         session_id = request.session.get("cesta_id")
         if not session_id:
             session_id = str(uuid.uuid4())
             request.session["cesta_id"] = session_id
-            
+
         cesta, _ = CestaCompra.objects.get_or_create(session_id=session_id)
-        
+
     return cesta
 
 @require_POST
-@transaction.atomic 
+@transaction.atomic
 def update_cart(request, producto_id):
     """
     Gestiona los botones (+) y (-) del carrito.
@@ -160,22 +147,21 @@ def update_cart(request, producto_id):
     """
     producto = get_object_or_404(Producto, id=producto_id)
     cesta = obtener_cesta_actual(request)
-    
+
     item, created = ItemCestaCompra.objects.get_or_create(
-        cesta_compra=cesta, 
-        producto_id=producto_id, 
+        cesta_compra=cesta,
+        producto_id=producto_id,
         defaults={'cantidad': 0, 'precio_unitario': producto.precio}
     )
-    
+
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
     action = request.POST.get('action')
-    
+
     if is_ajax and not action:
         action = 'add'
 
     json_response_data = {'success': False, 'mensaje': 'Error'}
 
-    # --- AÑADIR ---
     if action == 'add':
         try:
             cantidad_add = int(request.POST.get('cantidad', 1))
@@ -195,18 +181,17 @@ def update_cart(request, producto_id):
         else:
             if item.cantidad + cantidad_add <= producto.stock:
                 item.cantidad += cantidad_add
-                item.save()      
+                item.save()
                 json_response_data = {
-                    'success': True, 
+                    'success': True,
                     'mensaje': 'Producto añadido',
                     'total_items': sum(i.cantidad for i in cesta.items.all()),
                     'nuevo_stock': producto.stock
                 }
-            else: 
+            else:
                 mensaje = "No puedes añadir más unidades; has alcanzado el límite de stock disponible."
                 if is_ajax: return JsonResponse({'success': False, 'mensaje': mensaje})
 
-    # --- QUITAR ---
     elif action == 'remove':
         if item.cantidad > 1:
             item.cantidad -= 1
@@ -225,13 +210,13 @@ def update_cart(request, producto_id):
 @transaction.atomic
 def remove_from_cart(request, producto_id):
     cesta = obtener_cesta_actual(request)
-    if not cesta: return redirect('carrito:carrito') 
+    if not cesta: return redirect('carrito:carrito')
     try:
         item = ItemCestaCompra.objects.get(cesta_compra=cesta, producto_id=producto_id)
         item.delete()
         messages.success(request, "Producto eliminado del carrito.")
     except ItemCestaCompra.DoesNotExist:
-        pass 
+        pass
     return redirect('carrito:carrito')
 
 def ver_cesta(request):
@@ -248,11 +233,11 @@ def ver_cesta(request):
             precio_unitario = item.producto.precio_rebajado if (hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado) else item.producto.precio
             precio_linea = precio_unitario * item.cantidad
             subtotal += precio_linea
-            
+
             imagen_url = item.producto.imagen.url if (item.producto.imagen and item.producto.imagen.name) else "https://res.cloudinary.com/djfgts1ii/image/upload/imagen1_zi2acs.jpg"
-                
+
             articulos_para_plantilla.append({
-                    'id': item.producto.id, 
+                    'id': item.producto.id,
                     'nombre': item.producto.nombre,
                     'imagen_url': imagen_url,
                     'precio_unidad': precio_unitario,
@@ -260,16 +245,16 @@ def ver_cesta(request):
                     'precio_total': precio_linea,
                     'stock': item.producto.stock,
             })
-        total = subtotal 
-    
+        total = subtotal
+
     opciones_filtro = obtener_opciones_filtro()
     productos_destacados = Producto.objects.filter(stock__gt=0).order_by('?')[:5]
 
     context = {
-        'articulos': articulos_para_plantilla, 
+        'articulos': articulos_para_plantilla,
         'subtotal': f"{subtotal:.2f}",
-        'total': f"{total:.2f}", 
-        'opciones_filtro': opciones_filtro, 
+        'total': f"{total:.2f}",
+        'opciones_filtro': opciones_filtro,
         'productos_destacados': productos_destacados,
         'precio_seleccionado': '',
         'fabricante_seleccionado': '',
@@ -286,22 +271,17 @@ def vaciar_cesta(request):
     messages.success(request, "La cesta ha sido vaciada correctamente.")
     return redirect('carrito:carrito')
 
-# ==============================================================================
-# 3. PROCESO DE PAGO Y VERIFICACIÓN DE STOCK
-# ==============================================================================
-
 def checkout(request):
     """
     Página de Pago.
     INCLUYE 'PORTERO': Verifica stock antes de dejarte ver el formulario.
     """
     cesta = obtener_cesta_actual(request)
-    
+
     if not cesta or not cesta.items.exists():
         messages.error(request, "Tu carrito está vacío.")
         return redirect('carrito:carrito')
 
-    # --- PORTERO DE SEGURIDAD ---
     problema_detectado = False
     for item in cesta.items.select_related('producto'):
         stock_real = item.producto.stock
@@ -317,23 +297,20 @@ def checkout(request):
 
     if problema_detectado:
         return redirect('carrito:carrito')
-    # -----------------------------
 
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
         precio = item.producto.precio_rebajado if (hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado) else item.producto.precio
         subtotal += precio * item.cantidad
-        
-    # Calcular gastos de envío: 5€ si subtotal < 50€, gratis si >= 50€
+
     coste_envio = Decimal('5.00') if subtotal < 50 else Decimal('0.00')
     total_inicial = subtotal + coste_envio
-    
-    # Pre-rellenar datos cliente
+
     datos_cliente = {
-        'nombre': request.user.nombre if request.user.is_authenticated else '', 
+        'nombre': request.user.nombre if request.user.is_authenticated else '',
         'apellidos': request.user.apellidos if request.user.is_authenticated else '',
         'email': request.user.corre_electronico if request.user.is_authenticated else '',
-        'telefono': '', 'direccion_calle': '', 'direccion_cp': '', 'direccion_ciudad': '', 'direccion_pais': '',      
+        'telefono': '', 'direccion_calle': '', 'direccion_cp': '', 'direccion_ciudad': '', 'direccion_pais': '',
         'tipo_envio_default': TipoEnvio.DOMICILIO, 'tipo_pago_default': TipoPago.PASARELA_PAGO,
     }
     tarjetas_guardadas = None
@@ -343,20 +320,19 @@ def checkout(request):
         try:
             usuario_cliente = UsuarioCliente.objects.get(usuario=request.user)
             tarjetas_guardadas = usuario_cliente.tarjetas.all()
-            
-            # 1. Procesar y enmascarar las tarjetas para el frontend
+
             for tarjeta in tarjetas_guardadas:
-                # La tarjeta enmascarada tendrá 12 asteriscos + los 4 dígitos finales
+
                 numero_enmascarado = f"************{tarjeta.ultimos_cuatro}"
-                
+
                 tarjetas_para_contexto.append({
                     'id': tarjeta.id,
                     'numero_enmascarado': numero_enmascarado,
                     'ultimos_cuatro': tarjeta.ultimos_cuatro,
-                    'fecha_expiracion': tarjeta.card_expiry, # Pasa la fecha real (MM/AA)
-                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first()) # Marcar la primera por defecto
+                    'fecha_expiracion': tarjeta.card_expiry,
+                    'es_seleccionada': (tarjeta == tarjetas_guardadas.first())
                 })
-            
+
         except UsuarioCliente.DoesNotExist:
             pass
 
@@ -375,24 +351,24 @@ def checkout(request):
                     datos_cliente['direccion_ciudad'] = partes[2]
         except UsuarioCliente.DoesNotExist:
             pass
-    
+
     opciones_filtro = obtener_opciones_filtro()
 
     context = {
-        'articulos': cesta.items.all(), 
+        'articulos': cesta.items.all(),
         'subtotal': f"{subtotal:.2f}",
         'coste_envio': float(coste_envio),
-        'total': f"{total_inicial:.2f}", 
+        'total': f"{total_inicial:.2f}",
         'datos_cliente': datos_cliente,
-        'tarjetas_para_contexto': tarjetas_para_contexto, # La lista de tarjetas procesadas
+        'tarjetas_para_contexto': tarjetas_para_contexto,
         'tiene_tarjeta_guardada': bool(tarjetas_para_contexto),
-        'opciones_filtro': opciones_filtro, 
+        'opciones_filtro': opciones_filtro,
         'precio_seleccionado': '', 'fabricante_seleccionado': '', 'seccion_filtro_seleccionada': '',
     }
     return render(request, "pago.html", context)
 
 @require_POST
-@transaction.atomic 
+@transaction.atomic
 def procesar_pago(request):
     """
     1. Verifica stock y limpia.
@@ -401,9 +377,9 @@ def procesar_pago(request):
     Esta función está diseñada para ser llamada vía AJAX desde el frontend.
     """
     cesta = obtener_cesta_actual(request)
-    # Identificar si la solicitud es AJAX para devolver JSON en caso de error
+
     is_ajax = request.headers.get('x-requested-with') == 'XMLHttpRequest'
-    
+
     if not cesta or not cesta.items.exists():
         mensaje_error = "El carrito está vacío."
         if is_ajax:
@@ -411,7 +387,6 @@ def procesar_pago(request):
         messages.error(request, mensaje_error)
         return redirect('carrito:carrito')
 
-    # 1. FASE DE LIMPIEZA
     cesta_modificada = False
     for item in cesta.items.select_related('producto'):
         producto = item.producto
@@ -426,40 +401,35 @@ def procesar_pago(request):
             item.save()
             cesta_modificada = True
 
-    # Si la cesta se modificó, redirigimos (no podemos hacerlo con JsonResponse ya que implica un recálculo)
-    if cesta_modificada: return redirect('carrito:checkout') # Redirigimos a checkout para recálculo/aviso
+    if cesta_modificada: return redirect('carrito:checkout')
 
-    # 2. PROCESAMIENTO
-    entrega_value = request.POST.get('shipping_option') 
-    payment_method_value = request.POST.get('payment_method') 
+    entrega_value = request.POST.get('shipping_option')
+    payment_method_value = request.POST.get('payment_method')
     email = request.POST.get('contact_email')
-    
-    # Validar que el email sea de Gmail
+
     if email and not email.lower().endswith('@gmail.com'):
         mensaje_error = "Solo se aceptan correos electrónicos con dominio @gmail.com"
         if is_ajax:
             return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
         messages.error(request, mensaje_error)
         return redirect('carrito:checkout')
-    
-    telefon = request.POST.get('contact_phone') 
-    
+
+    telefon = request.POST.get('contact_phone')
+
     calle = (request.POST.get('address_street') or '').strip()
     ciudad = (request.POST.get('address_city') or '').strip()
     cpi = (request.POST.get('address_zip') or '').strip()
     pais = (request.POST.get('address_country') or '').strip()
-    
+
     direccion = f"{calle}, {cpi} {ciudad}, {pais}"
 
-    # Datos de Tarjeta (solo si el método es 'gateway')
     card_number = request.POST.get('card_number')
-    expiry_date = request.POST.get('expiry_date') # MM/AA
-    card_cvv = request.POST.get('cvv') #  CVV
+    expiry_date = request.POST.get('expiry_date')
+    card_cvv = request.POST.get('cvv')
     tarjeta_id = request.POST.get('tarjeta_guardada_id')
-    # Flag para guardar tarjeta (solo presente si el usuario está autenticado)
+
     save_card_flag = request.POST.get('save_card') == 'on'
 
-    
     subtotal = Decimal('0.00')
     for item in cesta.items.all():
         precio = item.producto.precio_rebajado if (hasattr(item.producto, 'precio_rebajado') and item.producto.precio_rebajado) else item.producto.precio
@@ -471,60 +441,52 @@ def procesar_pago(request):
 
     if entrega_value == 'standard':
         if subtotal < 50: coste_entrega = Decimal('5.00')
-        if not calle: 
+        if not calle:
             mensaje_error = "Dirección obligatoria para envío a domicilio."
             if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
             messages.error(request, mensaje_error)
             return redirect('carrito:checkout')
     elif entrega_value == 'express':
         metodo_envio = TipoEnvio.RECOGIDA_TIENDA
-        direccion_final = "Calle Jardines del Guadalquivir, 45, 41012 Sevilla" 
-    
+        direccion_final = "Calle Jardines del Guadalquivir, 45, 41012 Sevilla"
+
     metodo_pago = TipoPago.PASARELA_PAGO if payment_method_value == 'gateway' else TipoPago.CONTRAREEMBOLSO
     pago = (metodo_pago == TipoPago.PASARELA_PAGO)
     total_importe = subtotal + coste_entrega
 
-    # ====================================================================
-    # 💳 VALIDACIÓN DE PAGO (Tarjeta Guardada vs. Tarjeta Nueva)
-    # ====================================================================
-
     if metodo_pago == TipoPago.PASARELA_PAGO:
-        # Caso 1: Se eligió pagar con una tarjeta guardada
+
         if tarjeta_id:
             if not card_cvv:
                 mensaje_error = "El CVV (código de seguridad) es obligatorio para usar una tarjeta guardada."
                 if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
                 messages.error(request, mensaje_error)
                 return redirect('carrito:checkout')
-            
+
             try:
-                # Aseguramos que la tarjeta exista y pertenezca al usuario
+
                 tarjeta_guardada = Tarjeta.objects.get(id=tarjeta_id, usuario_cliente__usuario=request.user)
-                
-                # **Validación de CVV contra el hash guardado**
-                if not tarjeta_guardada.check_cvv(card_cvv): 
+
+                if not tarjeta_guardada.check_cvv(card_cvv):
                     mensaje_error = f"❌ El CVV proporcionado no es correcto para la tarjeta que termina en {tarjeta_guardada.ultimos_cuatro}. Inténtelo de nuevo."
-                    # **CAMBIO CLAVE: Devolver JsonResponse en caso de error de CVV**
-                    if is_ajax: 
+
+                    if is_ajax:
                         return JsonResponse({'success': False, 'message': mensaje_error, 'code': 'CVV_INVALID'}, status=400)
                     messages.error(request, mensaje_error)
                     return redirect('carrito:checkout')
-                
+
             except Tarjeta.DoesNotExist:
                 mensaje_error = "Tarjeta guardada inválida o no accesible. Por favor, inténtelo de nuevo."
                 if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
                 messages.error(request, mensaje_error)
                 return redirect('carrito:checkout')
 
-        # Caso 2: Pago con tarjeta nueva (o no se seleccionó ninguna guardada)
         elif not card_number or not expiry_date or not card_cvv:
             mensaje_error = "Por favor, complete todos los datos de la tarjeta (Número, Fecha de expiración y CVV)."
             if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
             messages.error(request, mensaje_error)
             return redirect('carrito:checkout')
 
-    # ====================================================================
-    
     usuario_cliente = None
     if request.user.is_authenticated:
         try:
@@ -534,51 +496,46 @@ def procesar_pago(request):
             usuario_cliente.save()
 
             if metodo_pago == TipoPago.PASARELA_PAGO and save_card_flag and card_number and expiry_date and card_cvv:
-                
-                # Crear instancia del nuevo modelo
+
                 nueva_tarjeta = Tarjeta(
                     usuario_cliente=usuario_cliente
                 )
-                
-                # Hashear y asignar detalles (usa el método que definimos en models.py)
+
                 nueva_tarjeta.set_card_details(card_number, expiry_date, card_cvv)
-                
-                # Intentar guardar, verificando si ya existe un hash idéntico para este usuario
+
                 try:
                     nueva_tarjeta.save()
                     messages.info(request, f"💳 Tarjeta que termina en {nueva_tarjeta.ultimos_cuatro} guardada de forma segura.")
                 except Exception:
-                    # Si falla al guardar (unique_together error), significa que ya existe
+
                     messages.warning(request, "Esta tarjeta ya está guardada en su perfil.")
         except UsuarioCliente.DoesNotExist: pass
-            
+
     try:
-        # CREAR PEDIDO
+
         pedido = Pedido.objects.create(
-            usuario_cliente=usuario_cliente, estado=EstadoPedido.PEDIDO, 
+            usuario_cliente=usuario_cliente, estado=EstadoPedido.PEDIDO,
             subtotal_importe=subtotal, coste_entrega=coste_entrega, total_importe=total_importe,
-            metodo_pago=metodo_pago, tipo_envio=metodo_envio, direccion_envio=direccion_final, 
+            metodo_pago=metodo_pago, tipo_envio=metodo_envio, direccion_envio=direccion_final,
             correo_electronico=email, telefono=telefon, pago=pago,
         )
 
         for item_cesta in cesta.items.select_related('producto'):
             producto = item_cesta.producto
-            if item_cesta.cantidad > producto.stock: raise ValueError("Stock insuficiente.") 
-            
+            if item_cesta.cantidad > producto.stock: raise ValueError("Stock insuficiente.")
+
             precio_final = producto.precio_rebajado if (hasattr(producto, 'precio_rebajado') and producto.precio_rebajado) else producto.precio
             ItemPedido.objects.create(pedido=pedido, producto=producto, cantidad=item_cesta.cantidad, precio_unitario=precio_final)
-            
-            # RESTA DE STOCK REAL
+
             producto.stock -= item_cesta.cantidad
             producto.save()
 
-        # Email (Lógica de envío de email)
         try:
             pedido.refresh_from_db()
             tracking_url = request.build_absolute_uri(reverse('seguimiento_pedido', kwargs={'order_id': pedido.id, 'tracking_hash': pedido.tracking_id}))
             items_email = pedido.items.select_related('producto').all()
             contexto = {'pedido': pedido, 'items': items_email, 'tracking_url': tracking_url}
-            
+
             subject = f"Confirmación pedido #{pedido.id}"
             text_body = f"Gracias. Sigue tu pedido aquí: {tracking_url}"
             html_body = render_to_string('correo.html', contexto)
@@ -588,21 +545,18 @@ def procesar_pago(request):
             msg.send(fail_silently=False)
         except Exception: pass
 
-        # FINALIZAR
         cesta.items.all().delete()
         request.session['ultimo_correo_pedido'] = email
-        
-        # **CAMBIO CLAVE: Devolver JsonResponse en caso de éxito**
+
         if is_ajax:
             success_url = reverse('carrito:fin_compra')
             return JsonResponse({'success': True, 'redirect_url': success_url, 'message': f"¡Pedido realizado con éxito!"}, status=200)
 
-        # Si no es AJAX
         messages.success(request, f"🛒 ¡Pedido #{pedido.id} realizado con éxito!")
         return redirect('carrito:fin_compra')
-        
+
     except ValueError as e:
-        # Captura el error específico de stock si se lanza
+
         transaction.set_rollback(True)
         mensaje_error = f"Error al procesar el pedido: {e}"
         if is_ajax: return JsonResponse({'success': False, 'message': mensaje_error}, status=400)
@@ -620,7 +574,6 @@ def compra_finalizada(request):
     correo = request.session.pop('ultimo_correo_pedido', '')
     return render(request, 'compra_finalizada.html', {'correo': correo, 'opciones_filtro': obtener_opciones_filtro()})
 
-# --- API ---
 def verificar_stock_api(request):
     """API para polling de stock."""
     ids_param = request.GET.get('ids', '')
@@ -628,6 +581,6 @@ def verificar_stock_api(request):
     try:
         p_ids = [int(x) for x in ids_param.split(',') if x.isdigit()]
     except ValueError: return JsonResponse({})
-    
+
     productos = Producto.objects.filter(id__in=p_ids)
     return JsonResponse({str(p.id): p.stock for p in productos})

@@ -11,16 +11,16 @@ class PedidoEstadoForm(forms.ModelForm):
     """
     Formulario para que el administrador actualice el estado de un pedido.
     """
-    class Meta:        
+    class Meta:
         model = Pedido
-        fields = ['estado'] 
+        fields = ['estado']
         widgets = {
             'estado': forms.Select(choices=ESTADO_CHOICES, attrs={'class': 'input-style'}),
         }
         labels = {
             'estado': 'Estado Actual del Pedido',
         }
-        
+
     """def clean_estado(self):
         
         Validación: Evita cambiar el estado si ya está ENTREGADO.

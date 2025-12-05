@@ -7,13 +7,13 @@ class ItemPedidoInline(admin.TabularInline):
     readonly_fields = ('producto', 'cantidad', 'precio_unitario', 'total')
     extra = 0
     can_delete = False
-    
+
 class HistorialSeguimientoInline(admin.TabularInline):
     model = HistorialSeguimiento
     readonly_fields = ('estado_anterior', 'estado_nuevo', 'fecha_cambio', 'notas', 'usuario_admin')
     extra = 0
     can_delete = False
-    
+
 @admin.register(Pedido)
 class PedidoAdmin(admin.ModelAdmin):
     list_display = ('id', 'usuario_cliente', 'fecha_creacion', 'estado', 'total_importe', 'metodo_pago', 'tipo_envio', 'direccion_envio')

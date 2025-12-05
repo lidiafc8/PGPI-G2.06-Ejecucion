@@ -3,7 +3,6 @@ import re
 
 from home.models import UsuarioCliente, Pedido, CestaCompra
 
-
 def _clean_text(s: str) -> str:
     if not s:
         return ''
@@ -15,7 +14,6 @@ def _clean_text(s: str) -> str:
     cleaned = re.sub(r',\s*,', ',', cleaned)
     cleaned = cleaned.strip()
     return cleaned
-
 
 class Command(BaseCommand):
     help = (
@@ -29,8 +27,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         dry_run = options.get('dry_run', False)
 
-        # Esta utilidad vacía las cestas asociadas a UsuarioCliente cuyos campos de
-        # `direccion_envio` contienen la cadena 'None'. No modifica direcciones.
         uc_qs = UsuarioCliente.objects.filter(direccion_envio__icontains='None')
         affected_ids = list(uc_qs.values_list('id', flat=True))
 
@@ -44,7 +40,6 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Dry-run activado; no se harán cambios.'))
             return
 
-        # Vaciar cestas (borrar items) asociadas a UsuarioCliente afectados
         emptied_cestas = 0
         if affected_ids:
             cestas_qs = CestaCompra.objects.filter(usuario_cliente_id__in=affected_ids)

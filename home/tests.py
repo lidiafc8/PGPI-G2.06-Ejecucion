@@ -9,14 +9,12 @@ from .models import Producto, UsuarioCliente, Seccion, Categoria, CestaCompra, I
 
 User = get_user_model()
 
-
 class HomeViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
         gif = b'GIF89a\x01\x00\x01\x00\x00\xff\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x00;'
         image = SimpleUploadedFile('img.gif', gif, content_type='image/gif')
 
-        # Productos
         self.prod_featured = Producto.objects.create(
             nombre='Feat', descripcion='d', departamento='D', seccion=Seccion.HERRAMIENTAS_MANUALES,
             fabricante='F', categoria=Categoria.CORTE_Y_PODA, precio=Decimal('12.34'), stock=5, imagen=image, esta_destacado=True
@@ -26,7 +24,6 @@ class HomeViewsTest(TestCase):
             fabricante='F2', categoria=Categoria.CORTE_Y_PODA, precio=Decimal('5.00'), stock=3, imagen=image, esta_destacado=False
         )
 
-        # Usuario para pruebas autenticadas
         self.user = User.objects.create_user(corre_electronico='u@x.com', password='pass', nombre='U', apellidos='X')
         self.usuario_cliente = UsuarioCliente.objects.create(usuario=self.user)
 
@@ -45,7 +42,7 @@ class HomeViewsTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         self.assertIn('productos_destacados', resp.context)
         prods = list(resp.context['productos_destacados'])
-        # Both products have CORTE_Y_PODA so both should appear
+
         self.assertIn(self.prod_featured, prods)
         self.assertIn(self.prod_other, prods)
 
@@ -57,7 +54,7 @@ class HomeViewsTest(TestCase):
         self.assertTrue(hasattr(prod, 'euros'))
         self.assertTrue(hasattr(prod, 'centavos'))
         related = list(resp.context['productos_relacionados'])
-        # prod_other is same category so should be related
+
         self.assertIn(self.prod_other, related)
 
     def test_buscar_productos_finds_by_name_and_sets_context(self):
@@ -73,10 +70,10 @@ class HomeViewsTest(TestCase):
         self.assertEqual(resp.status_code, 200)
         data = json.loads(resp.content)
         self.assertTrue(data.get('success'))
-        # Session should have cesta_id
+
         session_id = self.client.session.get('cesta_id')
         self.assertIsNotNone(session_id)
-        # Cesta and item exist
+
         cesta = CestaCompra.objects.filter(session_id=session_id).first()
         self.assertIsNotNone(cesta)
         item = ItemCestaCompra.objects.filter(cesta_compra=cesta, producto=self.prod_featured).first()
@@ -97,4 +94,3 @@ class HomeViewsTest(TestCase):
         self.assertEqual(item.cantidad, 1)
 from django.test import TestCase
 
-# Create your tests here.

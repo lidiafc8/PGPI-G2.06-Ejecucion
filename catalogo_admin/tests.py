@@ -10,12 +10,10 @@ from home.models import Producto, Seccion, Categoria
 
 User = get_user_model()
 
-
 class CatalogoAdminViewsTest(TestCase):
     def setUp(self):
         self.client = Client()
 
-        # Usuarios
         self.staff_user = User.objects.create_user(
             corre_electronico='admin@example.com', password='pass', nombre='Admin', apellidos='One', is_staff=True
         )
@@ -23,11 +21,9 @@ class CatalogoAdminViewsTest(TestCase):
             corre_electronico='user@example.com', password='pass', nombre='User', apellidos='Two', is_staff=False
         )
 
-        # Imagen de prueba
         gif = b'GIF89a\x01\x00\x01\x00\x00\xff\x00,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x00;'
         self.image = SimpleUploadedFile('img.gif', gif, content_type='image/gif')
 
-        # Crear productos
         self.p1 = Producto.objects.create(
             nombre='P1', descripcion='d', departamento='D', seccion=Seccion.HERRAMIENTAS_MANUALES,
             fabricante='F', categoria=Categoria.CORTE_Y_PODA, precio=Decimal('5.00'), stock=10, imagen=self.image
@@ -39,7 +35,7 @@ class CatalogoAdminViewsTest(TestCase):
 
     def test_lista_productos_redirects_non_staff(self):
         resp = self.client.get(reverse('lista_productos'))
-        # redirects to 'home' (root)
+
         self.assertEqual(resp.status_code, 302)
 
     def test_lista_productos_shows_for_staff(self):
@@ -65,7 +61,6 @@ class CatalogoAdminViewsTest(TestCase):
         }
         data_files = {'imagen': self.image}
 
-        # Use files= to send the image correctly
         resp = self.client.post(url, data=data, files={'imagen': self.image}, follow=True)
         self.assertEqual(resp.status_code, 200)
         self.assertTrue(Producto.objects.filter(nombre='Nuevo').exists())
@@ -93,7 +88,7 @@ class CatalogoAdminViewsTest(TestCase):
     def test_eliminar_producto_posts_delete(self):
         self.client.force_login(self.staff_user)
         url = reverse('eliminar_producto', args=[self.p2.id])
-        # GET returns confirmation
+
         get_resp = self.client.get(url)
         self.assertEqual(get_resp.status_code, 200)
         post_resp = self.client.post(url, follow=True)
@@ -127,4 +122,3 @@ class CatalogoAdminViewsTest(TestCase):
         self.assertEqual(resp.status_code, 302)
 from django.test import TestCase
 
-# Create your tests here.

@@ -2,7 +2,7 @@ from django.urls import path, reverse_lazy
 from django.contrib.auth import views as auth_views
 from django.contrib.auth import logout
 from django.shortcuts import redirect
-from .forms import ClienteAuthenticationForm # Asegúrate de que esta forma funciona correctamente
+from .forms import ClienteAuthenticationForm
 from . import views
 
 def custom_logout_view(request):
@@ -18,21 +18,19 @@ def cambio_rol(request):
     Asume que tienes un campo o método en el modelo User para verificar si es administrador.
     """
     if request.user.is_authenticated and (request.user.is_staff or request.user.is_superuser):
-        return redirect('adminpanel:adminpanel_index') 
+        return redirect('adminpanel:adminpanel_index')
     elif request.user.is_authenticated:
-        return redirect('/') 
+        return redirect('/')
     else:
         return redirect('inicio_sesion:login')
-
 
 app_name = 'inicio_sesion'
 
 urlpatterns = [
     path('login/', views.login_view, name='login'),
 
-    path('logout/', custom_logout_view, name='logout'), 
+    path('logout/', custom_logout_view, name='logout'),
 
-    # URL para la redirección condicional
     path('cambio_rol/', cambio_rol, name='cambio_rol'),
     path('post_login_redirect/', views.post_login_redirect, name='post_login_redirect'),
 ]

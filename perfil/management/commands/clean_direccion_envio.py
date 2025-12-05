@@ -3,23 +3,21 @@ import re
 
 from home.models import UsuarioCliente, Pedido
 
-
 def _clean_text(s: str) -> str:
     if not s:
         return ''
-    # Reemplaza literal 'None' y variantes, luego limpia comas y espacios repetidos
+
     cleaned = re.sub(r'\bNone\b', '', s)
-    # Remove leftover sequences like ', ,' and extra spaces
+
     cleaned = re.sub(r',\s*,+', ',', cleaned)
     cleaned = re.sub(r'\s{2,}', ' ', cleaned)
-    # Remove leading/trailing commas and whitespace
+
     cleaned = cleaned.strip()
     cleaned = re.sub(r'^[,\s]+|[,\s]+$', '', cleaned)
-    # Collapse ', ,' into ', '
+
     cleaned = re.sub(r',\s*,', ',', cleaned)
     cleaned = cleaned.strip()
     return cleaned
-
 
 class Command(BaseCommand):
     help = 'Limpia el campo direccion_envio de UsuarioCliente y Pedido eliminando literales "None" y zonas vacías.'
@@ -46,6 +44,5 @@ class Command(BaseCommand):
                 p.save()
                 updated_pedido += 1
 
-        # Solo limpiar direcciones en UsuarioCliente y Pedido; no tocar cestas aquí
         self.stdout.write(self.style.SUCCESS(f'UsuarioCliente actualizados: {updated_uc}'))
         self.stdout.write(self.style.SUCCESS(f'Pedidos actualizados: {updated_pedido}'))

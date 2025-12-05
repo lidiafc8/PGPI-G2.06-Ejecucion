@@ -1,23 +1,23 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import login 
-from django.contrib.auth.decorators import login_required 
-from django.urls import reverse_lazy 
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
 
-from .forms import ClienteAuthenticationForm 
+from .forms import ClienteAuthenticationForm
 
 def login_view(request):
 
-    if request.user.is_authenticated: 
-        return redirect('adminpanel:adminpanel_index') 
+    if request.user.is_authenticated:
+        return redirect('adminpanel:adminpanel_index')
 
     if request.method == 'POST':
-        form = ClienteAuthenticationForm(request=request, data=request.POST) 
+        form = ClienteAuthenticationForm(request=request, data=request.POST)
 
-        if form.is_valid(): 
+        if form.is_valid():
             user = form.get_user()
-            login(request, user) 
+            login(request, user)
 
-            return redirect('inicio_sesion:post_login_redirect') 
+            return redirect('inicio_sesion:post_login_redirect')
 
     else:
         form = ClienteAuthenticationForm(request=request)

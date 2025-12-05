@@ -6,7 +6,6 @@ from .backends import ClienteBackend
 
 User = get_user_model()
 
-
 class ClienteBackendTest(TestCase):
 	def setUp(self):
 		self.user = User.objects.create_user(corre_electronico='u@test.com', password='secret', nombre='U', apellidos='T')
@@ -25,7 +24,6 @@ class ClienteBackendTest(TestCase):
 		u = self.backend.get_user(self.user.pk)
 		self.assertEqual(u.pk, self.user.pk)
 
-
 class InicioSesionViewsTest(TestCase):
 	def setUp(self):
 		self.client = Client()
@@ -42,7 +40,7 @@ class InicioSesionViewsTest(TestCase):
 	def test_login_view_post_logs_in_and_redirects(self):
 		url = reverse('inicio_sesion:login')
 		resp = self.client.post(url, {'username': 'user1@example.com', 'password': 'pw'})
-		# Should redirect to post_login_redirect
+
 		self.assertEqual(resp.status_code, 302)
 		self.assertIn(reverse('inicio_sesion:post_login_redirect'), resp['Location'])
 
@@ -50,14 +48,14 @@ class InicioSesionViewsTest(TestCase):
 		self.client.force_login(self.user)
 		url = reverse('inicio_sesion:login')
 		resp = self.client.get(url)
-		# The view redirects authenticated users to adminpanel index
+
 		self.assertEqual(resp.status_code, 302)
 
 	def test_post_login_redirect_for_regular_user(self):
 		self.client.force_login(self.user)
 		url = reverse('inicio_sesion:post_login_redirect')
 		resp = self.client.get(url)
-		# regular users are redirected to '/'
+
 		self.assertEqual(resp.status_code, 302)
 		self.assertTrue(resp['Location'].endswith('/'))
 
@@ -69,24 +67,22 @@ class InicioSesionViewsTest(TestCase):
 
 	def test_logout_redirects_home(self):
 		url = reverse('inicio_sesion:logout')
-		# login first
+
 		self.client.force_login(self.user)
 		resp = self.client.get(url)
 		self.assertEqual(resp.status_code, 302)
 
 	def test_cambio_rol_behaviour(self):
 		url = reverse('inicio_sesion:cambio_rol')
-		# anonymous redirects to login
+
 		resp = self.client.get(url)
 		self.assertEqual(resp.status_code, 302)
 
-		# authenticated non-staff -> /
 		self.client.force_login(self.user)
 		resp2 = self.client.get(url)
 		self.assertEqual(resp2.status_code, 302)
 		self.assertTrue(resp2['Location'].endswith('/'))
 
-		# staff user -> adminpanel (redirect)
 		self.client.force_login(self.staff)
 		resp3 = self.client.get(url)
 		self.assertEqual(resp3.status_code, 302)
